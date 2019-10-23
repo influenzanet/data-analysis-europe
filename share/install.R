@@ -11,7 +11,7 @@ system_template = "# Global configuration of scripts
 # Local config scripts
 source('../location.R') # should always in the upper directory from working dir
 
-if( is.null( getOption(\"ifn\") ) {
+if( is.null( getOption(\"ifn\") ) ) {
   # load system bootstrap script
   source(paste0(BASE_PATH,'share/lib/system.R'))
 }
