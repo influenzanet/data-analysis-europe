@@ -11,6 +11,11 @@ A project must be independent from others and the only scripts known outside it 
 
 The `share` directory contains common libraries & data shared accross projects. These libraries must be loaded with `share.lib` function & data using `share.data.path()` function.
 
+
+## Naming conventions
+
+File names must be in lower case, using underscore as separator
+
 ## Configuration
 
 Configuration is expected to be in a `location.R` file in the root of this repository. It contains local configuration specific to this project. It can overrides system-wide or user profile config (.Rprofile file). We use this *location.R* because several repositories with differents projects can be hosted in the same user space.
