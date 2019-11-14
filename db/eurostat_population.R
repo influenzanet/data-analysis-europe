@@ -6,9 +6,15 @@ library(glue)
 
 output.years = 2012:2018
 
+file.prefix = paste(range(output.years),collapse = "-")
+
 out.path = function(...) {
-  paste0("data/population/", ...)
+  paste0("data/population/",file.prefix, "/", ...)
 }
+
+dir.create(out.path())
+
+file.remove(Sys.glob(out.path('*')))
 
 countries = c("BE", "DK",  "ES", "FR", "IE", "IT", "NL", "PT", "SE", "UK", "CH")
 
@@ -24,6 +30,8 @@ pop_eu$year = as.integer(format(pop_eu$time, "%Y"))
 pop_eu$country = substr(pop_eu$geo, 1, 2)
 
 pop_eu = pop_eu %>% filter(country %in% countries)
+
+pop_eu$level = nchar(as.character(pop_eu$geo)) - 2
 
 min.year = 2010
 
@@ -82,7 +90,7 @@ for(year in output.years) {
 
   i = country.year$max_year < max(country.year$max_year)
   if(any(i)) {
-    cat(paste("Using ",country.year$max_year[i],"for country ", country.year$max_year[i]) ,"\n")
+    cat(paste("Using ", country.year$max_year[i], "for country ", country.year$country[i]),sep="\n")
   }
 
   country.year = rename(country.year, "year.ref"="max_year")
@@ -160,15 +168,15 @@ for(year in output.years) {
   pop.frame = merge(data.frame(geo=nuts2$code_nuts2), data.frame(age=age.groups$age))
 
   pop = merge(pop, pop.frame, by=c('geo','age'), all=T)
+ 
+  pop = pop[ pop$age != "UNK", ] # Remove unknown age-group category (actually always 0)
 
   if( any(is.na(pop$all)) ) {
-    print( pop[ is.na(pop$all)])
+    print( pop[ is.na(pop$all),])
     stop("Some population are unknown in expected geo levels or age groups")
   }
 
   # Now that's ok
-
-  pop = pop[ pop$age != "UNK", ] # Remove unknown age-group category (actually always 0)
 
   pop = rename(pop, code_nuts2=geo)
 
@@ -212,13 +220,10 @@ for(year in output.years) {
       print(pop_check[i, c('country', paste0(v, suffixes)) ])
     }
   }
-
+  
   output_pop = function(data, level, age=FALSE) {
-    f = paste0(year,'_pop_', level)
-    if(age) {
-      f = paste0(f, '_age5')
-    }
-
+    f = paste0('pop_', level)
+    
     if(level == "country") {
       column = "country"
     } else {
@@ -227,23 +232,37 @@ for(year in output.years) {
 
     if(is.null(data$country)) {
       data$country = substring(data[[column]], 1, 2)
+    } else {
+      
     }
-    write.csv2(data, file=out.path(f, '.csv'), row.names=F)
-
+    
+    if(age) {
+      data = data[ order(data[[column]], data$age.min), ]
+    } else {
+      data = data[ order(data[[column]]), ]
+    }
+    
+    
+    write.csv2(data, file=out.path(year,'_', f, '.csv'), row.names=F)
 
     if(age) {
-      qq = paste0("insert into pop_age5_",level," (age_min, year,",column,", year.ref, all, male, female) values ")
+      table = paste0("pop_age5_",level)
+      qq = paste0("insert into ",table," (age_min, year,",column,", year.ref, all, male, female) values \n")
 
-      query = glue_data_sql(data, paste0("({age.min},", year,"{", column,"},{year.ref},{all},{male},{female})"))
+      query = glue_data(data, paste0("({age.min},", year,",'{", column,"}',{year.ref},{all},{male},{female})"))
 
-      qq = paste(qq, paste(query, collapse = ","), ";")
+      qq = paste(qq, paste(query, collapse = ",\n"), ";")
 
     } else {
-      qq = paste0("insert into pop_",level," (year,",column,", year.ref, all, male, female) values ")
-      query = glue_data_sql(data, paste0("(", year,"{", column,"},{year.ref},{all},{male},{female})"))
-      qq = paste(qq, paste(query, collapse = ","), ";")
+      table = paste0("pop_",level)
+      qq = paste0("insert into ",table," (year,",column,", year.ref, all, male, female) values \n")
+      query = glue_data(data, paste0("(", year,",'{", column,"}',{year.ref},{all},{male},{female})"))
+      qq = paste(qq, paste(query, collapse = ",\n"), ";\n")
     }
-    write(qq, file=out.path(f, '.sql'))
+    fn = out.path(f, '.sql')
+    write(paste("\n\n-- year ", year, " level ", level," table ",table,"\n"), file=fn, append=TRUE)
+    write(paste0("delete from ", table, " where year=",year,";\n"), file=fn, append=TRUE)
+    write(qq, file=fn, append=TRUE)
   }
 
   output_pop(pop[, c('age.min','age.max','all','male','female','year.ref','country', 'code_nuts2')], 'nuts2', age=TRUE)
