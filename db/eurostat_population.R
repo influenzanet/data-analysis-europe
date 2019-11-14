@@ -1,9 +1,10 @@
+source("conf.R")
 library(eurostat)
 library(dplyr)
 library(reshape2)
 library(glue)
 
-output.years = c(2015, 2016, 2017)
+output.years = 2012:2018
 
 out.path = function(...) {
   paste0("data/population/", ...)
