@@ -226,42 +226,62 @@ for(year in output.years) {
     
     if(level == "country") {
       column = "country"
+      
+      columns = column
+      
     } else {
       column = paste0('code_', level)
+      columns = c("country", column)
     }
 
-    if(is.null(data$country)) {
+    if(!hasName(data, "country")) {
       data$country = substring(data[[column]], 1, 2)
-    } else {
-      
-    }
+    } 
     
     if(age) {
       data = data[ order(data[[column]], data$age.min), ]
+      data = rename(data, age_min="age.min")
     } else {
       data = data[ order(data[[column]]), ]
     }
     
-    
     write.csv2(data, file=out.path(year,'_', f, '.csv'), row.names=F)
 
+    build_query = function(data, columns, table) {
+      qq = paste0('insert into ',table, ' ("', paste(columns,collapse='","'),'")  values \n')
+      
+      cc = lapply(columns, function(column) {
+        if(is.character(data[[column]]) || is.factor(data[[column]])) {
+          quote ="'"
+        } else {
+          quote = ""
+        }
+        paste0(quote, '{', column,'}', quote)
+      })
+      
+      template = paste0("(", paste(cc, collapse=","),")")
+      
+      qq = paste(qq, paste(glue_data(data, template), collapse = ",\n"), ";\n")
+      qq
+    }
+    
+    data = rename(data, "year_ref"="year.ref")
+    
+    columns = c(columns, "year", "year_ref", "all", "male", "female")
+    
     if(age) {
-      table = paste0("pop_age5_",level)
-      qq = paste0("insert into ",table," (age_min, year,",column,", year.ref, all, male, female) values \n")
-
-      query = glue_data(data, paste0("({age.min},", year,",'{", column,"}',{year.ref},{all},{male},{female})"))
-
-      qq = paste(qq, paste(query, collapse = ",\n"), ";")
-
+      table = paste0("pop_age5_", level)
+      
+      columns = c("age_min", columns)
+      qq = build_query(data, columns, table)
+    
     } else {
       table = paste0("pop_",level)
-      qq = paste0("insert into ",table," (year,",column,", year.ref, all, male, female) values \n")
-      query = glue_data(data, paste0("(", year,",'{", column,"}',{year.ref},{all},{male},{female})"))
-      qq = paste(qq, paste(query, collapse = ",\n"), ";\n")
+      qq = build_query(data, columns, table)
     }
     fn = out.path(f, '.sql')
     write(paste("\n\n-- year ", year, " level ", level," table ",table,"\n"), file=fn, append=TRUE)
-    write(paste0("delete from ", table, " where year=",year,";\n"), file=fn, append=TRUE)
+    write(paste0("delete from ", table, " where \"year\"=",year,";\n"), file=fn, append=TRUE)
     write(qq, file=fn, append=TRUE)
   }
 
