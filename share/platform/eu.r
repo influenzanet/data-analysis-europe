@@ -1,4 +1,3 @@
-survey_default_language = 'en'
 
 colors.web = list('green'="#7AB800","blue"="#007AB8")
 
@@ -75,9 +74,12 @@ seasons = list(
   list(2011, pop=2012),
   list(2012, pop=2012),
   list(2013, pop=2013),
-  list(2014, pop=2013),
-  list(2015, pop=2014),
-  list(2016, pop=2014)
+  list(2014, pop=2014),
+  list(2015, pop=2015),
+  list(2016, pop=2016),
+  list(2017, pop=2017),
+  list(2018, pop=2018),
+  list(2019, pop=2019)
 )
 
 for(season in seasons) {
@@ -93,6 +95,10 @@ for(season in seasons) {
 
 platform_options(
   first.season.censored=TRUE,
+  complete.intake=list(
+    max.year=2
+  ),
+  default_language = 'en',
   health.status = list(
     "default"="epidb_health_status_2012",
     "id"="weekly_id"
