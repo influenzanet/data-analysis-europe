@@ -22,3 +22,5 @@ ALTER TABLE epidb_results_intake ADD PRIMARY KEY (id);
 
 -- Add Intake extra column to hold original country data for CH
 ALTER TABLE epidb_results_intake ADD COLUMN country_from char(2);
+ALTER TABLE epidb_results_weekly ADD COLUMN country_from char(2);
+

@@ -7,8 +7,10 @@ UPDATE epidb_results_weekly set "country"='BE' where "country"='BN';
 
 -- Cleanup CH codes
 
-UPDATE epidb_results_intake set "country_from"=RIGHT(country, 2) where "country" like "CH_%";
-UPDATE epidb_results_intake set "country"='CH' where "country" like "CH_%";
+UPDATE epidb_results_intake set "country_from"=RIGHT(country, 2) where "country" like 'CH_%';
+UPDATE epidb_results_intake set "country"='CH' where "country" like 'CH_%';
+UPDATE epidb_results_weekly set "country_from"=RIGHT(country, 2) where "country" like 'CH_%';
+UPDATE epidb_results_weekly set "country"='CH' where "country" like 'CH_%';
 
 -- Cleanup geographical code
 UPDATE epidb_results_intake SET "Q3"=btrim("Q3");
