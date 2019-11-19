@@ -1,10 +1,14 @@
 UPDATE epidb_results_intake set "country"=upper("country");
 UPDATE epidb_results_intake set "Q3"=upper("Q3");
 
+-- Cleanup BE codes
 UPDATE epidb_results_intake set "country"='BE' where "country"='BN';
 UPDATE epidb_results_weekly set "country"='BE' where "country"='BN';
 
-CREATE INDEX idx_intake_q3_country ON epidb_results_intake USING btree (country, "Q3");
+-- Cleanup CH codes
+
+UPDATE epidb_results_intake set "country_from"=RIGHT(country, 2) where "country" like "CH_%";
+UPDATE epidb_results_intake set "country"='CH' where "country" like "CH_%";
 
 -- Cleanup geographical code
 UPDATE epidb_results_intake SET "Q3"=btrim("Q3");
@@ -62,3 +66,5 @@ UPDATE epidb_results_intake SET "Q3"='IE024' WHERE "Q3"='TIPPERARY SOUTH' AND "c
 UPDATE epidb_results_intake SET "Q3"='IE024' WHERE "Q3"='WATERFORD' AND "country"='IE';
 UPDATE epidb_results_intake SET "Q3"='IE024' WHERE "Q3"='WEXFORD' AND "country"='IE';
 UPDATE epidb_results_intake SET "Q3"='IE022' WHERE "Q3"='WICKLOW' AND "country"='IE';
+
+CREATE INDEX idx_intake_q3_country ON epidb_results_intake USING btree (country, "Q3");

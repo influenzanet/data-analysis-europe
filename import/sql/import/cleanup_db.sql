@@ -4,9 +4,10 @@ DROP TABLE IF EXISTS epidb_results_weekly CASCADE;
 
 -- Relax Q4d_* to accept NULL
 -- Relax Q17_* constraint to accept NULL
+-- country char(5) to accept CH codes
 CREATE TABLE epidb_results_intake
 (
-  country character(2),
+  country varying character(5),
   global_id character varying(36),
   "timestamp" timestamp with time zone,
   "user" integer,
@@ -128,7 +129,7 @@ CREATE TABLE epidb_results_intake
 
 CREATE TABLE epidb_results_weekly
 (
-  country character(2),
+  country varying character(5),
   global_id character varying(36),
   "timestamp" timestamp with time zone,
   "Q1_0" boolean NOT NULL,

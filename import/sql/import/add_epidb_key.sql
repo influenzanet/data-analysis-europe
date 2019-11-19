@@ -20,3 +20,5 @@ ALTER TABLE epidb_results_intake ADD UNIQUE(id);
 ALTER TABLE epidb_results_intake DROP CONSTRAINT epidb_results_intake_id_key RESTRICT;
 ALTER TABLE epidb_results_intake ADD PRIMARY KEY (id);
 
+-- Add Intake extra column to hold original country data for CH
+ALTER TABLE epidb_results_intake ADD COLUMN country_from char(2);
