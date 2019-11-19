@@ -1,0 +1,60 @@
+#!/bin/sh
+
+##
+# Import epidb dump
+##
+DIR=$(dirname $0)
+
+DUMPFILE=$1
+
+if [ "$DUMPFILE" eq "" ]; then
+ echo "import-epidb [dumpfile]"
+fi
+
+cd $DIR
+
+if [ ! -f conf.sh ]; then
+ echo "conf.sh file not found, are you running in import dir ?"
+ exit 1
+fi
+
+. ./conf.sh
+
+PGSQL="psql $DB_CNX -d $DB_TARGET"
+
+SQL_DIR="sql"
+LOCAL_DIR="local"
+ 
+if [ ! -f $DUMPFILE ]; then
+ echo "Unable to find epidb dump $DUMPFILE"
+ exit 1
+fi
+
+echo "Cleaning up database $DB_TARGET"
+$PGSQL < $SQL_DIR/import/cleanup_db.sql
+
+echo "Restoring Database"
+pg_restore $DB_CNX  -Fc -a -x -O -d $DB_TARGET $DUMPFILE
+
+echo "Running post import scripts"
+
+echo " > Creating id primary key"
+$PGSQL <  $SQL_DIR/import/add_epidb_key.sql
+
+echo " > Creating survey_surveyuser table"
+$PGSQL <  $SQL_DIR/import/create_surveyuser.sql
+
+echo " > Updating Health status Views"
+
+$PGSQL <  $SQL_DIR/import/health_status.sql
+
+echo " > Cleaning up data"
+
+$PGSQL <  $SQL_DIR/import/cleanup_data.sql
+
+if [ -f  $LOCAL_DIR/post-import ]; then
+ echo " > running post-install local hooks"
+ . $LOCAL_DIR/post-import
+fi
+
+echo "Import done."

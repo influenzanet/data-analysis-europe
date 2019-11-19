@@ -1,0 +1,2 @@
+DB_TARGET=epidb # Final db name to store data
+DB_CNX= # Option string to connect to db if necessary
