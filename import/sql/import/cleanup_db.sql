@@ -7,7 +7,7 @@ DROP TABLE IF EXISTS epidb_results_weekly CASCADE;
 -- country char(5) to accept CH codes
 CREATE TABLE epidb_results_intake
 (
-  country varying character(5),
+  country character varying(5),
   global_id character varying(36),
   "timestamp" timestamp with time zone,
   "user" integer,
@@ -129,7 +129,7 @@ CREATE TABLE epidb_results_intake
 
 CREATE TABLE epidb_results_weekly
 (
-  country varying character(5),
+  country character varying(5),
   global_id character varying(36),
   "timestamp" timestamp with time zone,
   "Q1_0" boolean NOT NULL,
