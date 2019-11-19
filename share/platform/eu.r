@@ -163,3 +163,22 @@ get_first_season_country <- function(country) {
     stop(paste("first season not defined for country ", country))
   )
 }
+
+#' Get the season year until wich participant first season should be censored
+#' This depends o
+get_season_censoring <- function(country) {
+  switch(toupper(country),
+         "UK"=2011,
+         "ES"=NA,
+         "DK"=NA,
+         "BE"=2011,
+         "IT"=2011,
+         "FR"=NA,
+         "PT"=2011,
+         "NL"=2011,
+         "IE"=NA,
+         "SE"=NA,
+         "CH"=NA,
+         stop(paste("first season not defined for country ", country))
+  )
+}
