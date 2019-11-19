@@ -8,15 +8,20 @@ Geographic levels
 
 The Influenzanet european database uses NUTS levels to describe subdivisions of the european countries.
 
-The database handles 5 levels : country, nuts1, nuts2, nuts4, zip
+The database handles 5 levels : country, nuts1, nuts2, nuts3, zip
 
 "zip" level is the atomic level used in the intake survey to describe each participant location. It is at least NUTS3 level (for Ireland) or a more precise location (zip code for example).
 Therefore the "zip" level designate a differend kind of geographic subdivision in each participant country (as far as the choice of this level).
 
 Known levels are :
-- Italy : Zip code
-- France : Municipality administrative code (INSEE)
-- Ireland : NUTS 3 level
+- IT : Zip code
+- FR : Municipality administrative code (INSEE)
+- IE : NUTS 3 level (recoded from county labels)
+- DK : Zip Code
+- CH : Zip code
+- UK : outer bound zip 
+- NL : ?
+- BE : Zip code
 
 Each geograhic level is associated with a table, named geo_[level_code]. This table describes all subdivisions at this level.
 A subdivision is described by a subdivision code and a title. The table also contains codes from the upper levels the subdivision belongs to.
