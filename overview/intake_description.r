@@ -5,10 +5,12 @@ library(ggplot2)
 library(dplyr)
 library(swMisc)
 
-cli.args = parseArgs(list(
-  season=list(type="int", min=2011, max=calc_season(Sys.Date()), default=get_current_season() )
-))
-
+if(!exists("cli.args")) {
+  cli.args = parseArgs(list(
+    season=list(type="int", min=2011, max=calc_season(Sys.Date()), default=get_current_season() )
+  ))
+}
+  
 season = cli.args$season
 
 message(paste("Running season ", season))
@@ -223,17 +225,15 @@ ggsave(out.path("age-pyramid.pdf"), width=20, height=8)
 
 intake.gender = intake.age %>%
             group_by(country, gender) %>%
-            summarize(
-              count=sum(intake),
-              total=sum(intake.country),
-              pop=sum(pop),
-              pop.country=sum(pop.country)
-            )
-
+            summarize(count=sum(count)) %>%
+            ungroup() %>%
+            group_by(country) %>% 
+            mutate(total=sum(count))
+            
 ggplot(intake.gender, aes(x=country, fill=gender, y=count/total)) +
   geom_bar(stat="identity", position="dodge") +
   ylab("% of participant count") +
   g_title("Gender by country")
-
+ggsave(out.path("gender-country.pdf"), width=20, height=8)
 
 
