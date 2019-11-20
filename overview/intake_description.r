@@ -99,7 +99,7 @@ graph.save(out.path('europe-gender'), width=8, height=6, type=graph.type)
 
 gg_barplot_percent(intake$vacc.curseason, col="darkgreen", label.size = 2) +
   labs(title=paste("Flu vaccination for the current season (all countries)",season.title))
-graph.save(out.path('europe-vacc-curseason'), width=800, height=600, type=graph.type)
+graph.save(out.path('europe-vacc-curseason'), width=8, height=6, type=graph.type)
 
 # Graph by country
 
