@@ -207,7 +207,7 @@ ggsave(out.path('european-pyramid.png'), width=6, height=8)
 
 countries = levels(intake$country)
 for(v in countries) {
-  g = plot_age_pyramid(ages[ ages$country == v,], female=q_female, title=paste(v, "- Influenzanet by age-group"))
+  g = plot_age_pyramid(ages[ ages$country == v,], female=q_female) + ggtitle(paste(v, "- Influenzanet by age-group"))
   ggsave(out.path(paste0('population-pyramid_',v, '.png')), width=6, height=8)
 }
 
