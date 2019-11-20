@@ -4,14 +4,17 @@ source('conf.R')
 library(ggplot2)
 library(dplyr)
 library(swMisc)
+library(rlang)
 
 if(!exists("cli.args")) {
   cli.args = parseArgs(list(
     season=list(type="int", min=2011, max=calc_season(Sys.Date()), default=get_current_season() )
   ))
 }
-  
+
 season = cli.args$season
+
+graph.type = "pdf"
 
 message(paste("Running season ", season))
 
@@ -88,15 +91,15 @@ g_title = function(...) {
 
 gg_barplot_percent(intake$age.cat, col="darkgreen", label.size =2) +
   g_title(title=paste("Participants by age-group (all countries)",season.title))
-graph.save(out.path('europe-age'), width=8, height=6)
+graph.save(out.path('europe-age'), width=8, height=6, type=graph.type)
 
 gg_barplot_percent(intake$gender, col="darkgreen", label.size=2) +
   g_title(title=paste("Participants by gender (all countries)", season.title))
-graph.save(out.path('europe-gender'), width=8, height=6)
+graph.save(out.path('europe-gender'), width=8, height=6, type=graph.type)
 
 gg_barplot_percent(intake$vacc.curseason, col="darkgreen", label.size = 2) +
   labs(title=paste("Flu vaccination for the current season (all countries)",season.title))
-graph.open(out.path('europe-vacc-curseason'), width=800, height=600)
+graph.save(out.path('europe-vacc-curseason'), width=800, height=600, type=graph.type)
 
 # Graph by country
 
@@ -125,11 +128,10 @@ freq_plot = function(column, trans=NULL, width, title, file=NULL, h=NA, data=int
     g_title(title=i18n(title), x="", subtitle=subtitle, y=i18n('percentage'))
   h = ifelse(is.na(h), width / 1.618, h)
   file = if(is.null(file)) column else file
-  ggsave(out.path(file), width=width, height=h, device="png")
+  graph.save(out.path(file), width=width, height=h, type=graph.type)
   g
 }
 
-library(rlang)
 
 freq_country = function(.data, name, trans=NULL) {
   freq = .data %>% group_by(country, !!sym(name)) %>% summarize(count=n()) %>% rename(var=!!name)
@@ -158,7 +160,7 @@ plot_by_country = function(name, trans=NULL, title, x.rotate=90, x.vjust=NULL, f
 
   if( !is.null(file) ) {
     h = width / 1.68
-    graph.save(out.path(file), width=width, height=h, type="png")
+    graph.save(out.path(file), width=width, height=h, type=graph.type)
   }
 
   g
@@ -211,17 +213,17 @@ europe.ages = ages %>%
 
 europe.ages = europe.ages %>% group_by(gender, pop) %>% mutate(prop=count/sum(count))
 
-g = plot_age_pyramid(europe.ages,female=q_female, w=.5)
-ggsave(out.path('european-pyramid.png'), width=6, height=8)
+g = plot_age_pyramid(europe.ages, female=q_female, w=.5)
+graph.save(out.path('age-pyramid-eu-overall.pdf'), width=6, height=5)
 
 countries = levels(intake$country)
 for(v in countries) {
   g = plot_age_pyramid(ages[ ages$country == v,], female=q_female) + ggtitle(paste(v, "- Influenzanet by age-group"))
-  ggsave(out.path(paste0('population-pyramid_',v, '.png')), width=6, height=8)
+  graph.save(out.path(paste0('age-pyramid-',v)), width=6, height=5, type=graph.type)
 }
 
 g = plot_age_pyramid(ages, female=q_female) + facet_grid(~country)
-ggsave(out.path("age-pyramid.pdf"), width=20, height=8)
+graph.save(out.path("age-pyramid-eu-country"), width=20, height=5, type=graph.type)
 
 intake.gender = intake.age %>%
             group_by(country, gender) %>%
@@ -230,10 +232,12 @@ intake.gender = intake.age %>%
             group_by(country) %>% 
             mutate(total=sum(count))
             
+
 ggplot(intake.gender, aes(x=country, fill=gender, y=count/total)) +
   geom_bar(stat="identity", position="dodge") +
   ylab("% of participant count") +
   g_title("Gender by country")
-ggsave(out.path("gender-country.pdf"), width=20, height=8)
+
+graph.save(out.path("gender-country.pdf"), width=20, height=8)
 
 
