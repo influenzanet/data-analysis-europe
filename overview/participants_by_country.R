@@ -3,6 +3,8 @@
 source("conf.R")
 library(dplyr)
 
+init.path('overview')
+
 participants = NULL
 
 for(season in get_historical_seasons()) {
@@ -37,3 +39,5 @@ pp = participants %>% group_by(country, season) %>%
     intake_wo_weekly=sum(!is.na(count_intake) & is.na(count_weekly)),
     weekly_and_intake=sum(!is.na(count_intake) & !is.na(count_weekly))
   )
+
+write.csv(pp, my.path('participants_by_country.csv'), row.names = FALSE)

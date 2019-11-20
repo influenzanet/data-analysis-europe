@@ -17,7 +17,7 @@ message(paste("Running season ", season))
 
 theme_set(theme_minimal())
 
-init.path(paste0('output/intake/', season))
+init.path(paste0('overview/intake/', season))
 
 out.path = function(x) {
   my.path(paste(season,'_', x, sep=''))
