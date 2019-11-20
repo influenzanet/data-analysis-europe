@@ -3,8 +3,15 @@ source('conf.R')
 
 library(ggplot2)
 library(dplyr)
+library(swMisc)
 
-season = 2016
+cli.args = parseArgs(list(
+  season=list(type="int", min=2011, max=calc_season(Sys.Date()), default=get_current_season() )
+))
+
+season = cli.args$season
+
+message(paste("Running season ", season))
 
 theme_set(theme_minimal())
 
