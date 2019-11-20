@@ -24,3 +24,6 @@ if(!"methods" %in% loadedNamespaces()) {
   }
 }
 
+get_current_season = function() {
+  calc_season(Sys.Date())
+}
