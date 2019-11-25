@@ -4,6 +4,8 @@ library(dplyr)
 library(reshape2)
 library(glue)
 
+options(warn=1)
+
 output.years = 2012:2018
 
 file.prefix = paste(range(output.years),collapse = "-")
