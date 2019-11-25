@@ -20,6 +20,7 @@ rr = bind_rows(r_intake, r_weekly, .id = 'survey')
 
 ggplot(rr, aes(x=factor(year), y=prop, fill=survey)) + 
     geom_bar(stat="identity", position = "dodge") + 
+    geom_text(aes(label=missing_gid, color=survey, y=prop +2), position = position_dodge2(0.9), size=2.5) +
     facet_grid(rows=vars(country)) +
     labs(y="% of missing global_id", x="Year", title="Missing global_id by country, year and survey") +
     scale_fill_discrete(labels=c("1"="Intake","2"="Weekly")) 
