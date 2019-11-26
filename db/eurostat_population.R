@@ -4,12 +4,14 @@ library(dplyr)
 library(reshape2)
 library(glue)
 
+options(warn=1)
+
 output.years = 2012:2018
 
 file.prefix = paste(range(output.years),collapse = "-")
 
 out.path = function(...) {
-  paste0("data/population/",file.prefix, "/", ...)
+  my.path(paste0("population/",file.prefix, "/", ...))
 }
 
 dir.create(out.path())

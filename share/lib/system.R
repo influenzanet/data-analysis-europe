@@ -24,6 +24,13 @@ if(!"methods" %in% loadedNamespaces()) {
   }
 }
 
+setHook(packageEvent("ggplot2", "attach"),
+ function(...) {
+  cat("Extending ggplot2")
+  with_ggplot()
+})
+
+
 get_current_season = function() {
   calc_season(Sys.Date())
 }
