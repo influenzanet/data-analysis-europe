@@ -79,7 +79,7 @@ seasons = list(
   list(2016, pop=2016),
   list(2017, pop=2017),
   list(2018, pop=2018),
-  list(2019, pop=2019)
+  list(2019, pop=2018)
 )
 
 for(season in seasons) {
@@ -123,6 +123,11 @@ load_population_age <- function(geo, year, age.breaks=NULL, type=NULL, ...) {
 
   pop = dbQuery(paste0('select "',col_geo,'", age_min as "age.min", age_max as "age.max", "all",male,female from pop_age5_',geo,' where year=',year))
 
+  if(nrow(pop) == 0) {
+    rlang::warn(paste("No population for year", year,"at", geo, " level"))
+    return(pop)
+  }
+  
   # Restrict on type if necessary
   if( !is.null(type) ) {
     pop = pop[ geo_is_type(geo, type, pop[,col_geo]), ]
