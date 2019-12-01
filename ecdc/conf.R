@@ -3,3 +3,4 @@
 # Paths are relative to this directory
 source("../system.R")
 
+add_path_prefix("project", "ecdc")

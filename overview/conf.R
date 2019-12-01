@@ -1,6 +1,8 @@
 # All scripts in a workspace's project know only one file in the upper directory
 source('../system.R')
 
+add_path_prefix("project","overview")
+
 # need the db for all scripts of this project
 dbConnect()
 
