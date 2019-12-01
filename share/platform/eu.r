@@ -99,6 +99,7 @@ platform_options(
     max.year=2
   ),
   default_language = 'en',
+  use.country = TRUE,
   health.status = list(
     "default"="epidb_health_status_2012",
     "id"="weekly_id"
