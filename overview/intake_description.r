@@ -20,7 +20,7 @@ message(paste("Running season ", season))
 
 theme_set(theme_minimal())
 
-init.path(paste0('overview/intake/', season))
+init.path(paste0('intake/', season))
 
 out.path = function(x) {
   my.path(paste(season,'_', x, sep=''))
@@ -116,7 +116,7 @@ freq_plot = function(column, trans=NULL, width, title, file=NULL, h=NA, data=int
       if( isTRUE(trans) ) {
         trans = column
       }
-      y = survey_recode(data[[column]], survey='intake', trans, translate=T)
+      y = i18n(y)
     } else {
       y = data[[column]]
     }
