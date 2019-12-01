@@ -13,6 +13,10 @@ if(!exists("cli.args")) {
 country = cli.args$country
 season = cli.args$season
 
+if(is.null(country)) {
+  rlang::abort("Country not defined")
+}
+
 age.categories = c(0, 20, 65, 200)
 
 init.path(paste0('indicator/', country))
