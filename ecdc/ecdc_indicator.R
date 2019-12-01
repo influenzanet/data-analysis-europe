@@ -3,18 +3,24 @@ library(dplyr)
 library(swMisc)
 library(rlang)
 
-if(!exists("cli.args")) {
- cli.args = parseArgs(list(
-    'season'=list(type="int", default=get_current_season()),
-    'country'=list(type="choices", choices=platform_env("COUNTRY_CODES"))
-  ))
+if(!exists("country") | is.null(country)) {
+  rlang::abort("Country not defined")
 }
 
-country = cli.args$country
-season = cli.args$season
+if(!exists("season") | is.null(season)) {
+  rlang::abort("Season not defined")
+}
 
-if(is.null(country)) {
-  rlang::abort("Country not defined")
+countries = platform_env("COUNTRY_CODES")
+
+if(!country %in% countries) {
+  rlang::abort(paste("Unknown country ", sQuote(country)))
+}
+
+seasons = get_historical_seasons()
+
+if(!season %in% seasons) {
+  rlang::abort(paste("Unknown season ", sQuote(season)))
 }
 
 age.categories = c(0, 20, 65, 200)
@@ -35,15 +41,20 @@ r = load_results_for_incidence(season=season, age.categories=age.categories, cou
 if( is.null(r) | is.null(r$weekly) | is.null(r$intake) ) {
   rlang::abort("No data",class = "error_no_data")
 }
+
 if( nrow(r$weekly) == 0 ) {
-  rlang::abort("No weekly data",class = "error_no_data")
+  rlang::abort("No weekly data", class = "error_no_data")
 }
 
 params = list(active.week.before=1, active.week.after=1, active.min.surveys=2, exclude.same=T,ignore.first.delay=6, ignore.first.only.new=T)
 
 estimator = IncidenceRS2014$new(weekly=r$weekly, intake=r$intake, params=params, syndromes = r$syndromes, design=NULL, output="inc")
 
-results = estimator$compute(weeks = unique(r$weekly$yw), verticalize = TRUE)
+results = estimator$compute(weeks = unique(r$weekly$yw), verticalize = TRUE, verbose=FALSE)
+
+if(is.null(results$inc)) {
+  rlang::abort("No incidence data", class = "error_no_data")
+}
 
 ii = results$inc %>%
   filter(syndrome == "ari.ecdc" & type %in% c("crude","count")) 
