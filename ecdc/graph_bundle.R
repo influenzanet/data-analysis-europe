@@ -1,0 +1,75 @@
+source("conf.R")
+
+library(dplyr)
+library(rlang)
+library(ggplot2)
+
+countries = platform_env("COUNTRY_CODES")
+seasons = get_historical_seasons()
+
+init.path('indicator/bundles')
+
+load_bundle = function(country, name) {
+  file = my.path(country, '_', name,'.csv')
+  if(file.exists(file)) {
+    cat("Loading ", country, name, "\n")
+    return(read.csv(file))
+  }
+  NULL
+}
+
+
+inc = NULL
+active = NULL
+
+for(country in countries) {
+  a = load_bundle(country, "active")
+  a$country = as.character(a$country)
+  active = bind_rows(active, a)
+  ii = load_bundle(country, "incidence")
+  ii$country = as.character(ii$country)
+  inc = bind_rows(inc, ii)
+}
+
+max.active = inc %>% group_by(country, season) %>% summarize(max_active=max(part))
+inc = left_join(inc, max.active, by=c("country","season"))
+inc = inc %>% mutate(active_limit=.35 * max_active, censored=part < active_limit)
+
+caption = function() {
+  paste(Sys.time(), "Influenzanet 2019, for internal purpose only")
+}
+
+ggplot(inc %>% filter(!censored), aes(x=monday_of_week(yw), y=incidence, group=syndrome, color=syndrome)) + 
+  geom_vline(data=inc %>% filter(censored), aes(xintercept=monday_of_week(yw)), color="grey90") +
+  geom_line() +
+  geom_ribbon(aes(ymin=lower, ymax=upper), fill="red", color="transparent", alpha=.40) +
+  facet_grid(rows=vars(country), cols=vars(season), scales = "free") +
+  theme_with("legend_top") +
+  labs(x="Week", y="Incidence rate", title="Weekly incidence rate by country and season", caption=caption())
+ggsave(my.path("incidence_country+season.pdf"), width=12, height=8)
+
+
+d = left_join(active, inc[,c('country','season','yw','incidence','censored') ], by=c('country','season','yw'))
+d = d %>%
+      group_by(season, country) %>% 
+      mutate(
+        max_inc=max(incidence, na.rm=TRUE), 
+        max_active=max(active),
+        inc.r=max_active * incidence / max_inc
+      )
+
+ggplot(d, aes(x=monday_of_week(yw), y=active)) + 
+  geom_bar(stat="identity", fill="steelblue") +
+  geom_line(aes(y= inc.r)) +
+  geom_point(data=~filter(., censored),aes(y= inc.r), color="red", size=1) +
+  facet_grid(rows=vars(country), cols=vars(season), scales = "free") +
+  labs(x="Week", y="Active participant", title="Active participants by country and season (incidence superposed)", caption=caption())
+ggsave(my.path("active+inc_country+season.pdf"), width=12, height=8)
+
+ggplot(d, aes(x=monday_of_week(yw), y=active)) + 
+  geom_bar(stat="identity", fill="steelblue") +
+  facet_grid(rows=vars(country), cols=vars(season), scales = "free") +
+  labs(y="Active participants", x="Week", title="Active participants by ", caption=caption())
+ggsave(my.path("active_country+season.pdf"), width=12, height=8)
+
+
