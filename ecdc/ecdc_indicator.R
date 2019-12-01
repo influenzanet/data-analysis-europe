@@ -5,7 +5,7 @@ library(rlang)
 
 if(!exists("cli.args")) {
  cli.args = parseArgs(list(
-    'season'=list(type="int"),
+    'season'=list(type="int", default=get_current_season()),
     'country'=list(type="choices", choices=platform_env("COUNTRY_CODES"))
   ))
 }
