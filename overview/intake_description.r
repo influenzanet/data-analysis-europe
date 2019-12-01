@@ -116,7 +116,7 @@ freq_plot = function(column, trans=NULL, width, title, file=NULL, h=NA, data=int
       if( isTRUE(trans) ) {
         trans = column
       }
-      y = i18n(y)
+      y = i18n(data[[column]])
     } else {
       y = data[[column]]
     }
@@ -138,10 +138,7 @@ freq_country = function(.data, name, trans=NULL) {
   freq = freq %>% group_by(country) %>% mutate(total=sum(count), prop=count/total)
 
   if(!is.null(trans) ) {
-    if( isTRUE(trans) ) {
-      trans = name
-    }
-    freq$var = survey_recode(freq$var, survey='intake', trans)
+    freq$var = i18n(freq$var)
   }
 
   freq
