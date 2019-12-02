@@ -50,7 +50,12 @@ params = list(active.week.before=1, active.week.after=1, active.min.surveys=2, e
 
 estimator = IncidenceRS2014$new(weekly=r$weekly, intake=r$intake, params=params, syndromes = r$syndromes, design=NULL, output="inc")
 
-results = estimator$compute(weeks = unique(r$weekly$yw), verticalize = TRUE, verbose=FALSE)
+results = rlang::with_abort(estimator$compute(weeks = unique(r$weekly$yw), verticalize = TRUE, verbose=FALSE))
+
+if(is.error(results)) {
+  rlang::abort("Error during computation", parent=results)
+}
+
 
 if(is.null(results$inc)) {
   rlang::abort("No incidence data", class = "error_no_data")
