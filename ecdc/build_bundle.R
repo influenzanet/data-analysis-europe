@@ -13,7 +13,7 @@ dir.create(my.path('bundles'), showWarnings = FALSE)
 #' @param path path where are by seasons files
 #' @param name name of file to create
 #' @param country
-create_bundle = function(path, name, country) {
+create_bundle = function(path, name, country, sorting) {
   files = paste0(path, name, "_", seasons, ".csv")
   data = NULL
   for(file in files) {
@@ -23,12 +23,14 @@ create_bundle = function(path, name, country) {
     r = read.csv2(file)
     data = bind_rows(data, r)
   }
+  data = data %>% arrange(!!!syms(sorting))
+  
   write.csv(data, file=my.path('bundles/', country, '_', name,'.csv'), row.names = FALSE)
 }
 
 
 for(country in countries) {
   path = my.path(country,"/")
-  create_bundle(path, "active", country)
-  create_bundle(path, "incidence", country)
+  create_bundle(path, "active", country, "yw")
+  create_bundle(path, "incidence", country, c("yw","syndrome"))
 }
