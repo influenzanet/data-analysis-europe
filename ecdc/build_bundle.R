@@ -14,6 +14,7 @@ dir.create(my.path('bundles'), showWarnings = FALSE)
 #' @param name name of file to create
 #' @param country
 create_bundle = function(path, name, country, sorting) {
+  cat("Importing", name, country,"\n")
   files = paste0(path, name, "_", seasons, ".csv")
   data = NULL
   for(file in files) {
