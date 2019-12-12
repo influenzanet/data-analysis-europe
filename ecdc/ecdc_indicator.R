@@ -3,6 +3,10 @@ library(dplyr)
 library(swMisc)
 library(rlang)
 
+## Computation parameters
+params = list(active.week.before=1, active.week.after=1, active.min.surveys=2, exclude.same=T,ignore.first.delay=6, ignore.first.only.new=T)
+age.categories = c(0, 21, 65, 200)
+
 if(!exists("country") | is.null(country)) {
   rlang::abort("Country not defined")
 }
@@ -12,12 +16,11 @@ if(!exists("season") | is.null(season)) {
 }
 
 countries = platform_env("COUNTRY_CODES")
+seasons = get_historical_seasons()
 
 if(!country %in% countries) {
   rlang::abort(paste("Unknown country ", sQuote(country)))
 }
-
-seasons = get_historical_seasons()
 
 if(!season %in% seasons) {
   rlang::abort(paste("Unknown season ", sQuote(season)))
@@ -47,10 +50,6 @@ if( nrow(r$weekly) == 0 ) {
 # Create a country column, as it will be needed when merging intake
 r$intake$country = factor(country) 
 
-age.categories = c(0, 21, 65, 200)
-
-params = list(active.week.before=1, active.week.after=1, active.min.surveys=2, exclude.same=T,ignore.first.delay=6, ignore.first.only.new=T)
-
 h = season_definition(season = season)
 design = design_incidence(age.categories = age.categories, year.pop = h$year.pop, geo="country", geo_area = toupper(country))
 
@@ -62,12 +61,14 @@ if(is.error(results)) {
   rlang::abort("Error during computation", parent=results)
 }
 
-
 if(is.null(results$inc)) {
   rlang::abort("No incidence data", class = "error_no_data")
 }
+results$country = country
+results$season = season
+saveRDS(results, file=my.path('incidence-', season,'-', Sys.Date(),'.Rds'))
 
-use.type = "crude"
+use.type = "adj"
 
 ii = results$inc %>%
   filter(syndrome == "ari.ecdc" & type %in% c(use.type,"count")) 
