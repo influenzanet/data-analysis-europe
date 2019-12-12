@@ -23,8 +23,6 @@ if(!season %in% seasons) {
   rlang::abort(paste("Unknown season ", sQuote(season)))
 }
 
-age.categories = c(0, 20, 65, 200)
-
 init.path(paste0('indicator/', country))
 
 #' Create output file
@@ -46,9 +44,17 @@ if( nrow(r$weekly) == 0 ) {
   rlang::abort("No weekly data", class = "error_no_data")
 }
 
+# Create a country column, as it will be needed when merging intake
+r$intake$country = factor(country) 
+
+age.categories = c(0, 21, 65, 200)
+
 params = list(active.week.before=1, active.week.after=1, active.min.surveys=2, exclude.same=T,ignore.first.delay=6, ignore.first.only.new=T)
 
-estimator = IncidenceRS2014$new(weekly=r$weekly, intake=r$intake, params=params, syndromes = r$syndromes, design=NULL, output="inc")
+h = season_definition(season = season)
+design = design_incidence(age.categories = age.categories, year.pop = h$year.pop, geo="country", geo_area = toupper(country))
+
+estimator = IncidenceRS2014$new(weekly=r$weekly, intake=r$intake, params=params, syndromes = r$syndromes, design=design, output="inc")
 
 results = rlang::with_abort(estimator$compute(weeks = unique(r$weekly$yw), verticalize = TRUE, verbose=FALSE))
 
@@ -61,15 +67,17 @@ if(is.null(results$inc)) {
   rlang::abort("No incidence data", class = "error_no_data")
 }
 
+use.type = "crude"
+
 ii = results$inc %>%
-  filter(syndrome == "ari.ecdc" & type %in% c("crude","count")) 
+  filter(syndrome == "ari.ecdc" & type %in% c(use.type,"count")) 
  
 count = ii %>%
   filter(type =="count") %>%
   select(-upper, -lower, -type) %>%
   rename(count=value)
 inc = ii %>%
-  filter(type == "crude") %>%
+  filter(type == !!use.type) %>%
   select(-type) %>%
   rename(incidence=value)
 inc = merge(inc, count, by=c('syndrome','yw'), all=TRUE)

@@ -224,7 +224,7 @@ for(year in output.years) {
   }
   
   output_pop = function(data, level, age=FALSE) {
-    f = paste0('pop_', level)
+    f = paste0('pop_', ifelse(age, "age_", ""), level)
     
     if(level == "country") {
       column = "country"
@@ -246,6 +246,7 @@ for(year in output.years) {
     } else {
       data = data[ order(data[[column]]), ]
     }
+    
     
     write.csv2(data, file=out.path(year,'_', f, '.csv'), row.names=F)
 
@@ -306,3 +307,34 @@ for(year in output.years) {
   output_pop(p, 'country', age=TRUE)
 
 }
+
+## Now create bundles
+## All age population in one
+pattern = "(\\d+)_pop_age_(\\w+)\\.csv$"
+files = list.files(out.path(), pattern=pattern, full.names = TRUE)
+
+data = list()
+for(file in files) {
+  cat("Loading", basename(file),"\n")
+  year = as.integer(gsub(pattern,"\\1", basename(file)))
+  geo =  gsub(pattern,"\\2", basename(file))
+  d = read.csv2(file)
+  d$year = year 
+  data[[geo]] = bind_rows(data[[geo]], d)
+}
+
+dir.create(out.path('bundles'))
+
+lapply(names(data), function(geo) {
+  d = data[[geo]]
+  
+  by(d, d[, 'country', FALSE], function(dd) {
+      country = dd$country[1]
+      dd$country = NULL
+      write.csv2(dd, file=out.path('bundles/',country,'_pop_age5_',geo, '.csv'), row.names = F)
+  })
+
+  write.csv2(d, file=out.path('bundles/all_',geo, '.csv'), row.names = F)
+})
+
+
