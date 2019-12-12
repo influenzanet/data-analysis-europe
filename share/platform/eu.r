@@ -103,50 +103,11 @@ platform_options(
   health.status = list(
     "default"="epidb_health_status_2012",
     "id"="weekly_id"
-  )
+  ),
+  population.age.loader = "db",
+  population.loader = "db"
 )
 
-#' Load Population by age
-#' @param geo geographic level name
-#' @param year year of the population
-#' @param age.breaks group of age to use, list of values to use as break. Should be 5-yo multiples.
-#' @param type string select only area with this type
-load_population_age <- function(geo, year, age.breaks=NULL, type=NULL, ...) {
-
-  overall = F # if true make the overall sum by age (used when geo is null)
-  if( is.null(geo) ) {
-    ll = geo_hierarchy()
-    geo = ll[length(ll)] # consider the last upper level
-    overall = T
-  }
-
-  col_geo = geo_column(geo)
-
-  pop = dbQuery(paste0('select "',col_geo,'", age_min as "age.min", age_max as "age.max", "all",male,female from pop_age5_',geo,' where year=',year))
-
-  if(nrow(pop) == 0) {
-    rlang::warn(paste("No population for year", year,"at", geo, " level"))
-    return(pop)
-  }
-  
-  # Restrict on type if necessary
-  if( !is.null(type) ) {
-    pop = pop[ geo_is_type(geo, type, pop[,col_geo]), ]
-  }
-
-  if( !is.null(age.breaks) ) {
-    pop$age.max[is.na(pop$age.max)] = pop$age.min[is.na(pop$age.max)]
-    pop$cat.min = ifnBase::cut_age(pop$age.min, age.breaks)
-    pop$cat.max = ifnBase::cut_age(pop$age.max, age.breaks)
-    stopifnot( all(pop$cat.min == pop$cat.max))
-    pop = swMisc::replace_names(pop, "age.cat"="cat.min")
-    pop = aggregate(as.list(pop[, c('all','male','female')]), as.list(pop[,c('age.cat', col_geo)]),  sum)
-  }
-  if( overall ) {
-    pop = aggregate(as.list(pop[, c('all','male','female')]), list(age.cat=pop$age.cat),  sum)
-  }
-  pop
-}
 
 #' Get the first season for a country
 #' Returns the season year the platform was launched
