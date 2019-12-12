@@ -7,13 +7,16 @@ library(dplyr)
 library(stringr)
 library(glue)
 
+init.path("geo")
+
 country = "CH"
 
 # Data Files should be found on EUROSTAT
 # https://ec.europa.eu/eurostat/cache/GISCO/distribution/v2/nuts/
 # https://ec.europa.eu/eurostat/cache/GISCO/distribution/v2/nuts/csv/NUTS_AT_2013.csv
+# download.file("https://ec.europa.eu/eurostat/cache/GISCO/distribution/v2/nuts/csv/NUTS_AT_2013.csv", destfile = my.path('NUTS_AT_2013.csv'))
 # https://ec.europa.eu/eurostat/cache/GISCO/distribution/v2/nuts/csv/NUTS_AT_2016.csv
-data = read.csv("data/NUTS_AT_2013.csv", encoding = "UTF8")
+data = read.csv(my.path("NUTS_AT_2013.csv"), encoding = "UTF8")
 
 data = rename(data, "country"="CNTR_CODE","code"="NUTS_ID", "label"="NUTS_NAME")
 
@@ -25,7 +28,7 @@ geo_nuts = function(level) {
   paste0('nuts', level)
 }
 
-out.file = paste0("data/nuts-",country,".sql") 
+out.file = my.path("nuts-",country,".sql") 
 if(file.exists(out.file)) {
   file.remove(out.file)
 }
