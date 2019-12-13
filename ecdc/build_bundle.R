@@ -26,6 +26,13 @@ create_bundle = function(path, name, country, sorting) {
   }
   data = data %>% arrange(!!!syms(sorting))
   
+  if(name == "incidence") {
+    i = is.na(data$upper) & is.na(data$lower)
+    data$upper[i] = 0
+    data$lower[i] = 0
+  }
+  
+  
   write.csv(data, file=my.path('bundles/', country, '_', name,'.csv'), row.names = FALSE)
 }
 
