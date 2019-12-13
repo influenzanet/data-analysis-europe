@@ -6,7 +6,7 @@ for(season in get_historical_seasons()) {
   for(country in countries) {
     cat("=== Computing ", country, " season ", season,"\n")
     r = try(local({
-      source("ecdc_indicator.R")
+      source("ecdc_indicator.R", local=TRUE)
     }), silent = TRUE)
     
     if(is(attr(r,"condition"), "error_no_data")) {
