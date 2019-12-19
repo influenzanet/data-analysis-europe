@@ -53,8 +53,9 @@ r$intake$country = factor(country)
 h = season_definition(season = season)
 design = design_incidence(age.categories = age.categories, year.pop = h$year.pop, geo="country", geo_area = toupper(country))
 
-estimator = IncidenceRS2014$new(weekly=r$weekly, intake=r$intake, params=params, syndromes = r$syndromes, design=design, output="inc")
+estimator = IncidenceRS2014$new(weekly=r$weekly, intake=r$intake, params=params, syndromes = r$syndromes, design=design, output=c("inc"))
 
+weeks = sort(unique(iso_yearweek(r$weekly$date)))
 results = rlang::with_abort(estimator$compute(weeks = unique(r$weekly$yw), verticalize = TRUE, verbose=FALSE))
 
 if(is.error(results)) {
@@ -68,6 +69,7 @@ results$country = country
 results$season = season
 saveRDS(results, file=my.path('incidence-', season,'-', Sys.Date(),'.Rds'))
 
+# Create output
 use.type = "adj"
 
 ii = results$inc %>%
@@ -77,10 +79,12 @@ count = ii %>%
   filter(type =="count") %>%
   select(-upper, -lower, -type) %>%
   rename(count=value)
+
 inc = ii %>%
   filter(type == !!use.type) %>%
   select(-type) %>%
   rename(incidence=value)
+
 inc = merge(inc, count, by=c('syndrome','yw'), all=TRUE)
 
 pp = results$inc %>%
@@ -93,10 +97,13 @@ inc = left_join(inc, pp, by=c('yw'))
 inc$country = country
 inc$season = as.integer(season)
 
+inc = inc %>% arrange(yw, syndrome)
+
 active = results$inc %>%
   filter(syndrome == "active" & type == "count") %>%
   select(-c(type, syndrome, upper, lower)) %>%
-  rename(active=value)
+  rename(active=value) %>%
+  arrange(yw)
 
 active$active = as.integer(active$active)
 active$season = as.integer(season)
