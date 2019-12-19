@@ -27,6 +27,11 @@ create_bundle = function(path, name, country, sorting) {
       next()
     }
     
+    if(country %in% c("BE", "NL") && season == 2017) {
+      next()
+    }
+    
+    
     r = read.csv2(file)
     
     ## Remove 2 first estimation points
