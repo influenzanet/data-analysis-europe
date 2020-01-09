@@ -17,6 +17,11 @@ season = cli.args$season
 
 init.path(paste0("country/", country, "/", season))
 
+i18n_load("i18n/", language = tolower(country))
+
+sub.text = i18n("platform.copyright")
+
+
 has.population = TRUE
 
 # Get list of columns for questions in survey
@@ -25,7 +30,7 @@ hear.columns = survey_labels('intake', 'hear.about')
 allergy.columns = survey_labels('intake', 'allergy')
 pets.columns = survey_labels('intake', 'pets')
 
-colors.web = list(primary="blue", secondary="darkgreen")
+colors.web = list(primary=i18n('color.web.primary'), secondary=i18n('color.web.secondary'))
 #colors.web = platform_env("colors")
 
 columns = c('timestamp','gender','date.birth','vacc.curseason',"main.activity","occupation","often.ili", 'pregnant',hear.columns,'transport','smoker', condition.columns, allergy.columns, pets.columns )
