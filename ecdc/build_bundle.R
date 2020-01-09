@@ -38,6 +38,7 @@ create_bundle = function(path, name, country, sorting) {
     # Computed but given the computation rules they are not significants
     ww = sort(unique(r$yw))
     w = head(ww, n=2)
+    cat("Excluding ", w,"\n")
     r = r[ !r$yw %in% w, ]
     
     # Maximum season bounds

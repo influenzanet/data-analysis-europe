@@ -39,10 +39,12 @@ caption = function() {
   paste(Sys.time(), "Influenzanet 2019, for internal purpose only")
 }
 
-
 ii = inc %>% filter(!censored)
 ii = ii %>% group_by(country, season) %>% mutate(ymax=max(incidence, na.rm=TRUE))
 ii = ii %>% mutate(upper=ifelse(upper > ymax * 2, NA, upper))
+
+saveRDS(ii, my.path('inc.rds'))
+
 ggplot(ii, aes(x=monday_of_week(yw), y=incidence, group=syndrome, color=syndrome)) + 
   geom_vline(data=inc %>% filter(censored), aes(xintercept=monday_of_week(yw)), color="grey90") +
   geom_line() +
