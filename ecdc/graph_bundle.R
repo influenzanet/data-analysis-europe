@@ -57,9 +57,11 @@ ggsave(my.path("incidence_country+season.pdf"), width=12, height=8)
 ii = calc_season_fixed(ii)
 ggplot(ii, aes(x=season.index, y=incidence, group=season.year, color=factor(season.year))) + 
   geom_line() +
+  geom_line(data=ii[ ii$season == max(seasons), ], size=1.2) +
   facet_grid(rows=vars(country), scales = "free") +
   theme_with("legend_top") +
-  labs(x="Season week index (1=Week of last 1st september)", y="Incidence rate", title="Weekly incidence rate by country and season", caption=caption())
+  labs(x="Season week index (1=Week of last 1st september)", y="Incidence rate", title="Weekly incidence rate by country and season", caption=caption()) +
+  guides(color=guide_legend("Season") )
 ggsave(my.path("incidence_country+season_superpose.pdf"), width=4, height=12)
 
 d = ii %>% 
@@ -80,7 +82,7 @@ ggplot(d, aes(x=season.index)) +
   geom_line(aes(y=median, color="median", linetype="median")) +
   geom_line(aes(y=q1, color="quantile", linetype="quantile")) +
   geom_line(aes(y=q1, color="quantile", linetype="quantile")) +
-  geom_line(data=ii[ ii$season == max(seasons), ], aes(y=incidence, color="current", linetype="current")) +
+  geom_line(data=ii[ ii$season == max(seasons), ], aes(y=incidence, color="current", linetype="current"), size=1.2) +
   scale_color_manual(values=c('range'="darkblue","median"="blue", "current"="red", "quantile"="steelblue"), labels=labels)  +
   scale_linetype_manual(values=c('range'="dotted","median"="solid", "current"="solid", "quantile"="dashed"), labels=labels)  +
   facet_grid(rows="country") +
