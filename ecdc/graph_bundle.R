@@ -63,6 +63,7 @@ ggplot(ii, aes(x=season.index, y=incidence, group=season.year, color=factor(seas
 ggsave(my.path("incidence_country+season_superpose.pdf"), width=4, height=12)
 
 d = ii %>% 
+      filter(season < max(seasons)) %>%
       group_by(season.index, country) %>% 
       summarize( 
                 min=min(incidence, na.rm = TRUE), 
