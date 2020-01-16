@@ -60,7 +60,7 @@ ggplot(ii, aes(x=season.index, y=incidence, group=season.year, color=factor(seas
   facet_grid(rows=vars(country), scales = "free") +
   theme_with("legend_top") +
   labs(x="Season week index (1=Week of last 1st september)", y="Incidence rate", title="Weekly incidence rate by country and season", caption=caption())
-ggsave(my.path("incidence_country+season_superpose.pdf"), width=12, height=8)
+ggsave(my.path("incidence_country+season_superpose.pdf"), width=4, height=12)
 
 d = ii %>% 
       group_by(season.index, country) %>% 
@@ -84,7 +84,7 @@ ggplot(d, aes(x=season.index)) +
   scale_linetype_manual(values=c('range'="dotted","median"="solid", "current"="solid", "quantile"="dashed"), labels=labels)  +
   facet_grid(rows="country") +
   labs(x="Season week index (1=Week of last 1st september)", y="Incidence rates", caption=caption())
-ggsave(my.path("incidence_country+season_distrib.pdf"), width=12, height=8)
+ggsave(my.path("incidence_country+season_distrib.pdf"), width=4, height=12)
 
 
 d = left_join(active, inc[,c('country','season','yw','incidence','censored') ], by=c('country','season','yw'))
