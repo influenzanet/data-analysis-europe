@@ -2,3 +2,5 @@
 .DS_Store
 local/
 conf.sh
+download
+*.dump
