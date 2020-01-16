@@ -43,7 +43,7 @@ ii = inc %>% filter(!censored)
 ii = ii %>% group_by(country, season) %>% mutate(ymax=max(incidence, na.rm=TRUE))
 ii = ii %>% mutate(upper=ifelse(upper > ymax * 2, NA, upper))
 
-saveRDS(ii, my.path('inc.rds'))
+saveRDS(data.frame(ii), my.path('inc.rds'))
 
 ggplot(ii, aes(x=monday_of_week(yw), y=incidence, group=syndrome, color=syndrome)) + 
   geom_vline(data=inc %>% filter(censored), aes(xintercept=monday_of_week(yw)), color="grey90") +
@@ -53,6 +53,38 @@ ggplot(ii, aes(x=monday_of_week(yw), y=incidence, group=syndrome, color=syndrome
   theme_with("legend_top") +
   labs(x="Week", y="Incidence rate", title="Weekly incidence rate by country and season", caption=caption())
 ggsave(my.path("incidence_country+season.pdf"), width=12, height=8)
+
+ii = calc_season_fixed(ii)
+ggplot(ii, aes(x=season.index, y=incidence, group=season.year, color=factor(season.year))) + 
+  geom_line() +
+  facet_grid(rows=vars(country), scales = "free") +
+  theme_with("legend_top") +
+  labs(x="Season week index (1=Week of last 1st september)", y="Incidence rate", title="Weekly incidence rate by country and season", caption=caption())
+ggsave(my.path("incidence_country+season_superpose.pdf"), width=12, height=8)
+
+d = ii %>% 
+      group_by(season.index, country) %>% 
+      summarize( 
+                min=min(incidence, na.rm = TRUE), 
+                max=max(incidence, na.rm = TRUE), 
+                median=median(incidence, na.rm=TRUE), 
+                q1=quantile(incidence, probs=.25, na.rm = TRUE), 
+                q3=quantile(incidence, probs=.75, na.rm=TRUE)
+      )
+
+labels = c('range'="Min/Max","median"="Median", "current"="Current season", "quantile"="1st, 3rd quantiles")
+ggplot(d, aes(x=season.index)) +
+  geom_line(aes(y=min, color="range", linetype="range")) +
+  geom_line(aes(y=max, color="range", linetype="range")) +
+  geom_line(aes(y=median, color="median", linetype="median")) +
+  geom_line(aes(y=q1, color="quantile", linetype="quantile")) +
+  geom_line(aes(y=q1, color="quantile", linetype="quantile")) +
+  geom_line(data=ii[ ii$season == max(seasons), ], aes(y=incidence, color="current", linetype="current")) +
+  scale_color_manual(values=c('range'="darkblue","median"="blue", "current"="red", "quantile"="steelblue"), labels=labels)  +
+  scale_linetype_manual(values=c('range'="dotted","median"="solid", "current"="solid", "quantile"="dashed"), labels=labels)  +
+  facet_grid(rows="country") +
+  labs(x="Season week index (1=Week of last 1st september)", y="Incidence rates", caption=caption())
+ggsave(my.path("incidence_country+season_distrib.pdf"), width=12, height=8)
 
 
 d = left_join(active, inc[,c('country','season','yw','incidence','censored') ], by=c('country','season','yw'))
