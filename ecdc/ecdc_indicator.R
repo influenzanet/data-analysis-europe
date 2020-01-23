@@ -75,6 +75,7 @@ saveRDS(results, file=my.path('incidence-', season,'-', Sys.Date(),'.Rds'))
 
 # Create output
 use.type = "adj"
+current.week = iso_yearweek(Sys.Date())
 
 ii = results$inc %>%
   filter(syndrome == "ari.ecdc" & type %in% c(use.type,"count")) 
@@ -103,11 +104,14 @@ inc$season = as.integer(season)
 
 inc = inc %>% arrange(yw, syndrome)
 
+inc = filter(inc, yw < current.week)
+
 active = results$inc %>%
   filter(syndrome == "active" & type == "count") %>%
   select(-c(type, syndrome, upper, lower)) %>%
   rename(active=value) %>%
-  arrange(yw)
+  arrange(yw) %>%
+  filter(yw < current.week)
 
 active$active = as.integer(active$active)
 active$season = as.integer(season)
