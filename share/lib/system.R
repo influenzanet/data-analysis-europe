@@ -30,6 +30,10 @@ setHook(packageEvent("ggplot2", "attach"),
   with_ggplot()
 })
 
+is_try_error = function(x) {
+  "try-error" %in% class(x)
+}
+
 
 get_current_season = function() {
   calc_season(Sys.Date())
