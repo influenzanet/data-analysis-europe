@@ -4,8 +4,12 @@ library(swMisc)
 library(rlang)
 
 ## Computation parameters
-params = list(active.week.before=1, active.week.after=1, active.min.surveys=2, exclude.same=T,ignore.first.delay=6, ignore.first.only.new=T)
-age.categories = c(0, 21, 65, 200)
+share.lib('incidence')
+
+eu.params = get_eu_incidence_parameters()
+
+params = eu.params$estimator.params
+age.categories = eu.params$age.categories
 
 if(!exists("country") | is.null(country)) {
   rlang::abort("Country not defined")
