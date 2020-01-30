@@ -42,7 +42,7 @@ for(season in seasons) {
       run_script(season, country, "ecdc_indicator")
     }
     
-    if(isTRUE(compute$episode)) {
+    if(isTRUE(compute$healthcare)) {
      run_script(season, country, "ecdc_healthcare")
     }
 
