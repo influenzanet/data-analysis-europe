@@ -133,17 +133,17 @@ ggsave(my.path("visits_weekly_country+season.pdf"), width=12, height=8)
 ggplot(visits, aes(x=monday_of_week(yw), y=cum_prop, color=variable)) + 
   geom_line() +
   facet_grid(rows=vars(country), cols=vars(season), scales="free", labeller=labeller(variable=i18n)) +
-  labs(y="% of participants with syndrome", x="Week", title="Health care seeking with ari.ecdc", caption = caption()) +
+  labs(y="% of participants with syndrome", x="Week", title="Health care seeking with ari.ecdc, weekly % cumulated over the season", caption = caption()) +
   guides(color=guide_legend("Variable"))
 ggsave(my.path("visits_weekly_cumulated_country+season.pdf"), width=12, height=8)
 
 visits.cumul = load_bundles("visits_cumul")
 
-ggplot(visits.cumul, aes(x=season, color=variable, group=variable)) + 
+ggplot(visits.cumul, aes(x=factor(season), color=variable, group=variable)) + 
   geom_ribbon(aes(ymin=cum_prop_lower, ymax=cum_prop_upper, fill=variable), color=NA, alpha=.3) +
   geom_point(aes(y=cum_prop)) +
   facet_grid(rows=vars(country), scales="free", labeller=labeller(variable=i18n)) +
   labs(y="% of participants with syndrome", x="Week", title="Health care seeking with ari.ecdc, cumulated over each season", caption = caption()) +
   guides(color=guide_legend("Variable"), fill=FALSE) + ylim(0,NA)
-ggsave(my.path("visits_season_cumulated.pdf"), width=12, height=8)
+ggsave(my.path("visits_season_cumulated.pdf"), width=8, height=8)
 
