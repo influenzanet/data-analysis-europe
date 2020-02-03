@@ -13,31 +13,39 @@ load_bundle = function(country, name) {
   file = my.path(country, '_', name,'.csv')
   if(file.exists(file)) {
     cat("Loading ", country, name, "\n")
-    return(read.csv(file))
+    d = read.csv(file)
+    if(nrow(d) > 0) {
+      if(!hasName(d, "country")) {
+        d$country = country
+      }
+      d$country = as.character(d$country)
+    }
+    return(d)
   }
   NULL
 }
 
-
-inc = NULL
-active = NULL
-
-for(country in countries) {
-  a = load_bundle(country, "active")
-  a$country = as.character(a$country)
-  active = bind_rows(active, a)
-  ii = load_bundle(country, "incidence")
-  ii$country = as.character(ii$country)
-  inc = bind_rows(inc, ii)
+load_bundles = function(name) {
+  data = NULL
+  for(country in countries) {
+    d = load_bundle(country, name)
+    data = bind_rows(data, d)
+    
+  }
+  data
 }
+
+caption = function() {
+  paste(Sys.time(), "Influenzanet 2019, for internal purpose only")
+}
+
+active = load_bundles('active')
+inc = load_bundles("incidence")
 
 max.active = inc %>% group_by(country, season) %>% summarize(max_active=max(part))
 inc = left_join(inc, max.active, by=c("country","season"))
 inc = inc %>% mutate(active_limit=.35 * max_active, censored=part < active_limit)
 
-caption = function() {
-  paste(Sys.time(), "Influenzanet 2019, for internal purpose only")
-}
 
 ii = inc %>% filter(!censored)
 ii = ii %>% group_by(country, season) %>% mutate(ymax=max(incidence, na.rm=TRUE))
@@ -113,4 +121,29 @@ ggplot(d, aes(x=monday_of_week(yw), y=active)) +
   labs(y="Active participants", x="Week", title="Active participants by ", caption=caption())
 ggsave(my.path("active_country+season.pdf"), width=12, height=8)
 
+visits = load_bundles("visits_weekly")
+
+ggplot(visits, aes(x=monday_of_week(yw), y=prop, color=variable)) + 
+  geom_line() + 
+  facet_grid(rows=vars(country), cols=vars(season), scales="free", labeller=labeller(variable=i18n)) +
+  labs(y="% of participants with syndrome", x="Week", title="Health care seeking with ari.ecdc", caption = caption()) +
+  guides(color=guide_legend("Variable"))
+ggsave(my.path("visits_weekly_country+season.pdf"), width=12, height=8)
+
+ggplot(visits, aes(x=monday_of_week(yw), y=cum_prop, color=variable)) + 
+  geom_line() +
+  facet_grid(rows=vars(country), cols=vars(season), scales="free", labeller=labeller(variable=i18n)) +
+  labs(y="% of participants with syndrome", x="Week", title="Health care seeking with ari.ecdc", caption = caption()) +
+  guides(color=guide_legend("Variable"))
+ggsave(my.path("visits_weekly_cumulated_country+season.pdf"), width=12, height=8)
+
+visits.cumul = load_bundles("visits_cumul")
+
+ggplot(visits.cumul, aes(x=season, color=variable, group=variable)) + 
+  geom_ribbon(aes(ymin=cum_prop_lower, ymax=cum_prop_upper, fill=variable), color=NA, alpha=.3) +
+  geom_point(aes(y=cum_prop)) +
+  facet_grid(rows=vars(country), scales="free", labeller=labeller(variable=i18n)) +
+  labs(y="% of participants with syndrome", x="Week", title="Health care seeking with ari.ecdc, cumulated over each season", caption = caption()) +
+  guides(color=guide_legend("Variable"), fill=FALSE) + ylim(0,NA)
+ggsave(my.path("visits_season_cumulated.pdf"), width=12, height=8)
 

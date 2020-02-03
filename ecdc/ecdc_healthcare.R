@@ -298,8 +298,4 @@ if(!is.null(freqs.ecdc)) {
     select(-type)
   
   output(visits, "visits_weekly")
-  
-  last = visits %>% filter(yw == max(yw)) %>% select(yw, variable, cum_prop)
-  
-  output(last, "visits_cumul")
 }

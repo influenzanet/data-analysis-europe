@@ -64,6 +64,8 @@ create_bundle = function(path, name, country, sorting, restrict.yw=TRUE) {
     }
     write.csv(data, file=my.path('bundles/', country, '_', name,'.csv'), row.names = FALSE)
   }
+  
+  data
 }
 
 
@@ -71,6 +73,14 @@ for(country in countries) {
   path = my.path(country,"/")
   create_bundle(path, "active", country, "yw")
   create_bundle(path, "incidence", country, c("yw","syndrome"))
-  create_bundle(path, "visits_weekly", country, c('yw','variable'))
-  create_bundle(path, "visits_cumul", country, c('yw','variable'), restrict.yw = FALSE)
+  visits = create_bundle(path, "visits_weekly", country, c('yw','variable'))
+  if(!is.null(visits)) {
+    last = visits %>% 
+              group_by(season) %>%
+              mutate(max_yw=max(yw)) %>%
+              ungroup() %>%
+              filter(yw == max_yw) %>% 
+              select(yw, variable, cum_prop, cum_prop_upper, cum_prop_lower, season)
+  }  
+  write.csv(last, file=my.path('bundles/', country, '_visits_cumul.csv'), row.names = FALSE)
 }
