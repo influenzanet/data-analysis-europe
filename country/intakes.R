@@ -21,7 +21,6 @@ i18n_load("i18n/", language = tolower(country))
 
 sub.text = i18n("platform.copyright")
 
-
 has.population = TRUE
 
 # Get list of columns for questions in survey
@@ -36,6 +35,10 @@ colors.web = list(primary=i18n('color.web.primary'), secondary=i18n('color.web.s
 columns = c('timestamp','gender','date.birth','vacc.curseason',"main.activity","occupation","often.ili", 'pregnant',hear.columns,'transport','smoker', condition.columns, allergy.columns, pets.columns )
 
 intake = survey_load_results("intake", columns, season=season, country=country)
+
+if( is.null(intake) || nrow(intake) == 0 ) {
+  rlang::abort("No data for this season/country",class = "error_no_data")
+}
 
 intake = keep_last_survey(intake)
 
