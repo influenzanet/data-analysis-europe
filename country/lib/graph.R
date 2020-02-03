@@ -26,14 +26,15 @@ simple_plot = function(column, trans=NULL, width, title, file=NULL, h=NA, data=i
     }
     y = multiple_freq(data[, column], translate = trans)
   } else {
-    if(!is.null(trans) ) {
-      if(isTRUE(trans)) {
-        trans = column
-      }
+    if(is.null(trans) ) {
+        trans = TRUE
+    }
+    if(isTRUE(trans)) {
       y = i18n(data[[column]])
     } else {
       y = data[[column]]
     }
+    
     if(no.empty) {
       y = factor(y)
     }
@@ -43,4 +44,5 @@ simple_plot = function(column, trans=NULL, width, title, file=NULL, h=NA, data=i
   h = ifelse(is.na(h), width/1.618, h)
   file = if(is.null(file)) column else file
   g_save(my.path(file), width=width, height=h)
+  last_plot()
 }
