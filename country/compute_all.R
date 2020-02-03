@@ -4,6 +4,7 @@ source("conf.R")
 run_script = function(season, country, name) {
   cat("-- Running ", name,"\n")
   r = try({
+    cli.args = list(country=country, season=season)
     source(paste0(name, ".R"), local=TRUE)
   }, silent = TRUE)
   
