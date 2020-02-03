@@ -54,8 +54,9 @@ age.categories = c(seq(0, 90, by=5), 200)
 intake$age.cat = cut_age(intake$age, age.categories)
 
 g_barplot(intake$age.cat, order=FALSE, label.size = 1.5) +
-  g_title(title=i18n("age_of_participants"), x=i18n('age_group'))
-g_save(my.path('age'), width=6, height=4)
+  g_title(title=i18n("age_of_participants"), x=i18n('age_group')) +
+  theme(axis.text.x=element_text(angle=-45, vjust=.5))
+g_save(my.path('age'), width=9, height=4)
 
 if( has.population) {
   # National population
@@ -107,7 +108,7 @@ if( has.population) {
 simple_plot(hear.columns, title="graph.hear.about", width=6.7, file="hearabout", x.rotate = 45, x.vjust=.3)
 
 # Main occupation
-simple_plot('main.activity', width=6, title='graph_main_activity', file='main-activity' )
+simple_plot('main.activity', width=6, title='graph_main_activity', file='main-activity')
 
 # Vaccination for the current season
 simple_plot('vacc.curseason', trans=NULL, width=6, title='graph_vacc_curseason', file='vaccination-curseason' )
