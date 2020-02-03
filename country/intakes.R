@@ -3,7 +3,7 @@ source('conf.R')
 library(dplyr)
 library(swMisc)
 
-source("lib/graph.R")
+source("lib/graph.R", local=TRUE)
 
 if(!exists("cli.args")) {
   cli.args = parseArgs(list(
