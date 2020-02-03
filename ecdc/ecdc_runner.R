@@ -14,11 +14,28 @@ if(!exists("cli.args")) {
 country = cli.args$country
 season = cli.args$season
 
-env = new.env()
-r = try(source("ecdc_indicator.R", local=env))
+run_script = function(name) {
+  cat("-- Running ", name,"\n")
+  env = new.env()
+  r = try(source(paste0(name, ".R"), local=env))
+  
+  if(is.error(r)) {
+    save(env, file=my.path("error_",name,"_", country, season,".RData"))
+    dump(r, file=my.path("error_",name,"_", country, season,".R"))
+  }
 
-if(is.error(r)) {
-  save(env, file=my.path("error_indicator_", country, season,".RData"))
-  dump(r, file=my.path("error_indicator_", country, season,".R"))
-  quit("no", status = 1)
+  if(is(attr(r,"condition"), "error_no_data")) {
+    message("No data for this season")
+    return()
+  }
+  
+  if( is.error(r) ) {
+    warning("Error during computing")
+    print(r)
+  }
+  r
 }
+
+run_script("ecdc_indicator")
+run_script("ecdc_healthcare")
+
