@@ -152,7 +152,7 @@ diet.lowcal = "Low carb."
 diet.other = "Other"
 
 # Pets
-pets.none = "Aucun"
+pets.none = "None"
 pets.dog = "Dogs"
 pets.cat = "Cats"
 pets.bird = "Birds"
