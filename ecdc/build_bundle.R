@@ -16,7 +16,7 @@ dir.create(my.path('bundles'), showWarnings = FALSE)
 #' @param restrict.yw restrict the range of weeks according to the weeks of the season
 #' @param filter function() to filter data
 #' @param country
-create_bundle = function(path, name, country, sorting, restrict.yw=TRUE, filter=NULL) {
+create_bundle = function(path, name, country, sorting, restrict.yw=TRUE, filter=NULL, out.name=NULL) {
   cat("Importing", name, country,"\n")
   data = NULL
   for(season in seasons) {
@@ -42,7 +42,7 @@ create_bundle = function(path, name, country, sorting, restrict.yw=TRUE, filter=
       # Computed but given the computation rules they are not significants
       ww = sort(unique(r$yw))
       w = head(ww, n=2)
-      cat("Excluding ", w,"\n")
+      #cat("Excluding ", w,"\n")
       r = r[ !r$yw %in% w, ]
       
       # Maximum season bounds
@@ -64,8 +64,10 @@ create_bundle = function(path, name, country, sorting, restrict.yw=TRUE, filter=
     if(!is.null(filter)) {
       data = do.call(filter, list(data))
     }
-  
-    write.csv(data, file=my.path('bundles/', country, '_', name,'.csv'), row.names = FALSE)
+    if(is.null(out.name)) {
+      out.name = name
+    }
+    write.csv(data, file=my.path('bundles/', country, '_', out.name,'.csv'), row.names = FALSE)
   }
   
   data
@@ -87,7 +89,7 @@ for(country in countries) {
   path = my.path(country,"/")
   create_bundle(path, "active", country, "yw")
   create_bundle(path, "incidence", country, c("yw","syndrome"), filter=filter_incidence )
-  create_bundle(path, "visits_weekly_all", country, c('yw','variable'))
+  create_bundle(path, "visits_weekly", country, c('yw','variable'), out.name="visits_weekly_all")
   visits = create_bundle(path, "visits_weekly", country, c('yw','variable'), filter=filter_visits)
   if(!is.null(visits)) {
     last = visits %>% 
