@@ -289,8 +289,7 @@ if(!is.null(freqs.ecdc)) {
   visits = visits %>% 
             filter(
                 type =="episode" & 
-                variable %in% c('visit.GP','visit.emergency','visit.hospital','visit.other') &
-                estimator == "adj"
+                variable %in% c('visit.GP','visit.emergency','visit.hospital','visit.other')
             )
   
   visits = visits %>% group_by(variable) %>% 
