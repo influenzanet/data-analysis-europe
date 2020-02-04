@@ -87,7 +87,8 @@ for(country in countries) {
   path = my.path(country,"/")
   create_bundle(path, "active", country, "yw")
   create_bundle(path, "incidence", country, c("yw","syndrome"), filter=filter_incidence )
-  visits = create_bundle(path, "visits_weekly", country, c('yw','variable'))
+  create_bundle(path, "visits_weekly_all", country, c('yw','variable'))
+  visits = create_bundle(path, "visits_weekly", country, c('yw','variable'), filter=filter_visits)
   if(!is.null(visits)) {
     last = visits %>% 
               group_by(season) %>%
