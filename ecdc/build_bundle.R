@@ -12,8 +12,11 @@ dir.create(my.path('bundles'), showWarnings = FALSE)
 
 #' @param path path where are by seasons files
 #' @param name name of file to create
+#' @param sorting column to use to sort the data
+#' @param restrict.yw restrict the range of weeks according to the weeks of the season
+#' @param filter function() to filter data
 #' @param country
-create_bundle = function(path, name, country, sorting, restrict.yw=TRUE) {
+create_bundle = function(path, name, country, sorting, restrict.yw=TRUE, filter=NULL) {
   cat("Importing", name, country,"\n")
   data = NULL
   for(season in seasons) {
@@ -54,14 +57,14 @@ create_bundle = function(path, name, country, sorting, restrict.yw=TRUE) {
     
     data = bind_rows(data, r)
   }
+  
   if(!is.null(data)) {
     data = data %>% arrange(!!!syms(sorting))
     
-    if(name == "incidence") {
-      i = is.na(data$upper) & is.na(data$lower)
-      data$upper[i] = 0
-      data$lower[i] = 0
+    if(!is.null(filter)) {
+      data = do.call(filter, list(data))
     }
+  
     write.csv(data, file=my.path('bundles/', country, '_', name,'.csv'), row.names = FALSE)
   }
   
@@ -69,10 +72,21 @@ create_bundle = function(path, name, country, sorting, restrict.yw=TRUE) {
 }
 
 
+filter_incidence = function(data) {
+  i = is.na(data$upper) & is.na(data$lower)
+  data$upper[i] = 0
+  data$lower[i] = 0
+  data
+}
+
+filter_visits = function(data) {
+  data %>% filter(estimator == "adj")
+}
+
 for(country in countries) {
   path = my.path(country,"/")
   create_bundle(path, "active", country, "yw")
-  create_bundle(path, "incidence", country, c("yw","syndrome"))
+  create_bundle(path, "incidence", country, c("yw","syndrome"), filter=filter_incidence )
   visits = create_bundle(path, "visits_weekly", country, c('yw','variable'))
   if(!is.null(visits)) {
     last = visits %>% 
