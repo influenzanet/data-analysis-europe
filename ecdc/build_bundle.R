@@ -98,6 +98,13 @@ for(country in countries) {
               ungroup() %>%
               filter(yw == max_yw) %>% 
               select(yw, variable, cum_prop, cum_prop_upper, cum_prop_lower, season)
-  }  
-  write.csv(last, file=my.path('bundles/', country, '_visits_cumul.csv'), row.names = FALSE)
+    
+    if(nrow(last) > 0) {
+      last[last$cum_prop_upper > 1] = 1
+      last[last$cum_prop_lower < 0] = 0
+    }
+    
+    write.csv(last, file=my.path('bundles/', country, '_visits_cumul.csv'), row.names = FALSE)
+  } 
+  
 }
