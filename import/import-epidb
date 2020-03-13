@@ -7,7 +7,7 @@ DIR=$(dirname $0)
 
 DUMPFILE=$1
 
-if [ "$DUMPFILE" eq "" ]; then
+if [ "$DUMPFILE" == "" ]; then
  echo "import-epidb [dumpfile]"
 fi
 

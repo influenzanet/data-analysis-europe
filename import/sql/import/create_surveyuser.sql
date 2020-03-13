@@ -1,6 +1,11 @@
 DROP TABLE IF EXISTS survey_surveyuser CASCADE;
 
-CREATE TABLE survey_surveyuser as SELECT DISTINCT global_id FROM (select global_id from epidb_results_intake union select global_id from epidb_results_weekly) t;
+CREATE TABLE survey_surveyuser as 
+  SELECT DISTINCT global_id FROM (
+      select global_id from epidb_results_intake 
+      union select global_id from epidb_results_weekly
+  ) t 
+  where global_id is not null and global_id != '';
 
 DROP SEQUENCE IF EXISTS survey_surveyuser_id_seq;
 CREATE SEQUENCE survey_surveyuser_id_seq START WITH 1 INCREMENT BY 1 NO MAXVALUE NO MINVALUE CACHE 1;

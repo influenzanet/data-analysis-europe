@@ -20,7 +20,7 @@ message(paste("Running season ", season))
 
 theme_set(theme_minimal())
 
-init.path(paste0('overview/intake/', season))
+init.path(paste0('intake/', season))
 
 out.path = function(x) {
   my.path(paste(season,'_', x, sep=''))
@@ -116,7 +116,7 @@ freq_plot = function(column, trans=NULL, width, title, file=NULL, h=NA, data=int
       if( isTRUE(trans) ) {
         trans = column
       }
-      y = survey_recode(data[[column]], survey='intake', trans, translate=T)
+      y = i18n(data[[column]])
     } else {
       y = data[[column]]
     }
@@ -138,10 +138,7 @@ freq_country = function(.data, name, trans=NULL) {
   freq = freq %>% group_by(country) %>% mutate(total=sum(count), prop=count/total)
 
   if(!is.null(trans) ) {
-    if( isTRUE(trans) ) {
-      trans = name
-    }
-    freq$var = survey_recode(freq$var, survey='intake', trans)
+    freq$var = i18n(freq$var)
   }
 
   freq

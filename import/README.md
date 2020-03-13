@@ -1,0 +1,1 @@
+This directory contains script to import database dump and build database ready for data analysis
