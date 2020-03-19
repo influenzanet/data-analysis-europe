@@ -100,8 +100,8 @@ for(country in countries) {
               select(yw, variable, cum_prop, cum_prop_upper, cum_prop_lower, season)
     
     if(nrow(last) > 0) {
-      last[last$cum_prop_upper > 1] = 1
-      last[last$cum_prop_lower < 0] = 0
+      last$cum_prop_upper[!is.na(last$cum_prop_upper) & last$cum_prop_upper > 1] = 1
+      last$cum_prop_lower[!is.na(last$cum_prop_lower) & last$cum_prop_lower < 0] = 0
     }
     
     write.csv(last, file=my.path('bundles/', country, '_visits_cumul.csv'), row.names = FALSE)
