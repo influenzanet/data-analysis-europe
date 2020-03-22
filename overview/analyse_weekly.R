@@ -149,20 +149,26 @@ data = data.all$participants_date
 data = data %>% filter(yw >= min.week)
 days = c('0'='Sunday','1'="Monday",'2'='Tuesday','3'='Wednesday', '4'='Thursday','5'='Friday','6'='Saturday')
 
+data = data %>% mutate(
+  day = 8- ifelse(wday == 0, 7, wday)
+)
+
 ggplot(data, aes(x=monday_of_week(yw), y=factor(wday), fill=n_person/total_person)) +
   geom_tile() +
   facet_grid(rows=vars(country)) +
-  scale_x_discrete(labels=days) +
+  scale_y_discrete(labels=days) +
   scale_fill_viridis_c(direction = -1, option = "A" ) +
-  labs(x="Week", y="Day of week", title="% of person by week and weekday, by date of first report of the week", caption=caption())
+  labs(x="Week", y="Day of week", title="% of person by week and weekday, by date of first report of the week", caption=caption()) +
+  guides(fill=guide_legend("% of Participants"))
 ggsave(my.path("week_participant_prop.pdf"), width=6, height = 14)  
 
-ggplot(data, aes(x=monday_of_week(yw), y=factor(wday), fill=n_survey/total_survey)) +
+ggplot(data, aes(x=monday_of_week(yw), y=factor(day), fill=n_survey/total_survey)) +
   geom_tile() +
   facet_grid(rows=vars(country)) +
-  scale_x_discrete(labels=days) +
+  scale_y_discrete(labels=days) +
   scale_fill_viridis_c(direction = -1, option = "A" ) +
-  labs(x="Week", y="Day of week", title="% of surveys by week and weekday, by date of first report of the week", caption=caption())
+  labs(x="Week", y="Day of week", title="% of surveys by week and weekday, by date of first report of the week", caption=caption()) +
+  guides(fill=guide_legend("% of Participants"))
 ggsave(my.path("week_survey_prop.pdf"), width=6, height = 14)  
 
 
