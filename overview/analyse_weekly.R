@@ -34,7 +34,7 @@ season = get_current_season()
 init.path(season)
 
 for(country in countries) {
-  syndrome.from = list(health.status=FALSE)
+  syndrome.from = list(health.status=TRUE)
   onset = episode_onset_design()
   dataset = load_results_for_incidence(season=season, age.categories=age.categories, country=country, syndrome.from = syndrome.from, onset=onset, columns=list(keep.all=TRUE))
   
@@ -45,10 +45,14 @@ for(country in countries) {
   
   symptoms = get_symptoms_aliases()
   symptoms = symptoms[ symptoms != "no.sympt"]
+  syndromes = dataset$syndromes
+  syndromes = syndromes[ syndromes != "no.symptom"]
   
-  weekly = dataset$weekly %>% group_by(person_id, onset) %>% summarize_at(symptoms, sum)
+  columns = c(symptoms, syndromes)
   
-  weekly[, symptoms] = weekly[, symptoms] > 0
+  weekly = dataset$weekly %>% group_by(person_id, onset) %>% summarize_at(columns, sum)
+  
+  weekly[, columns] = weekly[, columns] > 0
   
  # in this list were predefined by the Israeli MOH (Ministry of Health): muscle pains, shortness of breath,
  #  fatigue, cough and a high fever (body temperature of over 38 degrees celsius. For responders under the
@@ -88,6 +92,17 @@ for(country in countries) {
   ww$country = factor(country, countries)
   
   collect_data("symptoms", ww)
+
+  ww = weekly %>% group_by(yw, person_id) %>% summarize_at(syndromes, sum)
+  ww[, syndromes] = ww[, syndromes] > 0
+  ww$person = 1
+  ww = ww %>% group_by(yw) %>% summarise_at(c('person', syndromes), sum)
+  ww = tidyr::pivot_longer(ww, syndromes)
+  ww$name = factor(ww$name)
+  
+  ww$country = factor(country, countries)
+  
+  collect_data("syndromes", ww)
 
   rm(ww)
   rm(weekly)
@@ -144,6 +159,17 @@ ggplot(data %>% filter(yw >= min.week), aes(x=monday_of_week(yw), y=name, fill=v
   scale_fill_viridis_c(direction = -1, option = "A" ) +
   labs(x="Week", y="Symptom", title="% of symptom reported by participants", caption=caption())
 ggsave(my.path("symptom_prop.pdf"), width=6, height = 14)  
+
+data = data.all$syndromes
+
+ggplot(data %>% filter(yw >= min.week), aes(x=monday_of_week(yw), y=name, fill=value/person)) +
+  geom_tile() +
+  facet_grid(rows=vars(country)) +
+  scale_fill_viridis_c(direction = -1, option = "A" ) +
+  labs(x="Week", y="Syndromes", title="% of Influenzanet syndromes reported by participants", caption=caption())
+ggsave(my.path("syndrome_prop.pdf"), width=6, height = 14)  
+
+
 
 data = data.all$participants_date
 data = data %>% filter(yw >= min.week)
