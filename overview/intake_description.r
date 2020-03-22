@@ -20,11 +20,9 @@ message(paste("Running season ", season))
 
 theme_set(theme_minimal())
 
-init.path(paste0('intake/', season))
+init.path(paste0(season, '/intake'))
 
-out.path = function(x) {
-  my.path(paste(season,'_', x, sep=''))
-}
+out.path = my.path
 
 # Get list of columns for questions in survey
 condition.columns = survey_labels('intake', 'condition')
