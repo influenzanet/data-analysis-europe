@@ -157,7 +157,8 @@ ggplot(data %>% filter(yw >= min.week), aes(x=monday_of_week(yw), y=name, fill=v
   geom_tile() +
   facet_grid(rows=vars(country)) +
   scale_fill_viridis_c(direction = -1, option = "A" ) +
-  labs(x="Week", y="Symptom", title="% of symptom reported by participants", caption=caption())
+  labs(x="Week", y="Symptom", title="% of symptom reported by participants", caption=caption()) +
+  guides(fill=guide_legend("% of Participants"))
 ggsave(my.path("symptom_prop.pdf"), width=6, height = 14)  
 
 data = data.all$syndromes
@@ -166,7 +167,8 @@ ggplot(data %>% filter(yw >= min.week), aes(x=monday_of_week(yw), y=name, fill=v
   geom_tile() +
   facet_grid(rows=vars(country)) +
   scale_fill_viridis_c(direction = -1, option = "A" ) +
-  labs(x="Week", y="Syndromes", title="% of Influenzanet syndromes reported by participants", caption=caption())
+  labs(x="Week", y="Syndromes", title="% of Influenzanet syndromes reported by participants", caption=caption()) +
+  guides(fill=guide_legend("% of Participants"))
 ggsave(my.path("syndrome_prop.pdf"), width=6, height = 14)  
 
 
