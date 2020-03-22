@@ -173,7 +173,7 @@ ggsave(my.path("syndrome_prop.pdf"), width=6, height = 14)
 
 data = data.all$participants_date
 data = data %>% filter(yw >= min.week)
-days = c('0'='Sunday','1'="Monday",'2'='Tuesday','3'='Wednesday', '4'='Thursday','5'='Friday','6'='Saturday')
+days = c('1'="Monday",'2'='Tuesday','3'='Wednesday', '4'='Thursday','5'='Friday','6'='Saturday','7'='Sunday')
 
 data = data %>% mutate(
   day = 8- ifelse(wday == 0, 7, wday)
