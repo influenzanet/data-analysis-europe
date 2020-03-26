@@ -3,7 +3,7 @@
 #
 
 # Load framework
-source('conf.r')
+source('conf.R')
 
 library(dplyr)
 library(ggplot2)
