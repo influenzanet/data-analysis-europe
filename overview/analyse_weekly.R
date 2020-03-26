@@ -48,9 +48,34 @@ for(country in countries) {
   syndromes = dataset$syndromes
   syndromes = syndromes[ syndromes != "no.symptom"]
   
-  columns = c(symptoms, syndromes)
+  weekly = dataset$weekly
   
-  weekly = dataset$weekly %>% group_by(person_id, onset) %>% summarize_at(columns, sum)
+  # Add .ifn suffix to influenzanet syndrom names
+  nn <- syndromes
+  names(nn) <- paste0(syndromes, ".ifn")
+  weekly = rename(weekly, !!!nn)
+  syndromes = names(nn)
+  
+  sd = SyndromeProviderRS2019$new()
+  ww = sd$compute(weekly = weekly, intake=dataset$intake, use.sudden = FALSE)
+  n = names(ww)
+  i = n != "id"
+  n[i] = paste0(n[i], ".covid")
+  names(ww) <- n
+  
+  weekly = left_join(weekly, data.frame(ww), by="id")
+  
+  syndromes.covid = n[ n != "id"]
+  
+  ww = sd$compute(weekly = weekly, intake=dataset$intake, use.sudden = TRUE)
+  n = names(ww)
+  weekly = left_join(weekly, data.frame(ww), by="id")
+  
+  syndromes.ecdc = n[ n != "id"]
+  
+  columns = c(symptoms, syndromes, syndromes.covid, syndromes.ecdc)
+  
+  weekly = weekly %>% group_by(person_id, onset) %>% summarize_at(columns, sum)
   
   weekly[, columns] = weekly[, columns] > 0
   
@@ -93,6 +118,8 @@ for(country in countries) {
   
   collect_data("symptoms", ww)
 
+  # Influenzanet Syndromes 
+  
   ww = weekly %>% group_by(yw, person_id) %>% summarize_at(syndromes, sum)
   ww[, syndromes] = ww[, syndromes] > 0
   ww$person = 1
@@ -104,6 +131,32 @@ for(country in countries) {
   
   collect_data("syndromes", ww)
 
+  #  Syndromes ECDC
+  ss = syndromes.ecdc
+  ww = weekly %>% group_by(yw, person_id) %>% summarize_at(ss, sum)
+  ww[, ss] = ww[, ss] > 0
+  ww$person = 1
+  ww = ww %>% group_by(yw) %>% summarise_at(c('person', ss), sum)
+  ww = tidyr::pivot_longer(ww, ss)
+  ww$name = factor(ww$name)
+  
+  ww$country = factor(country, countries)
+  
+  collect_data("syndromes.ecdc", ww)
+
+  # Covid Syndromes 
+  ss = syndromes.covid
+  ww = weekly %>% group_by(yw, person_id) %>% summarize_at(ss, sum)
+  ww[, ss] = ww[, ss] > 0
+  ww$person = 1
+  ww = ww %>% group_by(yw) %>% summarise_at(c('person', ss), sum)
+  ww = tidyr::pivot_longer(ww, ss)
+  ww$name = factor(ww$name)
+  
+  ww$country = factor(country, countries)
+  
+  collect_data("syndromes.covid", ww)
+  
   rm(ww)
   rm(weekly)
   
@@ -171,7 +224,38 @@ ggplot(data %>% filter(yw >= min.week), aes(x=monday_of_week(yw), y=name, fill=v
   guides(fill=guide_legend("% of Participants"))
 ggsave(my.path("syndrome_prop.pdf"), width=6, height = 14)  
 
+data = data.all$syndromes.covid
 
+ggplot(data %>% filter(yw >= min.week), aes(x=monday_of_week(yw), y=name, fill=value/person)) +
+  geom_tile() +
+  facet_grid(rows=vars(country)) +
+  scale_fill_viridis_c(direction = -1, option = "A" ) +
+  labs(x="Week", y="Syndromes", title="% of Influenzanet syndromes (without sudden) reported by participants", caption=caption()) +
+  guides(fill=guide_legend("% of Participants"))
+ggsave(my.path("syndrome-covid_prop.pdf"), width=6, height = 14)  
+
+data = data.all$syndromes.ecdc
+
+ggplot(data %>% filter(yw >= min.week), aes(x=monday_of_week(yw), y=name, fill=value/person)) +
+  geom_tile() +
+  facet_grid(rows=vars(country)) +
+  scale_fill_viridis_c(direction = -1, option = "A" ) +
+  labs(x="Week", y="Syndromes", title="% of Influenzanet syndromes (ECDC sets) reported by participants", caption=caption()) +
+  guides(fill=guide_legend("% of Participants"))
+ggsave(my.path("syndrome-ecdc_prop.pdf"), width=6, height = 14)  
+
+d1 = data.all$syndromes.covid
+d1$name = gsub(".covid", "", d1$name, fixed=TRUE)
+d2 = data.all$syndromes.ecdc
+data = bind_rows(covid=d1, ecdc=d2, .id="set")
+
+ggplot(data %>% filter(yw >= min.week), aes(x=monday_of_week(yw), y=value/person, color=set)) +
+  geom_line() +
+  scale_color_discrete(labels=c('ecdc'="With sudden (ECDC)", "covid"="Without sudden")) +
+  facet_grid(rows=vars(country), cols=vars(name), scales="free_y") +
+  labs(x="Week", y="Syndromes", title="% of Influenzanet syndromes (ECDC & without-sudden sets) reported by participants", caption=caption()) +
+  guides(fill=guide_legend("% of Participants"))
+ggsave(my.path("syndrome-covid-ecdc_prop.pdf"), width=14, height = 12)  
 
 data = data.all$participants_date
 data = data %>% filter(yw >= min.week)
