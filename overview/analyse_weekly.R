@@ -6,9 +6,8 @@ source("conf.R")
 library(dplyr)
 
 share.lib("incidence")
-caption = function() {
-  paste(Sys.time(), "Influenzanet 2019, for internal purpose only")
-}
+
+caption = ifn.copyright # get then caption graph 
 
 eu.params = get_eu_incidence_parameters()
 

@@ -7,7 +7,7 @@ add_path_prefix("project","overview")
 dbConnect()
 
 ifn.copyright = function() {
-  paste("Influenzanet.eu -", Sys.time())
+  paste(Sys.time(), "Influenzanet 2019, for internal purpose only")
 }
 
 gg_ifn = function() {
