@@ -40,7 +40,7 @@ build_index = function(dir) {
 }
 
 build_dirs = function(dir) {
-  dirs = list.dirs(dir, full.names = FALSE)
+  dirs = list.dirs(dir, full.names = FALSE, recursive = FALSE)
   dirs = dirs[!grepl("\\.+", dirs)]
   dirs = dirs[dirs != ""]
   dirs = lapply(dirs, function(d) {
@@ -115,7 +115,7 @@ for(f in libs) {
   lib = share_path(file.path("resources/", f))
   target =my.path(f)
   if(!file.exists(target)) {
-    file.link(lib,target)
+    file.symlink(lib, target)
   }  
 }
 
