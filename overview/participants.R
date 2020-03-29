@@ -79,7 +79,7 @@ ggplot(total, aes(x=date, y=n, fill=country)) +
   geom_bar(stat="identity", position="stack") + 
   facet_grid(rows="country", scales = "free_y") +
   labs(title="Count intake by date (first of each participant)", y="Count") + gg_ifn()
-ggsave(my.path("intake_count_date_country.pdf"), width=8, height=12)
+ggsave(out_path("intake_count_date_country.pdf", plot=TRUE), width=8, height=12)
 
 ggplot(data, aes(x=date, y=n, fill=previous)) + 
   geom_bar(stat="identity", position="stack") + 
@@ -87,14 +87,14 @@ ggplot(data, aes(x=date, y=n, fill=previous)) +
   guides(fill=guide_legend("In previous seasons")) +
   facet_grid(rows="country", scales = "free_y") +
   labs(title="Count intake by date (first of each participant) and previous participation", y="Count") + gg_ifn()
-ggsave(my.path("intake_count_date_previous_country.pdf"), width=8, height=12)
+ggsave(out_path("intake_count_date_previous_country.pdf", plot=TRUE), width=8, height=12)
 
 total = total %>% group_by(country) %>% arrange(date) %>% mutate(cum=cumsum(n))
 ggplot(total, aes(x=date, y=cum, fill=country)) + 
   geom_bar(stat="identity", position="stack") + 
   facet_grid(rows="country", scales = "free_y") +
   labs(title="Cumulated count of intakes by date (first of each participant)", y="Count") + gg_ifn()
-ggsave(my.path("intake_cumulated_date_country.pdf"), width=8, height=12)
+ggsave(out_path("intake_cumulated_date_country.pdf", plot=TRUE), width=8, height=12)
 
 data = data %>% group_by(country) %>% arrange(date) %>% mutate(cum=cumsum(n))
 ggplot(data, aes(x=date, y=cum, fill=previous)) + 
@@ -103,7 +103,7 @@ ggplot(data, aes(x=date, y=cum, fill=previous)) +
   guides(fill=guide_legend("In previous seasons")) +
   facet_grid(rows="country", scales = "free_y") +
   labs(title="Count intake by date (first of each participant) and previous participation", y="Count") + gg_ifn()
-ggsave(my.path("intake_cumulated_date_previous_country.pdf"), width=8, height=12)
+ggsave(out_path("intake_cumulated_date_previous_country.pdf", plot=TRUE), width=8, height=12)
 
 data = data.all$weekly
 
@@ -112,12 +112,12 @@ ggplot(total, aes(x=date, y=n, fill=country)) +
   geom_bar(stat="identity", position="stack") + 
   facet_grid(rows="country", scales = "free_y") +
   labs(title="Count of participants with weekly by date", y="Count") + gg_ifn()
-ggsave(my.path("weekly_count_date_country.pdf"), width=8, height=12)
+ggsave(out_path("weekly_count_date_country.pdf", plot=TRUE), width=8, height=12)
 
 data = data.all$weekly.week
 ggplot(data, aes(x=monday_of_week(yw), y=n, fill=country)) + 
   geom_bar(stat="identity", position="stack") + 
   facet_grid(rows="country", scales = "free_y") +
   labs(title="Count of participants with weekly by calendar week", y="Count") + gg_ifn()
-ggsave(my.path("weekly_count_week_country.pdf"), width=8, height=12)
+ggsave(out_path("weekly_count_week_country.pdf", plot=TRUE), width=8, height=12)
 

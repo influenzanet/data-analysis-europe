@@ -201,7 +201,7 @@ ggplot(data %>% filter(yw >= min.week), aes(x=monday_of_week(yw), y=mean, group=
   geom_line() +
   facet_grid(rows=vars(country), scales="free_y") +
   labs(title="Symptom ratio from (Rossman H et al.), 2019")
-ggsave(my.path("symptom_ratio.pdf"), width=12, height = 8)  
+ggsave(out_path("symptom_ratio.pdf", plot=TRUE), width=12, height = 8)  
 
 data = data.all$symptoms
 
@@ -211,7 +211,7 @@ ggplot(data %>% filter(yw >= min.week), aes(x=monday_of_week(yw), y=name, fill=v
   scale_fill_viridis_c(direction = -1, option = "A" ) +
   labs(x="Week", y="Symptom", title="% of symptom reported by participants", caption=caption()) +
   guides(fill=guide_legend("% of Participants"))
-ggsave(my.path("symptom_prop.pdf"), width=6, height = 14)  
+ggsave(out_path("symptom_prop.pdf", plot=TRUE), width=6, height = 14)  
 
 data = data.all$syndromes
 
@@ -219,9 +219,9 @@ ggplot(data %>% filter(yw >= min.week), aes(x=monday_of_week(yw), y=name, fill=v
   geom_tile() +
   facet_grid(rows=vars(country)) +
   scale_fill_viridis_c(direction = -1, option = "A" ) +
-  labs(x="Week", y="Syndromes", title="% of Influenzanet syndromes reported by participants", caption=caption()) +
+  labs(x="Week", y="Syndromes", title="% of syndromes reported by participants, Influenzanet syndromes set, by week", caption=caption()) +
   guides(fill=guide_legend("% of Participants"))
-ggsave(my.path("syndrome_prop.pdf"), width=6, height = 14)  
+ggsave(out_path("syndrome_prop.pdf", plot=TRUE), width=6, height = 14)  
 
 data = data.all$syndromes.covid
 
@@ -231,7 +231,7 @@ ggplot(data %>% filter(yw >= min.week), aes(x=monday_of_week(yw), y=name, fill=v
   scale_fill_viridis_c(direction = -1, option = "A" ) +
   labs(x="Week", y="Syndromes", title="% of Influenzanet syndromes (without sudden) reported by participants", caption=caption()) +
   guides(fill=guide_legend("% of Participants"))
-ggsave(my.path("syndrome-covid_prop.pdf"), width=6, height = 14)  
+ggsave(out_path("syndrome-covid_prop.pdf", plot=TRUE), width=6, height = 14)  
 
 data = data.all$syndromes.ecdc
 
@@ -239,9 +239,9 @@ ggplot(data %>% filter(yw >= min.week), aes(x=monday_of_week(yw), y=name, fill=v
   geom_tile() +
   facet_grid(rows=vars(country)) +
   scale_fill_viridis_c(direction = -1, option = "A" ) +
-  labs(x="Week", y="Syndromes", title="% of Influenzanet syndromes (ECDC sets) reported by participants", caption=caption()) +
+  labs(x="Week", y="Syndromes", title="% of Influenzanet syndromes reported by participants, ECDC syndromes set", caption=caption()) +
   guides(fill=guide_legend("% of Participants"))
-ggsave(my.path("syndrome-ecdc_prop.pdf"), width=6, height = 14)  
+ggsave(out_path("syndrome-ecdc_prop.pdf", plot=TRUE), width=6, height = 14)  
 
 d1 = data.all$syndromes.covid
 d1$name = gsub(".covid", "", d1$name, fixed=TRUE)
@@ -254,7 +254,7 @@ ggplot(data %>% filter(yw >= min.week), aes(x=monday_of_week(yw), y=value/person
   facet_grid(rows=vars(country), cols=vars(name), scales="free_y") +
   labs(x="Week", y="Syndromes", title="% of Influenzanet syndromes (ECDC & without-sudden sets) reported by participants", caption=caption()) +
   guides(fill=guide_legend("% of Participants"))
-ggsave(my.path("syndrome-covid-ecdc_prop.pdf"), width=14, height = 12)  
+ggsave(out_path("syndrome-covid-ecdc_prop.pdf", plot=TRUE), width=14, height = 12)  
 
 data = data.all$participants_date
 data = data %>% filter(yw >= min.week)
@@ -271,7 +271,7 @@ ggplot(data, aes(x=monday_of_week(yw), y=factor(wday), fill=n_person/total_perso
   scale_fill_viridis_c(direction = -1, option = "A" ) +
   labs(x="Week", y="Day of week", title="% of person by week and weekday, by date of first report of the week", caption=caption()) +
   guides(fill=guide_legend("% of Participants"))
-ggsave(my.path("week_participant_prop.pdf"), width=6, height = 14)  
+ggsave(out_path("week_participant_prop.pdf", plot=TRUE), width=6, height = 14)  
 
 ggplot(data, aes(x=monday_of_week(yw), y=factor(day), fill=n_survey/total_survey)) +
   geom_tile() +
@@ -280,6 +280,6 @@ ggplot(data, aes(x=monday_of_week(yw), y=factor(day), fill=n_survey/total_survey
   scale_fill_viridis_c(direction = -1, option = "A" ) +
   labs(x="Week", y="Day of week", title="% of surveys by week and weekday, by date of first report of the week", caption=caption()) +
   guides(fill=guide_legend("% of Participants"))
-ggsave(my.path("week_survey_prop.pdf"), width=6, height = 14)  
+ggsave(out_path("week_survey_prop.pdf", plot=TRUE), width=6, height = 14)  
 
 
