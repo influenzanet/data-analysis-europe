@@ -30,9 +30,11 @@ build_index = function(dir) {
     }
     withTags(
       li(class="list-group-item graph",
-        a(href=target, target),
-        span(class="badge badge-light", format(info$mtime, "%Y-%m-%d %T")),
-        if(!is.null(desc)) small(desc, class="")
+        p(
+          a(href=target, target),
+          span(class="badge badge-light", format(info$mtime, "%Y-%m-%d %T")),
+          if(!is.null(desc)) small(desc, class="")
+        )
       )
     )
   })

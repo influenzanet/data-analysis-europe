@@ -166,15 +166,22 @@ function handle_resize() {
   var $e = $(this);
   var size = {};
   var state = $e.data('state');
+  var type = $e.data('type');
   if(state) {
     size = $e.data('org');
   } else {
-    var $c = $e.find('canvas');
-    size = {'w': $c.attr('width'), 'h': $c.attr('height')};
+    if(type == "pdf") {
+      var $c = $e.find('canvas');
+      size = {'w': $c.attr('width'), 'h': $c.attr('height')};
+    } else {
+      var $c = $e.find('img');
+      size = {'w': $c.prop('naturalWidth'), 'h': $c.prop('naturalHeight') };
+    }
   }
   if(size) {
     $e.width(size.w);
     $e.height(size.h);
+    $e.css({'max-width': size.w, 'max-height': size.h});
     state = !state;
     $e.data('state', state);    
   }
@@ -185,16 +192,27 @@ function load_graphs() {
     var $a = $(this);
     var href = $a.attr('href');
     var $g = $a.parents('.graph');
+    $d = false;
     if(href.endsWith('.pdf')) {
-      $d = $('<figure style="width:200px;height:200px" class="b-1 border-light float-left figure" />');
+      $d = $('<figure style="width:200px;height:200px;max-width:200px;max-height:200px" class="b-1 border-light float-left figure" />');
+      $d.data('type','pdf');
       $d.data('org', {'w': '200px', 'h':'200px'});
       $d.on('click', handle_resize);
-      $g.prepend($d);
       pdf.load($d[0], href).then(function() {
         var $c = $d.find('canvas');
         var s = {'w': $c.attr('width'), 'h': $c.attr('height')};
         $d.data("open", s);
       });
     }
+    if(href.endsWith('.png') || href.endsWith('.svg')) {
+      $d = $('<figure style="width:200px;height:200px" class="b-1 border-light float-left figure" />');
+      $d.data('type','img');
+      $d.data('org', {'w': '200px', 'h':'200px'});
+      $d.append('<img src="'+href+'"/>');
+      $d.on('click', handle_resize);
+    }
+    if($d) {
+      $g.append($d);
+    }  
   });
 }
