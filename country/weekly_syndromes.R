@@ -95,7 +95,7 @@ if(nrow(data) > 0) {
       geom_line() +
       scale_color_discrete(labels=c('ecdc'=i18n("with_sudden"), "covid"=i18n("without_sudden"))) +
       facet_grid(rows=vars(country), cols=vars(name), scales="free_y") +
-      labs(x=titlelize("week"), y=titlelize("syndrome"), title=i18n("syndrom_ecdc_covid_reported_by_part"), caption=caption()) +
+      labs(x=titlelize("week"), y=titlelize("syndrome"), title=i18n("syndrom_ecdc_covid_reported_by_part"), caption=caption) +
       guides(fill=guide_legend(i18n('percentage_of_participants')))
     g_save("syndrome-covid-ecdc_prop", plot=TRUE, width=14, height = 12)  
   }
