@@ -54,7 +54,7 @@ if(nrow(data) > 0) {
     scale_fill_viridis_c(direction = -1, option = "A" ) +
     labs(x=titlelize("week"), y=titlelize("symptom"), title=i18n('symptom_reported_by_part'), caption=caption) +
     guides(fill=guide_legend(i18n('percentage_of_participants')))
-  g_save("symptom_prop", plot=TRUE, width=6, height = 6)  
+  g_save("symptom_prop", plot=TRUE, width=7, height = 6)  
 }
 
 data = data.all$syndromes
@@ -65,7 +65,7 @@ if(nrow(data) > 0) {
     scale_fill_viridis_c(direction = -1, option = "A" ) +
     labs(x=titlelize("week"), y=titlelize("syndrome"), title=i18n("syndrom_ifn_reported_by_part"), caption=caption) +
     guides(fill=guide_legend(i18n('percentage_of_participants')))
-  g_save("syndrome_prop", plot=TRUE, width=6, height = 14)  
+  g_save("syndrome_prop", plot=TRUE, width=7, height = 6)  
 }
 
 data = data.all$syndromes.covid
@@ -75,7 +75,7 @@ if(nrow(data) > 0) {
   scale_fill_viridis_c(direction = -1, option = "A" ) +
   labs(x=titlelize("week"), y=titlelize("syndrome"), title=i18n("syndrom_ifn_reported_by_part"), caption=caption) +
   guides(fill=guide_legend(i18n('percentage_of_participants')))
-  g_save("syndrome-covid_prop", plot=TRUE, width=6, height = 14)  
+  g_save("syndrome-covid_prop", plot=TRUE, width=7, height = 6)  
 }
 
 data = data.all$syndromes.ecdc
@@ -85,7 +85,7 @@ if(nrow(data) > 0) {
     scale_fill_viridis_c(direction = -1, option = "A" ) +
     labs(x=titlelize("week"), y=titlelize("syndrome"), title=i18n("syndrom_ecdc_reported_by_part"), caption=caption) +
     guides(fill=guide_legend(i18n('percentage_of_participants')))
-  g_save("syndrome-ecdc_prop", plot=TRUE, width=6, height = 14)  
+  g_save("syndrome-ecdc_prop", plot=TRUE, width=7, height = 6)  
 
   d1 = data.all$syndromes.covid %>% mutate(name=gsub(".covid", "", name, fixed=TRUE))
   data = bind_rows(covid=d1, ecdc=data, .id="set")
@@ -97,7 +97,7 @@ if(nrow(data) > 0) {
       facet_grid(rows=vars(country), cols=vars(name), scales="free_y") +
       labs(x=titlelize("week"), y=titlelize("syndrome"), title=i18n("syndrom_ecdc_covid_reported_by_part"), caption=caption) +
       guides(fill=guide_legend(i18n('percentage_of_participants')))
-    g_save("syndrome-covid-ecdc_prop", plot=TRUE, width=14, height = 12)  
+    g_save("syndrome-covid-ecdc_prop", plot=TRUE, width=10, height = 6)  
   }
 
 }
@@ -121,6 +121,6 @@ if(nrow(data) > 0) {
     scale_fill_viridis_c(direction = -1, option = "A" ) +
     labs(x=titlelize("week"), y=titlelize("week"), title=i18n("participant_week_by_weekday"), caption=caption) +
     guides(fill=guide_legend(i18n('percentage_of_participants')))
-  g_save("week_participant_prop", plot=TRUE, width=6, height = 14)  
+  g_save("week_participant_prop", plot=TRUE, width=7, height = 6)  
   
 }
