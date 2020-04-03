@@ -21,7 +21,63 @@ platform_define_survey(
   survey_id=NULL,
   table = "epidb_results_weekly",
   mapping=list(
-    country="country"
+    country="country",
+    "loss.smell"=variable_available("Q1_20", rlang::quo(season >= 2019)),
+    "loss.taste"=variable_available("Q1_21", rlang::quo(season >= 2019)),
+    "nose.bleed"=variable_available("Q1_22", rlang::quo(season >= 2019)),
+    
+    # covid-19
+    "travel"="Qcov1",
+    "travel.country1"=variable_available("Qcov1b_multi_row1_col1", rlang::quo(season >= 2019)),
+    "travel.country2"=variable_available("Qcov1b_multi_row2_col1", rlang::quo(season >= 2019)),
+    "travel.country3"=variable_available("Qcov1b_multi_row3_col1", rlang::quo(season >= 2019)),
+    
+    "contactperson.foreign"=variable_available("Qcov2", rlang::quo(season >= 2019)),
+    "contactperson.foreign.country1"=variable_available("Qcov2b_multi_row1_col1", rlang::quo(season >= 2019)),
+    "contactperson.foreign.country2"=variable_available("Qcov2b_multi_row2_col1", rlang::quo(season >= 2019)),
+    "contactperson.foreign.country3"=variable_available("Qcov2b_multi_row3_col1", rlang::quo(season >= 2019)),
+    
+    "contactperson.covid.confirm"=variable_available("Qcov3", rlang::quo(season >= 2019)),
+    "contactperson.covid.confirm.house"=variable_available("Qcov3b", rlang::quo(season >= 2019)),
+    "contactperson.covid.sympt"=variable_available("Qcov8", rlang::quo(season >= 2019)),
+    "contactperson.covid.sympt.house"=variable_available("Qcov8b", rlang::quo(season >= 2019)),
+    
+    "call.tel.covid"=variable_available("Qcov4", rlang::quo(season >= 2019)),
+    "call.tel.emergency"=variable_available("Qcov5", rlang::quo(season >= 2019)),
+    
+    "wear.mask"=variable_available("Qcov6", rlang::quo(season >= 2019)),
+    
+    "measure.wash.hands"=variable_available("Qcov7_1", rlang::quo(season >= 2019)),
+    "measure.cough.elbow"=variable_available("Qcov7_2", rlang::quo(season >= 2019)),
+    "measure.use.tissue"=variable_available("Qcov7_3", rlang::quo(season >= 2019)),
+    "measure.wear.mask"=variable_available("Qcov7_4", rlang::quo(season >= 2019)),
+    "measure.avoid.shakehands"=variable_available("Qcov7_5", rlang::quo(season >= 2019)),
+    "measure.limit.transp"=variable_available("Qcov7_6", rlang::quo(season >= 2019)),
+    "measure.avoid.gatherings"=variable_available("Qcov7_7", rlang::quo(season >= 2019)),
+    "measure.stay.home"=variable_available("Qcov7_8", rlang::quo(season >= 2019)),
+    "measure.work.home"=variable_available("Qcov7_9", rlang::quo(season >= 2019)),
+    "measure.avoid.travel"=variable_available("Qcov7_10", rlang::quo(season >= 2019)),
+    "measure.stop.hug.kiss"=variable_available("Qcov7_11", rlang::quo(season >= 2019)),
+    "measure.avoid.none"=variable_available("Qcov7_12", rlang::quo(season >= 2019)),
+    "measure.food.delivered"=variable_available("Qcov7_13", rlang::quo(season >= 2019)),
+    "measure.avoid.friend.family"=variable_available("Qcov7_14", rlang::quo(season >= 2019)),
+    "measure.avoid.elderly.risk"=variable_available("Qcov7_15", rlang::quo(season >= 2019)),
+    "measure.avoid.children"=variable_available("Qcov7_16", rlang::quo(season >= 2019))
+  ),
+  labels=list(
+    "sympt.cause" = list(
+      "cause.ili" = "0",
+      "cause.cold" = "1",
+      "cause.allergy" = "2",
+      "cause.gastro" = "3",
+      "cause.other" = "4",
+      "cause.dkn" = "5",
+      "cause.asthma" = "6",
+      "cause.ili.doctor" = "7",
+      "cause.other.doctor" = "8",
+      "cause.covid" = "9"
+    ),
+    symptoms.extra = c("loss.smell", "loss.taste", "nose.bleed")
   ),
   template = "eu:weekly"
 )
