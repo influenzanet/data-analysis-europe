@@ -2,7 +2,7 @@
 source("../system.R")
 
 library(htmltools)
-
+library(rlang)
 # base_analysis_url defined in location.R
 base_url = function(u) {
   paste0(base_analysis_url, u)
@@ -124,7 +124,11 @@ for(f in libs) {
 dirs = list.dirs(my.path(), recursive = TRUE, full.names = TRUE)
 for(dir in dirs) {
   cat(dir,"\n")
-  build_page(dir)
+  r = try(rlang::with_abort((build_page(dir))))
+  if(is_try_error(r)) {
+    cat("Error during page build")
+    print(r)
+  }
 }
 
 
