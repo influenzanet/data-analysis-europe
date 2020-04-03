@@ -1,5 +1,6 @@
 ##
 # Analyse weekly data for a given season
+# Country based analyses are stored in the country specific output directory
 ##
 
 source("conf.R")
@@ -188,12 +189,18 @@ for(country in countries) {
   ww$country = factor(country, countries)
   collect_data("participants_date", ww)
 
-  
 }
+
+saveRDS(data.all, file=my.path("weekly_syndromes.Rds"))
 
 library(ggplot2)
 
-min.week = 201952
+# Graph save shortcut
+g_save = function(...,  desc=NULL, plot=FALSE, width=12, height = 8) {
+  ggsave(out_path(..., ".pdf", plot=plot, desc=desc), width=width, height = height)  
+}
+
+min.week = season * 100 + 51
 
 data = data.all$rossman
 
@@ -201,7 +208,7 @@ ggplot(data %>% filter(yw >= min.week), aes(x=monday_of_week(yw), y=mean, group=
   geom_line() +
   facet_grid(rows=vars(country), scales="free_y") +
   labs(title="Symptom ratio from (Rossman H et al.), 2019")
-ggsave(out_path("symptom_ratio.pdf", plot=TRUE), width=12, height = 8)  
+g_save("symptom_ratio", plot=TRUE, width=12, height = 8)  
 
 data = data.all$symptoms
 
@@ -211,7 +218,9 @@ ggplot(data %>% filter(yw >= min.week), aes(x=monday_of_week(yw), y=name, fill=v
   scale_fill_viridis_c(direction = -1, option = "A" ) +
   labs(x="Week", y="Symptom", title="% of symptom reported by participants", caption=caption()) +
   guides(fill=guide_legend("% of Participants"))
-ggsave(out_path("symptom_prop.pdf", plot=TRUE), width=6, height = 14)  
+g_save("symptom_prop", plot=TRUE, width=6, height = 14)  
+
+
 
 data = data.all$syndromes
 
@@ -258,20 +267,11 @@ ggsave(out_path("syndrome-covid-ecdc_prop.pdf", plot=TRUE), width=14, height = 1
 
 data = data.all$participants_date
 data = data %>% filter(yw >= min.week)
-days = c('1'="Monday",'2'='Tuesday','3'='Wednesday', '4'='Thursday','5'='Friday','6'='Saturday','7'='Sunday')
+days = c('7'="Monday",'6'='Tuesday','5'='Wednesday', '4'='Thursday','3'='Friday','2'='Saturday','1'='Sunday')
 
 data = data %>% mutate(
-  day = 8- ifelse(wday == 0, 7, wday)
+  day =  8 - ifelse(wday == 0, 7, wday)
 )
-
-ggplot(data, aes(x=monday_of_week(yw), y=factor(wday), fill=n_person/total_person)) +
-  geom_tile() +
-  facet_grid(rows=vars(country)) +
-  scale_y_discrete(labels=days) +
-  scale_fill_viridis_c(direction = -1, option = "A" ) +
-  labs(x="Week", y="Day of week", title="% of person by week and weekday, by date of first report of the week", caption=caption()) +
-  guides(fill=guide_legend("% of Participants"))
-ggsave(out_path("week_participant_prop.pdf", plot=TRUE), width=6, height = 14)  
 
 ggplot(data, aes(x=monday_of_week(yw), y=factor(day), fill=n_survey/total_survey)) +
   geom_tile() +
