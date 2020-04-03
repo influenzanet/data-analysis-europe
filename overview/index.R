@@ -33,7 +33,7 @@ build_index = function(dir) {
         p(
           a(href=target, target),
           span(class="badge badge-light", format(info$mtime, "%Y-%m-%d %T")),
-          if(!is.null(desc)) small(desc, class="")
+          if(!is.null(desc)) small(desc)
         )
       )
     )
