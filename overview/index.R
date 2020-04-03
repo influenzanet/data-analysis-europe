@@ -29,16 +29,23 @@ build_index = function(dir) {
       desc = d$desc
     }
     withTags(
-      li(class="list-group-item graph",
-        p(
-          a(href=target, target),
-          span(class="badge badge-light", format(info$mtime, "%Y-%m-%d %T")),
-          if(!is.null(desc)) small(desc)
-        )
+      div(class="card graph mb-3", style="width:100%",
+        div(class="row no-gutter",
+          div(class="col-md-6",
+            figure()    
+          ),
+          div(class="col-md-6",
+            div(class="card-body",
+              h5(class="card-title", a(href=target, target)),
+              p(class="card-text", span(class="text-muted", format(info$mtime, "%Y-%m-%d %T"))),
+              if(!is.null(desc)) p(class="card-text", small(desc))
+            )
+          ) # Col
+        ) # Row
       )
     )
   })
-  tags$ul(class="list-group graph-index", tagList(files))
+  tags$div(class="graph-index", tagList(files))
 }
 
 build_dirs = function(dir) {

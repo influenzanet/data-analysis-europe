@@ -162,6 +162,9 @@ $(function() {
   pdf.start().then(load_graphs);
 });
 
+const width = 540;
+const height = 400;
+
 function handle_resize() {
   var $e = $(this);
   var size = {};
@@ -192,11 +195,14 @@ function load_graphs() {
     var $a = $(this);
     var href = $a.attr('href');
     var $g = $a.parents('.graph');
-    $d = false;
+    $d = $g.find('figure');
+    var found = false;
+    const  thumb = {'w': width+'px', 'h': height+'px'};
+    
     if(href.endsWith('.pdf')) {
-      $d = $('<figure style="width:200px;height:200px;max-width:200px;max-height:200px" class="b-1 border-light float-left figure" />');
+     found = true;
       $d.data('type','pdf');
-      $d.data('org', {'w': '200px', 'h':'200px'});
+      $d.data('org', thumb);
       $d.on('click', handle_resize);
       pdf.load($d[0], href).then(function() {
         var $c = $d.find('canvas');
@@ -205,14 +211,16 @@ function load_graphs() {
       });
     }
     if(href.endsWith('.png') || href.endsWith('.svg')) {
-      $d = $('<figure style="width:200px;height:200px" class="b-1 border-light float-left figure" />');
+      found = true;
       $d.data('type','img');
-      $d.data('org', {'w': '200px', 'h':'200px'});
-      $d.append('<img src="'+href+'"/>');
+      $d.data('org', thumb);
+      $d.append('<img src="'+href+'" />');
       $d.on('click', handle_resize);
     }
-    if($d) {
-      $g.append($d);
-    }  
+    if(found) {
+      $d.addClass('b-1 border-light float-left figure');
+      var css = {'width': width+'px','height': height+'px','max-width':width+'px','max-height':height+'px', 'overflow': 'auto'};
+      $d.css(css);
+    }
   });
 }
