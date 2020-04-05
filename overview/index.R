@@ -28,6 +28,7 @@ build_index = function(dir) {
     if(!is.null(d)) {
       desc = d$desc
     }
+    flat <- function(...) paste(..., collapse = " ")
     withTags(
       div(class="card graph mb-3", style="width:100%",
         div(class="row no-gutter",
@@ -38,7 +39,7 @@ build_index = function(dir) {
             div(class="card-body",
               h5(class="card-title", a(href=target, target)),
               p(class="card-text", span(class="text-muted", format(info$mtime, "%Y-%m-%d %T"))),
-              if(!is.null(desc)) p(class="card-text", small(desc))
+              if(!is.null(desc)) p(class="card-text", small(flat(desc)))
             )
           ) # Col
         ) # Row
