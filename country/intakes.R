@@ -15,7 +15,7 @@ if(!exists("cli.args")) {
 country = cli.args$country
 season = cli.args$season
 
-init.path(paste0("country/", country, "/", season))
+init.path(paste0(country, "/", season))
 
 i18n_load("i18n/", language = tolower(country))
 
