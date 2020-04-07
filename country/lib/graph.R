@@ -1,5 +1,20 @@
 library(ggplot2)
 
+# Register outputs
+.outputs = new.env(parent = emptyenv())
+
+# List of graphs in output
+.outputs$graphs = list()
+
+out_graph = function(file) {
+  .outputs$graphs[length(.outputs$graphs)+1] = basename(file)
+}
+
+save_outputs = function() {
+  g = unlist(.outputs$graphs)
+  writeLines(g, my.path('graphs.lst'))
+}
+
 g_title = function(...) {
   labs(..., caption=sub.text)
 }
@@ -12,10 +27,12 @@ g_save = function(file, width, height=NA, r=1.618) {
   if( is.na(height) ) {
     height = width / r
   }
-  ggsave(paste0(file, '.png'), width = width, height = height, dpi=110)
-  f = tempfile(fileext = "svg")
+  f = paste0(file, '.png')
+  ggsave(f, width = width, height = height, dpi=110)
+  out_graph(f)
+  f = paste0(file, '.svg')
   ggsave(f, device="svg", width = width, height = height)
-
+  out_graph(f)
 }
 
 simple_plot = function(column, trans=NULL, width, title, file=NULL, h=NA, data=intake, no.empty=FALSE, subtitle=NULL, ...) {

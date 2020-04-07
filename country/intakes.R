@@ -15,7 +15,7 @@ if(!exists("cli.args")) {
 country = cli.args$country
 season = cli.args$season
 
-init.path(paste0("country/", country, "/", season))
+init.path(paste0(country, "/", season))
 
 i18n_load("i18n/", language = tolower(country))
 
@@ -126,3 +126,6 @@ simple_plot('smoker',  width=7, title='graph_smoker', no.empty = TRUE)
 simple_plot(allergy.columns, title="graph_allergy", width=6.8, file="allergy")
 
 simple_plot(pets.columns, title="graph_pets", width=6.8, file="pets")
+
+# Save graph list
+save_outputs()

@@ -34,7 +34,7 @@ echo "Cleaning up database $DB_TARGET"
 $PGSQL < $SQL_DIR/import/cleanup_db.sql
 
 echo "Restoring Database"
-pg_restore $DB_CNX  -Fc -a -x -O -d $DB_TARGET $DUMPFILE
+pg_restore $DB_CNX  -Fc -x -c -O -d $DB_TARGET $DUMPFILE
 
 echo "Running post import scripts"
 

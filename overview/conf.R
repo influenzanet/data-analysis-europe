@@ -7,7 +7,7 @@ add_path_prefix("project","overview")
 dbConnect()
 
 ifn.copyright = function() {
-  paste("Influenzanet.eu -", Sys.time())
+  paste(Sys.time(), "Influenzanet 2019, for internal purpose only")
 }
 
 gg_ifn = function() {
@@ -17,3 +17,11 @@ gg_ifn = function() {
 sub.text = function(cex.sub=.6) {
  title(sub=ifn.copyright, cex.sub=cex.sub)
 }
+
+# Create description file alongside with the output
+out_path = function(..., desc=NULL, plot=FALSE) {
+  path = my.path(...)
+  desc_output(path, desc=desc, plot=plot)
+  return(path)
+}
+

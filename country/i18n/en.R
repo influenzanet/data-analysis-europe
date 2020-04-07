@@ -24,6 +24,26 @@ graph_smoker = "Smoking status"
 graph_allergy = "Allergies"
 graph_pets= "Pets"
 
+# Weekly
+syndrome = "syndrome"
+week = "Week"
+symptom_reported_by_part = "% of symptom reported by participants"
+syndrom_ifn_reported_by_part="% of syndromes reported by participants by week, Influenzanet syndromes set"
+syndrom_ecdc_reported_by_part="% of syndromes reported by participants by week, ECDC syndromes set"
+syndrom_ecdc_covid_reported_by_part="% of Influenzanet syndromes (ECDC & without-sudden sets) reported by participants"
+participant_week_by_weekday="% of person by week and weekday, by date of first report of the week"
+with_sudden="With sudden (ECDC)"
+without_sudden="Without sudden"
+percentage_of_participants = "% of Participants"
+
+monday    = "Monday"
+tuesday   = 'Tuesday'
+wednesday = "Wednesday"
+thursday  = 'Thursday'
+friday    = 'Friday'
+Saturday  = 'Saturday'
+sunday    = 'Sunday'
+
 # Surveys data
 male = 'male'
 female = 'female'
