@@ -7,7 +7,7 @@ source("conf.R")
 
 library(dplyr)
 library(gridExtra)
-library(cowplot)
+suppressPackageStartupMessages(library(cowplot))
 
 share.lib("incidence")
 share.lib('upset')
@@ -46,7 +46,7 @@ syndrome.from = list(health.status=TRUE)
 onset = episode_onset_design()
 symptoms = get_symptoms_columns(season)
 
-symptoms.mask = create_binay_mask(symptoms)
+symptoms.mask = create_binary_mask(symptoms)
 
 for(country in countries) {
   
