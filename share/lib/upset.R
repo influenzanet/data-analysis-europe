@@ -1,13 +1,13 @@
 
 # Symptoms grouped by topics
 symptoms.groups = list(
-  other=("sympt.other")
+  other=("sympt.other"),
   sensorial=c("loss.smell", "loss.taste", "nose.bleed"), 
   abdo=c("nausea", "vomiting", "diarrhea", "abdopain"),
   upper=c("rhino", "sneeze", "sorethroat", "wateryeye"),
   lower=c("cough", "dyspnea", "sputum", "chestpain"),
   fever=c("fever", "chills","pain", "headache"),
-  weakness=c("asthenia", "anorexia"),
+  weakness=c("asthenia", "anorexia")
 )
 
 
