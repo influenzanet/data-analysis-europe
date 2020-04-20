@@ -381,7 +381,7 @@ g_save("week_survey_prop.pdf", plot=TRUE, width=6, height = 14)
 data = data.all$symptom_groups
 
 overall = data %>% filter(yw >= short.term) %>% group_by(g) %>% summarize(count=sum(n_person))
-overall = get_binary_labels(overall, mask=symptoms.mask, group = "g")
+overall = get_labels_from_binary(overall, mask=symptoms.mask, group = "g")
 
 upset_plot(overall, symptoms, n.max=120, title=paste0("Symptom associations for the last ", short.term.size, " weeks"), caption=caption())
 g_save("symptom_upset_shortterm", plot=TRUE, width=14, height = 6)  
