@@ -14,6 +14,8 @@ platform_define_survey(
  geo.column="Q3"
 )
 
+# 
+recode.y1_n0_dkn2 = list("Yes" = 1, "No" = 0, "DNK" = 2)
 
 platform_define_survey(
  "weekly",
@@ -22,7 +24,7 @@ platform_define_survey(
   table = "epidb_results_weekly",
   mapping=list(
     country="country",
-    "loss.smell"=variable_available("Q1_20", rlang::quo(season >= 2019)),
+    "loss.smell"=variable_available("Q1_23", rlang::quo(season >= 2019)),
     "loss.taste"=variable_available("Q1_21", rlang::quo(season >= 2019)),
     "nose.bleed"=variable_available("Q1_22", rlang::quo(season >= 2019)),
     
@@ -62,7 +64,43 @@ platform_define_survey(
     "measure.food.delivered"=variable_available("Qcov7_13", rlang::quo(season >= 2019)),
     "measure.avoid.friend.family"=variable_available("Qcov7_14", rlang::quo(season >= 2019)),
     "measure.avoid.elderly.risk"=variable_available("Qcov7_15", rlang::quo(season >= 2019)),
-    "measure.avoid.children"=variable_available("Qcov7_16", rlang::quo(season >= 2019))
+    "measure.avoid.children"=variable_available("Qcov7_16", rlang::quo(season >= 2019)),
+    
+    "reason.covid.doctor"=variable_available("Qcov9_1", rlang::quo(season >= 2019)),
+    "reason.covid.confirm"=variable_available("Qcov9_2", rlang::quo(season >= 2019)),
+    "reason.covid.contact.confirm"=variable_available("Qcov9_3", rlang::quo(season >= 2019)),
+    "reason.covid.contact.diagnos"=variable_available("Qcov9_4", rlang::quo(season >= 2019)),
+    "reason.covid.contact.sympt"=variable_available("Qcov9_5", rlang::quo(season >= 2019)),
+    "reason.covid.event.confirm"=variable_available("Qcov9_6", rlang::quo(season >= 2019)),
+    "reason.covid.think"=variable_available("Qcov9_7", rlang::quo(season >= 2019)),
+    
+    "inform.contact.covid"=variable_available("Qcov9b", rlang::quo(season >= 2019)),
+    
+    "confin.work.home"=variable_available("Qcov10_1", rlang::quo(season >= 2019)),
+    "confin.work.outside"=variable_available("Qcov10_2", rlang::quo(season >= 2019)),
+    "confin.work.absence.child"=variable_available("Qcov10_3", rlang::quo(season >= 2019)),
+    "confin.work.absence.sick"=variable_available("Qcov10_4", rlang::quo(season >= 2019)),
+    "confin.work.other"=variable_available("Qcov10_5", rlang::quo(season >= 2019)),
+    
+    "confin.work.outside.ndays"=variable_available("Qcov10b", rlang::quo(season >= 2019)),
+    
+    "confin.shopping"=variable_available("Qcov11", rlang::quo(season >= 2019)),
+    
+    "confin.exercice"=variable_available("Qcov12", rlang::quo(season >= 2019)),
+    
+    "confin.contact.close"=variable_available("Qcov13", rlang::quo(season >= 2019)),
+    
+    "confinstop.work.home"=variable_available("Qcov14_1", rlang::quo(season >= 2019)),
+    "confinstop.work.outside"=variable_available("Qcov14_2", rlang::quo(season >= 2019)),
+    "confinstop.work.absence.child"=variable_available( "Qcov14_3", rlang::quo(season >= 2019)),
+    "confinstop.work.absence.sick"=variable_available("Qcov14_4", rlang::quo(season >= 2019)),
+    "confinstop.work.other"=variable_available("Qcov14_5", rlang::quo(season >= 2019)),
+    "confinstop.work.DNK"=variable_available("Qcov14_6", rlang::quo(season >= 2019)),
+    
+    "confinstop.work.outside.ndays"=variable_available("Qcov14b", rlang::quo(season >= 2019)),
+    
+    "confinextend.follow.reco"=variable_available("Qcov15", rlang::quo(season >= 2019))
+
   ),
   labels=list(
     "sympt.cause" = list(
@@ -77,7 +115,76 @@ platform_define_survey(
       "cause.other.doctor" = "8",
       "cause.covid" = "9"
     ),
-    symptoms.extra = c("loss.smell", "loss.taste", "nose.bleed")
+    measures="measure.*",
+    reason.covid="reason.covid.*",
+    confin.work="confin.work.*",
+    confinstop.work="confinstop.work.*"
+  ),
+  recodes=list(
+    # covid-19
+    "travel"=recode.y1_n0_dkn2,
+    # "travel.country1"=
+    # "travel.country2"=
+    # "travel.country3"=
+    
+    "contactperson.foreign"=recode.y1_n0_dkn2,
+    # "contactperson.foreign.country1"=
+    # "contactperson.foreign.country2"=
+    # "contactperson.foreign.country3"=
+    
+    "contactperson.covid.confirm"=recode.y1_n0_dkn2,
+    "contactperson.covid.confirm.house"=recode.y1_n0_dkn2,
+    "contactperson.covid.sympt"=recode.y1_n0_dkn2,
+    "contactperson.covid.sympt.house"=recode.y1_n0_dkn2,
+    
+    "call.tel.covid"=recode.y1_n0_dkn2,
+    "call.tel.emergency"=recode.y1_n0_dkn2,
+    
+    "wear.mask"= list(
+      "Yes" = 1,
+      "no.couldnot.find" = 2,
+      "No" = 0
+    ),
+    
+    "inform.contact.covid"=list(
+      "Yes" = 1,
+      "some.of.them" = 2,
+      "No" = 0
+    ),
+    
+    "confin.shopping"=list(
+      "anymore" = 1,
+      "less.1.week" = 2,
+      "1.week" = 3,
+      "2to6.week"=4,
+      "1.day"=5,
+      "more.1.day"=6
+    ),
+    
+    "confin.exercice"=list(
+      "anymore" = 1,
+      "less.1.week" = 2,
+      "1.week" = 3,
+      "2to6.week"=4,
+      "1.day"=5,
+      "more.1.day"=6
+    ),
+    
+    "confin.contact.close"=list(
+      "0" = 0,
+      "1" = 1,
+      "2.to.5" = 2,
+      "6.to.10"=3,
+      "more.10"=4
+    ),
+    
+    "confinextend.follow.reco"=list(
+      "no.not.at.all" = 1,
+      "no.not.really" = 2,
+      "yes.moderately"=3,
+      "yes.absolutely"=4,
+      "DNK"=99
+    )
   ),
   template = "eu:weekly"
 )
