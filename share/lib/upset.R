@@ -32,7 +32,7 @@ get_labels_from_binary = function(data, mask, group="g") {
   nn = names(mask)
   for(n in nn) {
     m = mask[n]
-    data[[n]] = bitAnd(data[[group]], m) > 0
+    data[[n]] = bitwAnd(data[[group]], m) > 0
   }
   data$label = apply(data[, nn], 1, function(x) {
     paste(nn[which(x)], collapse = '+')
@@ -89,6 +89,9 @@ create_binary_groups = function(data, groups) {
 #' @param point_size size of point in intersection plot
 #' @param name_size_scale scale of labels size in intersection plot
 upset_plot <- function(data, sets, n.max=40, point_size=3, name_size_scale=1, title=NULL, subtitle=NULL, caption=NULL) {
+  requireNamespace("cowplot")
+  
+  
   data = data %>% arrange(desc(count))
   data$label = reorder(data$label, order(data$count, decreasing=TRUE))
   

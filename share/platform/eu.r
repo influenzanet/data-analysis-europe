@@ -103,6 +103,7 @@ platform_define_survey(
 
   ),
   labels=list(
+    "symptoms.extra"=c('loss.smell', 'loss.taste', 'nose.bleed'),
     "sympt.cause" = list(
       "cause.ili" = "0",
       "cause.cold" = "1",

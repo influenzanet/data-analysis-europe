@@ -294,7 +294,7 @@ ggplot(data %>% filter(yw >= min.week), aes(x=name, y=100*value/person_with_symp
   theme(axis.text = element_text(size=5)) +
   labs(x="Symptom", y="% of participants of the week", title="% of symptom reported by participants with at least 1 symptom", caption=caption()) +
   guides(fill=guide_legend("% of Participants (with symptom)"))
-g_save("symptom_bar_prop_with_symptom", plot=TRUE, width=8, height = 10)  
+g_save("symptom_bar_prop_with_symptom", plot=TRUE, width=7, height = 14)  
 
 # Short term graph
 ggplot(data %>% filter(yw >= short.term), aes(x=monday_of_week(yw), y=name, fill=100*value/person_with_sympt)) +
@@ -314,7 +314,7 @@ ggplot(data %>% filter(yw >= short.term), aes(x=name, y=100*value/person_with_sy
   theme(axis.text = element_text(size=5)) +
   labs(x="Symptom", y="% of participants of the week", title="% of symptom reported by participants with at least 1 symptom", caption=caption()) +
   guides(fill=guide_legend("% of Participants"))
-g_save("symptom_bar_prop_with_symptom_shortterm", plot=TRUE, width=8, height = 10)  
+g_save("symptom_bar_prop_with_symptom_shortterm", plot=TRUE, width=8, height = 14)  
 
 data = data.all$syndromes
 
