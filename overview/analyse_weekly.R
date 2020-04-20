@@ -250,6 +250,9 @@ for(country in countries) {
   
 }
 
+attr(data.all, "symptoms") <- symptoms
+attr(data.all, "symptoms.mask") <- symptoms.mask
+
 saveRDS(data.all, file=my.path("weekly_syndromes.Rds"))
 
 library(ggplot2)
