@@ -122,7 +122,7 @@ ggplot(data %>% filter(yw >= min.week), aes(x=monday_of_week(yw), y=name, fill=1
   scale_sympt_freq() +
   g_labs(x="Week", y="Syndromes", title="% of syndromes reported by participants, Influenzanet syndromes set, by week") +
   guides(fill=guide_legend("% of Participants"))
-g_save("syndrome_prop.pdf", plot=TRUE, width=6, height = height )  
+g_save("syndrome_prop", plot=TRUE, width=6, height = height )  
 
 data = data.all$syndromes.covid
 
@@ -132,7 +132,7 @@ ggplot(data %>% filter(yw >= min.week), aes(x=monday_of_week(yw), y=name, fill=1
   scale_sympt_freq() +
   g_labs(x="Week", y="Syndromes", title="% of Influenzanet syndromes (without sudden) reported by participants") +
   guides(fill=guide_legend("% of Participants"))
-g_save("syndrome-covid_prop.pdf", plot=TRUE, width=6, height = height)  
+g_save("syndrome-covid_prop", plot=TRUE, width=6, height = height)  
 
 data = data.all$syndromes.ecdc
 
@@ -142,7 +142,7 @@ ggplot(data %>% filter(yw >= min.week), aes(x=monday_of_week(yw), y=name, fill=1
   scale_sympt_freq() +
   g_labs(x="Week", y="Syndromes", title="% of Influenzanet syndromes reported by participants, ECDC syndromes set") +
   guides(fill=guide_legend("% of Participants"))
-g_save("syndrome-ecdc_prop.pdf", plot=TRUE, width=6, height = height)  
+g_save("syndrome-ecdc_prop", plot=TRUE, width=6, height = height)  
 
 d1 = data.all$syndromes.covid
 d1$name = gsub(".covid", "", d1$name, fixed=TRUE)
@@ -155,7 +155,7 @@ ggplot(data %>% filter(yw >= min.week), aes(x=monday_of_week(yw), y=100*value/pe
   facet_grid(rows=vars(country), cols=vars(name), scales="free_y") +
   g_labs(x="Week", y="Syndromes", title="% of Influenzanet syndromes (ECDC & without-sudden sets) reported by participants") +
   guides(fill=guide_legend("% of Participants")) + theme_with("x_vertical")
-g_save("syndrome-covid-ecdc_prop.pdf", plot=TRUE, width=14, height = 12)  
+g_save("syndrome-covid-ecdc_prop", plot=TRUE, width=14, height = 12)  
 
 data = data.all$participants_date
 data = data %>% filter(yw >= min.week)
@@ -172,7 +172,7 @@ ggplot(data, aes(x=monday_of_week(yw), y=factor(day), fill=100*n_survey/total_su
   scale_fill_viridis_c(direction = -1, option = "A" ) +
   g_labs(x="Week", y="Day of week", title="% of surveys by week and weekday, by date of first report of the week") +
   guides(fill=guide_legend("% of Participants"))
-g_save("week_survey_prop.pdf", plot=TRUE, width=6, height = height)  
+g_save("week_survey_prop", plot=TRUE, width=6, height = height)  
 
 ## Symptoms association
 
