@@ -88,10 +88,22 @@ create_binary_groups = function(data, groups) {
 #' @param n.max number of top obs to keep, (all if na)
 #' @param point_size size of point in intersection plot
 #' @param name_size_scale scale of labels size in intersection plot
-upset_plot <- function(data, sets, n.max=40, point_size=3, name_size_scale=1, title=NULL, subtitle=NULL, caption=NULL) {
+#' @param title title of the plot
+#' @param subtitle subtite of the plot
+#' @param caption caption of the plot
+#' @param opts options for freq plot
+#' 
+#' @section Options:
+#' 
+#' General options :
+#' - theme: add the theme to the plot
+#' 
+#' 
+#' 
+#' 
+upset_plot <- function(data, sets, n.max=40, point_size=3, name_size_scale=1, title=NULL, subtitle=NULL, caption=NULL, opts=list()) {
   requireNamespace("cowplot")
-  
-  
+  requireNamespace("swMisc")
   data = data %>% arrange(desc(count))
   data$label = reorder(data$label, order(data$count, decreasing=TRUE))
   
@@ -102,57 +114,99 @@ upset_plot <- function(data, sets, n.max=40, point_size=3, name_size_scale=1, ti
   }
   
   left_margin = 1
+  
+  if(!is.null(opts$freq)) {
+    freq_opts = opts$freq
+  } else {
+    freq_opts = list()
+  }
+  
+  freq_opts = swMisc::merge_list(freq_opts, list(
+    bar.color=NA,
+    bar.fill="black",
+    label="Frequency"
+  ))
+
   # freq_plot
   d$row = 1:nrow(d)
   freq_plot = ggplot(d, aes(x=row, y=count)) + 
-    geom_bar(stat="identity") 
+    geom_bar(stat="identity", color=freq_opts$bar.color, fill=freq_opts$bar.fill) 
   
   freq_plot = freq_plot  + 
-    theme(panel.background = element_rect(fill = "white"),
-          plot.title = element_text(vjust = 1.5),
-          panel.border = element_rect(colour = "grey83"),
+    theme(
+          panel.background = element_rect(fill = "white", color="white"),
+          panel.border = element_blank(),
           panel.grid.minor = element_blank(),
           panel.grid.major = element_blank(),
+          plot.background = element_rect(fill="white", color="white"),
+          plot.title = element_text(vjust = 1.5),
+          plot.margin=unit(c(0.5, 0, 0, left_margin), "cm"),
           axis.title.y = element_text(vjust = 1.3, size = 8.3),
           axis.title.x = element_text(size = 8.3),
-          axis.text.x = element_blank(),
-          plot.margin=unit(c(0.5,0,0, left_margin), "cm"),
-          plot.background = element_rect(fill="white")
+          axis.text.x = element_blank()
     ) +
     scale_x_continuous(limits = c(0,(nrow(d)+1 )), expand = c(0,0), breaks = NULL) +
-    labs(x=NULL, y ="Frequency", title=title, subtitle = subtitle)
+    labs(x=NULL, y =freq_opts$label, title=title, subtitle = subtitle)
+  
+  if(!is.null(freq_opts$theme)) {
+    freq_plot = freq_plot + freq_opts$theme
+  }
   
   # Get symptoms with any associations
   n = colSums(d[, sets])
   n = names(n[n > 0])
   
+  if(!is.null(opts$matrix)) {
+    mat_opts = opts$matrix
+  } else {
+    mat_opts = list()
+  }
+  
+  mat_opts = swMisc::merge_list(mat_opts, list(
+    point.color ="grey20",
+    point.empty = "gray70",
+    point.size = 3,
+    name.size = 1,
+    grid.color="gray95",
+    line.size = 1,
+    line.color = "grey30"
+  ))
+  
+  name_size_scale = mat_opts$name.size
+  point_empty = mat_opts$point.empty
+  point_size = mat_opts$point.size
+  point_color = mat_opts$point.color
+  
   mat = as.matrix(d[, n])
   mm <- expand.grid(group=seq(nrow(mat)), symptom=seq(ncol(mat)))
   mm <- data.frame(mm, intersection = as.vector(mat))
-  matrix_plot = ggplot(mm, aes(x=group, y=symptom)) +
-    geom_point(color="gray83", size=point_size, shape=16) +
-    geom_point(data=~filter(., intersection), size=point_size, shape=16) +
-    geom_line(data=~filter(., intersection),aes(x=group, y=symptom, group=group), size = 1) +
-    scale_y_continuous(breaks = 1:length(n), limits = c(0.5,(length(n) +0.5)), labels = n, expand = c(0,0)) +
-    scale_x_continuous(limits = c(0,(nrow(d)+1 )), expand = c(0,0))  + 
+  rr = data.frame(symptom=seq(ncol(mat)))
+  rr$color = rr$symptom %% 2 == 0
+  matrix_plot = ggplot(mm) +
+    geom_rect(data=rr, aes(fill=color, ymin=symptom - .5, ymax=symptom + .5), xmin=0, xmax=nrow(mat) + .5, show.legend = FALSE) +
+    geom_point(aes(x=group, y=symptom), color=point_empty, size=point_size, shape=16) +
+    geom_point(aes(x=group, y=symptom), data=~filter(., intersection), size=point_size, shape=16, color=point_color) +
+    geom_line(data=~filter(., intersection), aes(x=group, y=symptom, group=group), size = mat_opts$line.size, color=mat_opts$line.color) +
+    scale_y_continuous(breaks = 1:length(n), limits = c(0.5, length(n) + 0.5), labels = n, expand = c(0,0)) +
+    scale_x_continuous(limits = c(0, nrow(d) + 1), expand = c(0, 0))  + 
+    scale_fill_manual(values=c('TRUE'="white",'FALSE'=mat_opts$grid.color)) +
     theme(
-      panel.background = element_rect(fill = "white"),
+      panel.background = element_rect(fill = "white", color="white"),
+      panel.border=element_blank(),
+      panel.grid.major = element_blank(),
+      panel.grid.minor = element_blank(), 
       plot.margin=unit(c(0, 0.5, 0.5, 1), "cm"),
-      panel.border = element_rect(colour = "grey83"),
       axis.text.x = element_blank(),
       axis.ticks.x = element_blank(),
       axis.ticks.y = element_blank(),
       axis.text.y = element_text(colour = "gray0", size = 7 * name_size_scale, hjust = 0.4),
-      panel.grid.major = element_blank(),
-      panel.grid.minor = element_blank(), 
       plot.background = element_rect(fill="white", color = "white")
     ) +
-    labs(x=NULL, y="", caption=caption)
+    labs(x=NULL, y=mat_opts$label, caption=caption)
   
-  #g2 = ggplot_gtable(ggplot_build(matrix_plot))
-  #g1 = ggplot_gtable(ggplot_build(freq_plot))
-  
-  #g = arrangeGrob(g1, g2)
+  if(!is.null(mat_opts$theme)) {
+    matrix_plot = matrix_plot + mat_opts$theme
+  }
   
   plot_grid(freq_plot, matrix_plot, align="v", ncol=1)
   
