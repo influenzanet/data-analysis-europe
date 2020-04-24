@@ -177,6 +177,13 @@ upset_plot <- function(data, sets, n.max=40, point_size=3, name_size_scale=1, ti
   point_size = mat_opts$point.size
   point_color = mat_opts$point.color
   
+  set_labels = n
+  if(!is.null(mat_opts$set.labels)) {
+    if(is.function(mat_opts$set.labels)) {
+      set_labels = mat_opts$set.labels(set_labels)
+    } 
+  }
+  
   mat = as.matrix(d[, n])
   mm <- expand.grid(group=seq(nrow(mat)), symptom=seq(ncol(mat)))
   mm <- data.frame(mm, intersection = as.vector(mat))
@@ -187,7 +194,7 @@ upset_plot <- function(data, sets, n.max=40, point_size=3, name_size_scale=1, ti
     geom_point(aes(x=group, y=symptom), color=point_empty, size=point_size, shape=16) +
     geom_point(aes(x=group, y=symptom), data=~filter(., intersection), size=point_size, shape=16, color=point_color) +
     geom_line(data=~filter(., intersection), aes(x=group, y=symptom, group=group), size = mat_opts$line.size, color=mat_opts$line.color) +
-    scale_y_continuous(breaks = 1:length(n), limits = c(0.5, length(n) + 0.5), labels = n, expand = c(0,0)) +
+    scale_y_continuous(breaks = 1:length(n), limits = c(0.5, length(n) + 0.5), labels = set_labels, expand = c(0,0)) +
     scale_x_continuous(limits = c(0, nrow(d) + 1), expand = c(0, 0))  + 
     scale_fill_manual(values=c('TRUE'="white",'FALSE'=mat_opts$grid.color)) +
     theme(

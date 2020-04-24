@@ -1,5 +1,16 @@
 
 platform.copyright = 'InfluenzaNet'
+country_label = ''
+monthday_format = "%d/%m"
+
+country_dk = 'Danemark'
+country_es = 'Spain'
+country_ie = 'Ireland'
+country_uk = 'England'
+country_ch = 'Switzerland'
+country_it = 'Italia'
+country_fr = 'France'
+country_pt = 'Portugal'
 
 # Title of the platform (GrippeNet Flusurvey...)
 cohort.title = 'InfluenzaNet'
@@ -75,6 +86,17 @@ sympt.other='Other'
 Yes='Yes'
 No='No'
 DNK='Don\'t Know'
+
+# Syndromes
+ili = "Flu-like"
+cold = "Cold"
+allergy = "allergy"
+ili.ifn = "Flu-like"
+cold.ifn = "Cold"
+gastro.ifn = "Gastroenteritis"
+allergy.ifn ="Allergy"
+non.specific = "Non specific"
+non.specific.ifn = "Non specific"
 
 # Hear about
 hear.radio = "Radio/TV"
@@ -159,8 +181,7 @@ allergy.pets = "Pets"
 allergy.other = "Other"
 allergy.none = "None"
 
-ili = "Flu-like"
-cold = "Cold"
+# Syndromes groups
 gastroenteritis = "Gastroenteritis"
 sympt.general = "General"
 respiratory = "Respiratory"

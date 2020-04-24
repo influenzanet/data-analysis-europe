@@ -1,8 +1,10 @@
-platform.copyright = 'InfluenzaNet'
+platform.copyright = 'Influweb, https://influweb.it'
+country_label = 'Italia'
 # Title of the platform (GrippeNet Flusurvey...)
 cohort.title = 'Influweb'
 color.web.primary = 'blue'
 color.web.secondary = 'darkgreen'
+
 # Intake description
 gender_of_participants = 'sesso dei partecipanti'
 percentage = 'percentuale'
@@ -20,6 +22,7 @@ graph_pregnant = "Gravidanza"
 graph_smoker = "Fumatori"
 graph_allergy = "Allergie"
 graph_pets= "Animali domestici"
+
 # Weekly
 syndrome = "sindrome"
 week = "Settimana"
@@ -31,6 +34,7 @@ participant_week_by_weekday="% di persone per settimana e per giorno della setti
 with_sudden="Con sudden onset (ECDC)"
 without_sudden="Senza sudden onset"
 percentage_of_participants = "% di Partecipanti"
+
 monday    = "Lunedì"
 tuesday   = 'Martedì'
 wednesday = "Mercoledì"
@@ -38,10 +42,12 @@ thursday  = 'Giovedì'
 friday    = 'Venerdì'
 Saturday  = 'Sabato'
 sunday    = 'Domenica'
+
 # Surveys data
 male = 'Uomini'
 female = 'Donne'
 gender = 'sesso'
+
 # Symptoms
 no.sympt='Nessun sintomo'
 fever='Febbre'
@@ -66,6 +72,7 @@ sympt.other='Altro'
 Yes='Si'
 No='No'
 DNK='Non so'
+
 # Hear about
 hear.radio = "Radio/TV"
 hear.newspaper = "Notizie"
@@ -133,18 +140,27 @@ smoker.daily = ">10/giorno"
 smoker.dkn = "DKN"
 smoker.stopped = "Stop > 1y"
 smoker.juststop = "Stop < 1y"
+
 # Allergies
 allergy.hay = "Febbre da fieno"
 allergy.dust = "Acari"
 allergy.pets = "Animali domestici"
 allergy.other = "Altro"
 allergy.none = "Nessuna"
+
+# Syndromes
 ili = "Simil-influenzale"
 cold = "Raffreddore"
 gastroenteritis = "Gastroenterite"
 sympt.general = "Generali"
 respiratory = "Respiratori"
 digestive = "Gastrintestinali"
+
+ili.ifn = "Simil-influenzale"
+cold.ifn = "Raffreddore"
+gastro.ifn = "Gastroenterite"
+
+
 # Diet
 diet.normal = "Normale"
 diet.vegetarian = "Vegetariano"
