@@ -29,8 +29,7 @@ hear.columns = survey_labels('intake', 'hear.about')
 allergy.columns = survey_labels('intake', 'allergy')
 pets.columns = survey_labels('intake', 'pets')
 
-colors.web = list(primary=i18n('color.web.primary'), secondary=i18n('color.web.secondary'))
-#colors.web = platform_env("colors")
+colors.web = get_platform_colors()
 
 columns = c('timestamp','gender','date.birth','vacc.curseason',"main.activity","occupation","often.ili", 'pregnant',hear.columns,'transport','smoker', condition.columns, allergy.columns, pets.columns )
 

@@ -83,9 +83,7 @@ pop = load_population_age(geo="country", age.breaks=age.categories, year=def$yea
 
 season.title = paste("\nSeason ", season,"-", season + 1)
 
-g_title = function(...) {
-  labs(..., caption = ifn.copyright())
-}
+g_title = ifn_labs
 
 g_save=function(..., width, height, desc=NULL) {
   p = out_path(..., '.pdf', plot=is.null(desc), desc=desc)
