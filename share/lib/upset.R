@@ -154,8 +154,9 @@ upset_plot <- function(data, sets, n.max=40, point_size=3, name_size_scale=1, ti
   
   # Get symptoms with any associations
   n = colSums(d[, sets])
+  n = n[order(n)]
   n = names(n[n > 0])
-  
+
   if(!is.null(opts$matrix)) {
     mat_opts = opts$matrix
   } else {
@@ -183,7 +184,6 @@ upset_plot <- function(data, sets, n.max=40, point_size=3, name_size_scale=1, ti
       set_labels = mat_opts$set.labels(set_labels)
     } 
   }
-  
   mat = as.matrix(d[, n])
   mm <- expand.grid(group=seq(nrow(mat)), symptom=seq(ncol(mat)))
   mm <- data.frame(mm, intersection = as.vector(mat))
