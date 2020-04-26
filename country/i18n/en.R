@@ -1,17 +1,3 @@
-
-platform.copyright = 'InfluenzaNet'
-country_label = ''
-monthday_format = "%d/%m"
-
-country_dk = 'Danemark'
-country_es = 'Spain'
-country_ie = 'Ireland'
-country_uk = 'England'
-country_ch = 'Switzerland'
-country_it = 'Italia'
-country_fr = 'France'
-country_pt = 'Portugal'
-
 # Title of the platform (GrippeNet Flusurvey...)
 cohort.title = 'InfluenzaNet'
 color.web.primary = 'blue'
