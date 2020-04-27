@@ -281,7 +281,7 @@ europe.ages = ages %>%
 europe.ages = europe.ages %>% group_by(gender, pop) %>% mutate(prop=count/sum(count))
 
 p_labs = function(title) {
-  g_title(x=i18n("percentage"), y=i18n("age_group"), title=title)
+  g_title(y=i18n("percentage"), x=i18n("age_group"), title=title)
 }
 
 g = plot_age_pyramid(europe.ages, female=q_female, w=.5)
