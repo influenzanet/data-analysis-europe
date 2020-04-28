@@ -12,6 +12,9 @@ if(!library(ifnBase, logical.return = TRUE)) {
 
 load_platform()
 
+# Load default translations
+i18n_load(platform_path("i18n", platform = TRUE), language = 'en')
+
 if(!"methods" %in% loadedNamespaces()) {
   # methods Lazy loading
   is <- function(...) {
@@ -34,6 +37,13 @@ is_try_error = function(x) {
   "try-error" %in% class(x)
 }
 
+#' Return a list of colors for the platform
+get_platform_colors = function() {
+  list(
+    primary=i18n('color.web.primary'), 
+    secondary=i18n('color.web.secondary')
+  )
+}
 
 get_current_season = function() {
   calc_season(Sys.Date())
@@ -58,6 +68,23 @@ desc_output = function(path, desc=NULL, plot=FALSE) {
     desc_file = paste0(".d_", basename(path))
     write(desc, file=paste0(dir, "/", desc_file))
   }
+}
+
+#' Default copyrght text
+ifn.copyright = function(internal=TRUE) {
+  cp = "Influenzanet, http://influenzanet.info"
+  if(internal) {
+    cp = paste0(cp, ", for internal purpose only")
+  }
+  paste0(cp, ", ", Sys.time())
+}
+
+# ' Helper function to replace ggplot2::labs() and put automatic caption 
+ifn_labs = function(..., caption=NULL, internal=TRUE) {
+  if(is.null(caption)) {
+    caption = ifn.copyright(internal=internal)
+  }
+  ggplot2::labs(..., caption=caption)
 }
 
 

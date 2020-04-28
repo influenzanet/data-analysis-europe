@@ -4,11 +4,17 @@
 ##
 
 source("conf.R")
+
 library(dplyr)
+library(gridExtra)
+library(ggplot2)
+
+suppressPackageStartupMessages(library(cowplot))
 
 share.lib("incidence")
+share.lib('upset')
 
-caption = ifn.copyright # get then caption graph 
+season = get_current_season()
 
 eu.params = get_eu_incidence_parameters()
 
@@ -29,26 +35,30 @@ collect_data = function(name, data) {
   }
 }
 
-season = get_current_season()
-
 init.path(season)
 
+syndrome.from = list(health.status=TRUE)
+onset = episode_onset_design()
+symptoms = get_symptoms_columns(season)
+
+symptoms.mask = create_binary_mask(symptoms)
+
 for(country in countries) {
-  syndrome.from = list(health.status=TRUE)
-  onset = episode_onset_design()
-  dataset = load_results_for_incidence(season=season, age.categories=age.categories, country=country, syndrome.from = syndrome.from, onset=onset, columns=list(keep.all=TRUE))
+  
+  dataset = load_results_for_incidence(season=season, age.categories=age.categories, country=country, syndrome.from = syndrome.from, onset=onset, columns=list(keep.all=TRUE, weekly=symptoms))
   
   if(is.null(dataset$weekly) || is.null(dataset$intake) || nrow(dataset$weekly) == 0 || nrow(dataset$intake) == 0) {
     cat("not data for", country, "\n")
     next()
   }
   
-  symptoms = get_symptoms_aliases()
+  dataset$weekly = dataset$weekly %>% arrange(timestamp)
+  
   symptoms = symptoms[ symptoms != "no.sympt"]
   syndromes = dataset$syndromes
   syndromes = syndromes[ syndromes != "no.symptom"]
   
-  weekly = dataset$weekly
+  weekly = dataset$weekly 
   
   # Add .ifn suffix to influenzanet syndrom names
   nn <- syndromes
@@ -72,6 +82,14 @@ for(country in countries) {
   weekly = left_join(weekly, data.frame(ww), by="id")
   
   syndromes.ecdc = n[ n != "id"]
+  
+  # Suggested by Ania 
+  #  fever and/OR cough (+ any combination of those with shortness of breath and fatigue).
+  #
+  n1 = c('cough','fever')
+  n2 = c("asthenia","dyspnea" )
+  weekly$ch.covid = rowSums(weekly[, n1], na.rm=TRUE) > 0 & rowSums(weekly[, n2], na.rm=TRUE) > 0
+  
   
   columns = c(symptoms, syndromes, syndromes.covid, syndromes.ecdc)
   
@@ -109,8 +127,9 @@ for(country in countries) {
   
   ww = weekly %>% group_by(yw, person_id) %>% summarize_at(symptoms, sum)
   ww[, symptoms] = ww[, symptoms] > 0
-  ww$person = 1
-  ww = ww %>% group_by(yw) %>% summarise_at(c('person',symptoms), sum)
+  ww$person = 1L
+  ww$person_with_sympt = as.integer(apply( ww[, symptoms], 1, sum, na.rm=TRUE) > 0)
+  ww = ww %>% group_by(yw) %>% summarise_at(c('person', 'person_with_sympt', symptoms), sum)
   ww = tidyr::pivot_longer(ww, symptoms)
   ww$name = factor(ww$name)
   
@@ -160,6 +179,39 @@ for(country in countries) {
   rm(ww)
   rm(weekly)
   
+  ww = dataset$weekly %>% filter(!no.sympt)
+  
+  
+  ww = apply_binary_mask(ww, mask=symptoms.mask, column="g")
+  
+  # Flag to differentiate all symptoms (with extra) and olds
+  ww$all = apply(ww[, symptoms], 1, function(x) !any(is.na(x)))
+
+  ww = ww %>% 
+        mutate(yw=iso_yearweek(date)) %>% 
+        group_by(person_id, yw, all, g) %>% 
+        summarize(count=n()) %>%
+        group_by(yw, all, g) %>%
+        summarize(n_person=n(), n_syndrom=sum(count))
+  ww = data.frame(ww)
+
+  ww$country = country
+  collect_data("symptom_groups", ww)
+
+  rm(ww)
+  
+  # Number of survey reported by week
+  # Here use reporting date (timestamp) not the onset date for the week
+  ww = dataset$weekly %>% 
+        mutate(yw=iso_yearweek(date)) %>%
+        group_by(person_id, yw) %>%
+        summarize(n_survey=n()) 
+  
+  ww = ww %>% group_by(yw) %>% summarize(n_person=n(), mean_survey=mean(n_survey), max_survey=max(n_survey))
+  ww$country = factor(country, countries)
+  
+  collect_data("participants_week", ww)
+  
   # Number of survey by week & first day of week for each user
   ww = dataset$weekly %>% 
         select(date, person_id) %>% 
@@ -189,97 +241,11 @@ for(country in countries) {
   ww$country = factor(country, countries)
   collect_data("participants_date", ww)
 
+  rm(ww)
+  
 }
+
+attr(data.all, "symptoms") <- symptoms
+attr(data.all, "symptoms.mask") <- symptoms.mask
 
 saveRDS(data.all, file=my.path("weekly_syndromes.Rds"))
-
-library(ggplot2)
-
-# Graph save shortcut
-g_save = function(...,  desc=NULL, plot=FALSE, width=12, height = 8) {
-  ggsave(out_path(..., ".pdf", plot=plot, desc=desc), width=width, height = height)  
-}
-
-min.week = season * 100 + 51
-
-data = data.all$rossman
-
-ggplot(data %>% filter(yw >= min.week), aes(x=monday_of_week(yw), y=mean, group=country)) +
-  geom_line() +
-  facet_grid(rows=vars(country), scales="free_y") +
-  labs(title="Symptom ratio from (Rossman H et al.), 2019")
-g_save("symptom_ratio", plot=TRUE, width=12, height = 8)  
-
-data = data.all$symptoms
-
-ggplot(data %>% filter(yw >= min.week), aes(x=monday_of_week(yw), y=name, fill=value/person)) +
-  geom_tile() +
-  facet_grid(rows=vars(country)) +
-  scale_fill_viridis_c(direction = -1, option = "A" ) +
-  labs(x="Week", y="Symptom", title="% of symptom reported by participants", caption=caption()) +
-  guides(fill=guide_legend("% of Participants"))
-g_save("symptom_prop", plot=TRUE, width=6, height = 14)  
-
-
-
-data = data.all$syndromes
-
-ggplot(data %>% filter(yw >= min.week), aes(x=monday_of_week(yw), y=name, fill=value/person)) +
-  geom_tile() +
-  facet_grid(rows=vars(country)) +
-  scale_fill_viridis_c(direction = -1, option = "A" ) +
-  labs(x="Week", y="Syndromes", title="% of syndromes reported by participants, Influenzanet syndromes set, by week", caption=caption()) +
-  guides(fill=guide_legend("% of Participants"))
-ggsave(out_path("syndrome_prop.pdf", plot=TRUE), width=6, height = 14)  
-
-data = data.all$syndromes.covid
-
-ggplot(data %>% filter(yw >= min.week), aes(x=monday_of_week(yw), y=name, fill=value/person)) +
-  geom_tile() +
-  facet_grid(rows=vars(country)) +
-  scale_fill_viridis_c(direction = -1, option = "A" ) +
-  labs(x="Week", y="Syndromes", title="% of Influenzanet syndromes (without sudden) reported by participants", caption=caption()) +
-  guides(fill=guide_legend("% of Participants"))
-ggsave(out_path("syndrome-covid_prop.pdf", plot=TRUE), width=6, height = 14)  
-
-data = data.all$syndromes.ecdc
-
-ggplot(data %>% filter(yw >= min.week), aes(x=monday_of_week(yw), y=name, fill=value/person)) +
-  geom_tile() +
-  facet_grid(rows=vars(country)) +
-  scale_fill_viridis_c(direction = -1, option = "A" ) +
-  labs(x="Week", y="Syndromes", title="% of Influenzanet syndromes reported by participants, ECDC syndromes set", caption=caption()) +
-  guides(fill=guide_legend("% of Participants"))
-ggsave(out_path("syndrome-ecdc_prop.pdf", plot=TRUE), width=6, height = 14)  
-
-d1 = data.all$syndromes.covid
-d1$name = gsub(".covid", "", d1$name, fixed=TRUE)
-d2 = data.all$syndromes.ecdc
-data = bind_rows(covid=d1, ecdc=d2, .id="set")
-
-ggplot(data %>% filter(yw >= min.week), aes(x=monday_of_week(yw), y=value/person, color=set)) +
-  geom_line() +
-  scale_color_discrete(labels=c('ecdc'="With sudden (ECDC)", "covid"="Without sudden")) +
-  facet_grid(rows=vars(country), cols=vars(name), scales="free_y") +
-  labs(x="Week", y="Syndromes", title="% of Influenzanet syndromes (ECDC & without-sudden sets) reported by participants", caption=caption()) +
-  guides(fill=guide_legend("% of Participants"))
-ggsave(out_path("syndrome-covid-ecdc_prop.pdf", plot=TRUE), width=14, height = 12)  
-
-data = data.all$participants_date
-data = data %>% filter(yw >= min.week)
-days = c('7'="Monday",'6'='Tuesday','5'='Wednesday', '4'='Thursday','3'='Friday','2'='Saturday','1'='Sunday')
-
-data = data %>% mutate(
-  day =  8 - ifelse(wday == 0, 7, wday)
-)
-
-ggplot(data, aes(x=monday_of_week(yw), y=factor(day), fill=n_survey/total_survey)) +
-  geom_tile() +
-  facet_grid(rows=vars(country)) +
-  scale_y_discrete(labels=days) +
-  scale_fill_viridis_c(direction = -1, option = "A" ) +
-  labs(x="Week", y="Day of week", title="% of surveys by week and weekday, by date of first report of the week", caption=caption()) +
-  guides(fill=guide_legend("% of Participants"))
-ggsave(out_path("week_survey_prop.pdf", plot=TRUE), width=6, height = 14)  
-
-

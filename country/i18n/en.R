@@ -1,6 +1,3 @@
-
-platform.copyright = 'InfluenzaNet'
-
 # Title of the platform (GrippeNet Flusurvey...)
 cohort.title = 'InfluenzaNet'
 color.web.primary = 'blue'
@@ -28,6 +25,7 @@ graph_pets= "Pets"
 syndrome = "syndrome"
 week = "Week"
 symptom_reported_by_part = "% of symptom reported by participants"
+symptom_reported_by_part_with_sympt = "% of symptom reported by participants with symptoms"
 syndrom_ifn_reported_by_part="% of syndromes reported by participants by week, Influenzanet syndromes set"
 syndrom_ecdc_reported_by_part="% of syndromes reported by participants by week, ECDC syndromes set"
 syndrom_ecdc_covid_reported_by_part="% of Influenzanet syndromes (ECDC & without-sudden sets) reported by participants"
@@ -35,6 +33,7 @@ participant_week_by_weekday="% of person by week and weekday, by date of first r
 with_sudden="With sudden (ECDC)"
 without_sudden="Without sudden"
 percentage_of_participants = "% of Participants"
+on_last_n_weeks = "during the last {weeks} weeks"
 
 monday    = "Monday"
 tuesday   = 'Tuesday'
@@ -73,6 +72,17 @@ sympt.other='Other'
 Yes='Yes'
 No='No'
 DNK='Don\'t Know'
+
+# Syndromes
+ili = "Flu-like"
+cold = "Cold"
+allergy = "allergy"
+ili.ifn = "Flu-like"
+cold.ifn = "Cold"
+gastro.ifn = "Gastroenteritis"
+allergy.ifn ="Allergy"
+non.specific = "Non specific"
+non.specific.ifn = "Non specific"
 
 # Hear about
 hear.radio = "Radio/TV"
@@ -157,8 +167,7 @@ allergy.pets = "Pets"
 allergy.other = "Other"
 allergy.none = "None"
 
-ili = "Flu-like"
-cold = "Cold"
+# Syndromes groups
 gastroenteritis = "Gastroenteritis"
 sympt.general = "General"
 respiratory = "Respiratory"
