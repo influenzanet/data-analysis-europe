@@ -43,9 +43,23 @@ symptoms = get_symptoms_columns(season)
 
 symptoms.mask = create_binary_mask(symptoms)
 
+mesure.covid = survey_labels('weekly', "measures")
+reason.covid = survey_labels('weekly', "reason.covid")
+confin.work = survey_labels('weekly', "confin.work")
+confinstop.work = survey_labels('weekly', "confinstop.work")
+
+weekly.columns = c(symptoms, mesure.covid, reason.covid, confin.work, confinstop.work)
+
+other.questions <- list(
+  mesure = mesure.covid,
+  reason = reason.covid, 
+  confin = confin.work,
+  confinstop = confinstop.work
+)
+
 for(country in countries) {
   
-  dataset = load_results_for_incidence(season=season, age.categories=age.categories, country=country, syndrome.from = syndrome.from, onset=onset, columns=list(keep.all=TRUE, weekly=symptoms))
+  dataset = load_results_for_incidence(season=season, age.categories=age.categories, country=country, syndrome.from = syndrome.from, onset=onset, columns=list(keep.all=TRUE, weekly=weekly.columns))
   
   if(is.null(dataset$weekly) || is.null(dataset$intake) || nrow(dataset$weekly) == 0 || nrow(dataset$intake) == 0) {
     cat("not data for", country, "\n")
@@ -242,6 +256,26 @@ for(country in countries) {
   collect_data("participants_date", ww)
 
   rm(ww)
+  
+  for(name in names(other.questions)){
+    
+    variables = other.questions[[name]]
+    
+    ww <- dataset$weekly %>% select(yw, id, !!!variables) %>% filter(yw >= min.week)
+    
+    weekly.variable <- ww %>% group_by(yw) %>% summarize_at(variables, sum, na.rm = TRUE)
+    weekly.variable <- pivot_longer(weekly.variable, -yw, names_to = 'variable')
+    
+    answer.variable <- ww %>% group_by(yw) %>% summarize_at(variables, ~sum(!is.na(.)))
+    answer.variable <- pivot_longer(answer.variable, -yw, names_to = 'variable',values_to = 'nb')
+    
+    weekly.variable <- merge(weekly.variable, answer.variable, by=c('yw','variable'), all=TRUE)
+
+    weekly.variable$country = country
+    
+    collect_data(name, weekly.variable)
+    
+  }
   
 }
 
