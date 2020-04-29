@@ -116,7 +116,9 @@ for(country in countries) {
     summarize_at(columns, sum, na.rm=TRUE) %>%
     group_by(yw, sympt.cause) %>%
     summarise_at(columns, ~sum(. > 0))
-  
+
+  ww = data.frame(ww)
+    
   ww$country = factor(country, countries)
   collect_data("symptom_causes", ww)
 
@@ -266,6 +268,7 @@ for(country in countries) {
       
     }
     
+    d = data.frame(d)
     attr(d, "type") <- type
     d
   }
@@ -331,7 +334,13 @@ for(country in countries) {
 
 }
 
+attr(data.all, "syndromes") <- list(
+  "covid"=structure(syndromes.covid, title="Covid syndromes"),
+  "ecdc"=structure(syndromes.ecdc, title="ECDC syndromes"),
+  "ifn"=structure(syndromes, title="Influenzanet syndroms")
+) 
+
 attr(data.all, "symptoms") <- symptoms
 attr(data.all, "symptoms.mask") <- symptoms.mask
-
+attr(data.all, "questions") <- other.questions
 saveRDS(data.all, file=my.path("weekly_syndromes.Rds"))
