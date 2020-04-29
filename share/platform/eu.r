@@ -106,23 +106,10 @@ platform_define_survey(
     "symptoms.extra"=c('loss.smell', 'loss.taste', 'nose.bleed'),
     measures="measure.*",
     reason.covid="reason.covid.*",
-    confin.work="confin.work.*",
-    confinstop.work="confinstop.work.*"
+    confin.work=c('confin.work.home','confin.work.outside','confin.work.absence.child','confin.work.absence.sick','confin.work.other'),
+    confinstop.work=c('confinstop.work.home','confinstop.work.outside','confinstop.work.absence.child','confinstop.work.absence.sick','confinstop.work.other','confinstop.work.DNK')
   ),
   recodes=list(
-    
-    "sympt.cause" = list(
-      "cause.ili" = "0",
-      "cause.cold" = "1",
-      "cause.allergy" = "2",
-      "cause.gastro" = "3",
-      "cause.other" = "4",
-      "cause.dkn" = "5",
-      "cause.asthma" = "6",
-      "cause.ili.doctor" = "7",
-      "cause.other.doctor" = "8",
-      "cause.covid" = "9"
-    ),
     
     # covid-19
     "travel"=recode.y1_n0_dkn2,
