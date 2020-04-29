@@ -153,7 +153,7 @@ upset_plot <- function(data, sets, n.max=40, point_size=3, name_size_scale=1, ti
   }
   
   # Get symptoms with any associations
-  n = colSums(d[, sets])
+  n = colSums(d[, sets], na.rm = TRUE)
   n = n[order(n)]
   n = names(n[n > 0])
 
