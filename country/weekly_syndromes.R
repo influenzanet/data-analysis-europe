@@ -22,6 +22,9 @@ if(!exists("cli.args")) {
 country = cli.args$country
 season = cli.args$season
 
+# Country translations
+i18n_load("i18n/", language = tolower(country))
+
 short.term.size = 4
 short.term = iso_yearweek(Sys.Date() - short.term.size * 7)
 
@@ -43,8 +46,6 @@ for(n in ls(data.all)) {
 
 init.path(paste0(country, "/", season))
 
-i18n_load("i18n/", language = "en") # default
-i18n_load("i18n/", language = tolower(country))
 
 caption = paste0(i18n("platform.copyright"),", ", Sys.time())
 
@@ -298,6 +299,19 @@ if(nrow(data) > 0) {
     
     g_save(paste0("symptcause-weekly-", name), plot=TRUE, width=14, height = 8)  
 
+    
+    # Radar plot 
+    d = ww %>% filter(yw >= short.term) %>% group_by(sympt.cause, name) %>% summarise_at("value", sum)
+    d = d %>% ungroup() %>% group_by(name) %>% mutate(total=sum(value))
+    ggplot(d, aes(x=name, y=100*value/total, color=sympt.cause, group=sympt.cause)) + 
+      geom_line() + 
+      coord_radar() +
+      g_labs(y=i18n("percentagee"), x=i18n(name), title=paste0(i18n("percentage_of_cause_for_group"),", ", short.term.title) ) +
+      guides(color=guide_legend(i18n("sympt.cause")))
+    g_save(paste0("symptcause-weekly-", name), plot=TRUE, width=14, height = 8)  
+    
   }
 }
+
+
 

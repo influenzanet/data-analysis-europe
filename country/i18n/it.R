@@ -1,5 +1,6 @@
 platform.copyright = 'Influweb, https://influweb.it'
 country_label = 'Italia'
+
 # Title of the platform (GrippeNet Flusurvey...)
 cohort.title = 'Influweb'
 color.web.primary = 'blue'

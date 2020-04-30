@@ -218,3 +218,13 @@ upset_plot <- function(data, sets, n.max=40, point_size=3, name_size_scale=1, ti
   plot_grid(freq_plot, matrix_plot, align="v", ncol=1)
   
 }
+
+# function provided by Erwan Le Pennec for the radar coord. 
+# https://medium.com/@rhdzmota/alcohol-and-radar-plots-in-r-with-ggplot2-9ba7ad8c92c
+coord_radar <- function (theta = "x", start = 0, direction = 1) {
+  theta <- match.arg(theta, c("x", "y"))
+  r <- if (theta == "x") "y" else "x"
+  ggproto("CordRadar", CoordPolar, theta = theta, r = r, start = start, 
+          direction = sign(direction),
+          is_linear = function(coord) TRUE)
+}
