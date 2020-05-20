@@ -274,14 +274,14 @@ for(i in seq_along(sets)) {
     facet_grid(cols=vars(name), scales="free_y") +
     theme_with('x_vertical') +
     g_labs(title=paste0("% Symptoms self-reported cause vs ", title), subtitle=paste("Influenzanet, all countries", short.term.period,", non weighted"), x="Symptom cause", y=paste("Percentage of ",name,"set")) 
-  g_save(paste0("symptcause-freq-",name,"-europe-by_cause"), plot=TRUE, width=width, height = 8)  
+  g_save(paste0("symptcause-freq-",name,"-europe-by_cause"), plot=TRUE, width=width, height = 6)  
   
   ggplot(wg, aes(x=name, y=100*value/total_cause, fill=name)) + 
     geom_bar(stat="identity") + 
-    facet_grid(rows=vars(sympt.cause), scales="free_y") +
+    facet_wrap(~sympt.cause, scales="free_y") +
     theme_with('x_vertical') +
     g_labs(title=paste0("Symptoms self-reported cause vs ", title), subtitle=paste("Influenzanet, all countries,", short.term.period,", non weighted"), x="Week", y="Percentage of reported cause") 
-  g_save(paste0("symptcause-freq-",name,"-europe-by_syndrome"), plot=TRUE, width=length(unique(wg$name))*.4, height = 8)  
+  g_save(paste0("symptcause-freq-",name,"-europe-by_syndrome"), plot=TRUE, width=length(unique(wg$name))+1, height = length(use.causes)*2)  
   
   
 }
