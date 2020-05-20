@@ -174,6 +174,9 @@ platform_define_survey(
       "yes.moderately"=3,
       "yes.absolutely"=4,
       "DNK"=99
+    ),
+    "sympt.cause"=list(
+      cause.covid="9"
     )
   ),
   template = "eu:weekly"
