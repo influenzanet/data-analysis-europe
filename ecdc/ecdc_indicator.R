@@ -78,7 +78,7 @@ use.type = "adj"
 current.week = iso_yearweek(Sys.Date())
 
 ii = results$inc %>%
-  filter(syndrome == "ari.ecdc" & type %in% c(use.type,"count")) 
+  filter(syndrome == "ili.ecdc" & type %in% c(use.type,"count")) 
  
 count = ii %>%
   filter(type =="count") %>%
