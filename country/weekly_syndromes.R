@@ -22,6 +22,9 @@ if(!exists("cli.args")) {
 country = cli.args$country
 season = cli.args$season
 
+# Country translations
+i18n_load("i18n/", language = tolower(country))
+
 short.term.size = 4
 short.term = iso_yearweek(Sys.Date() - short.term.size * 7)
 
@@ -43,8 +46,6 @@ for(n in ls(data.all)) {
 
 init.path(paste0(country, "/", season))
 
-i18n_load("i18n/", language = "en") # default
-i18n_load("i18n/", language = tolower(country))
 
 caption = paste0(i18n("platform.copyright"),", ", Sys.time())
 
@@ -240,3 +241,77 @@ if(nrow(data) > 0) {
   upset_plot(data, sets=names(symptoms.groups), title=paste0("Grouped symptoms associations for the last ", short.term.size, " weeks"), opts=opts)
   g_save("grouped_symptom_upset_shortterm", plot=TRUE, width=14, height = 6)  
 }
+
+questions = attr(data.all, "questions")
+
+for(question in questions) {
+  data = data.all[[question$name]]
+  name = question$name
+  if(is.null(data)) {
+    cat("No data for", question$name,"\n")
+  }
+  ggplot(data, aes(x=monday_of_week(yw), y=round(count/total * 100, 2))) +
+    geom_bar(stat = "identity", fill = colors$primary) +
+    g_labs(y=i18n('percentage'), x=i18n('week'), title=i18n(name)) +
+    facet_wrap(. ~ variable, labeller=labeller(variable=i18n))
+  g_save(name, "_percent", width=14, height=6)
+  
+  ggplot(data, aes(x=monday_of_week(yw), y=count)) +
+    geom_bar(stat = "identity", fill = colors$primary) +
+    g_labs(y=i18n("count"), x=i18n('week'), title=i18n(name)) +
+    facet_wrap(.~variable, labeller=labeller(variable=i18n))
+  g_save(paste0(name, "_value"), width=14, height=6) 
+
+}
+
+## Symptoms and Symptom causes
+data = data.all$symptom_causes
+
+if(nrow(data) > 0) {
+
+  data$sympt.cause = survey_recode(data$sympt.cause, "sympt.cause", "weekly")
+  
+  sets = attr(data.all, "syndromes")
+  sets$symptoms = structure(attr(data.all, "symptoms"), title="Symptoms")
+  
+  #use.causes = c('cause.ili','cause.cold','cause.covid')
+  
+  for(i in seq_along(sets)) {
+    name = names(sets[i])
+    columns = sets[[i]]
+    title = attr(sets[[i]], "title")
+    ww = data %>% select(yw, sympt.cause, !!!syms(columns)) %>% filter(!is.na(sympt.cause))
+    ww = ww %>% filter(yw >= min.week) 
+    
+    #if(name != "ifn") {
+    #  ww =  ww %>% filter(sympt.cause %in% use.causes)
+    #}
+    
+    ww$sympt.cause = factor(ww$sympt.cause)
+    ww = tidyr::pivot_longer(ww, columns)
+    ww = data.frame(ww)
+  
+    g = ggplot(ww, aes(x=monday_of_week(yw), y=value, color=sympt.cause, group=sympt.cause)) + 
+      geom_line() + 
+      g_labs(title=paste0("Symptoms self-reported cause vs  ", title), x="Week", y="Count") 
+    
+      g = g  + facet_wrap(~name, scales="free_y") 
+    
+    g_save(paste0("symptcause-weekly-", name), plot=TRUE, width=14, height = 8)  
+
+    
+    # Radar plot 
+    d = ww %>% filter(yw >= short.term) %>% group_by(sympt.cause, name) %>% summarise_at("value", sum)
+    d = d %>% ungroup() %>% group_by(name) %>% mutate(total=sum(value))
+    ggplot(d, aes(x=name, y=100*value/total, color=sympt.cause, group=sympt.cause)) + 
+      geom_line() + 
+      coord_radar() +
+      g_labs(y=i18n("percentagee"), x=i18n(name), title=paste0(i18n("percentage_of_cause_for_group"),", ", short.term.title) ) +
+      guides(color=guide_legend(i18n("sympt.cause")))
+    g_save(paste0("symptcause-weekly-", name), plot=TRUE, width=14, height = 8)  
+    
+  }
+}
+
+
+

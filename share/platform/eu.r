@@ -104,24 +104,13 @@ platform_define_survey(
   ),
   labels=list(
     "symptoms.extra"=c('loss.smell', 'loss.taste', 'nose.bleed'),
-    "sympt.cause" = list(
-      "cause.ili" = "0",
-      "cause.cold" = "1",
-      "cause.allergy" = "2",
-      "cause.gastro" = "3",
-      "cause.other" = "4",
-      "cause.dkn" = "5",
-      "cause.asthma" = "6",
-      "cause.ili.doctor" = "7",
-      "cause.other.doctor" = "8",
-      "cause.covid" = "9"
-    ),
     measures="measure.*",
     reason.covid="reason.covid.*",
-    confin.work="confin.work.*",
-    confinstop.work="confinstop.work.*"
+    confin.work=c('confin.work.home','confin.work.outside','confin.work.absence.child','confin.work.absence.sick','confin.work.other'),
+    confinstop.work=c('confinstop.work.home','confinstop.work.outside','confinstop.work.absence.child','confinstop.work.absence.sick','confinstop.work.other','confinstop.work.DNK')
   ),
   recodes=list(
+    
     # covid-19
     "travel"=recode.y1_n0_dkn2,
     # "travel.country1"=
@@ -185,6 +174,9 @@ platform_define_survey(
       "yes.moderately"=3,
       "yes.absolutely"=4,
       "DNK"=99
+    ),
+    "sympt.cause"=list(
+      cause.covid="9"
     )
   ),
   template = "eu:weekly"

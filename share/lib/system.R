@@ -53,7 +53,7 @@ get_current_season = function() {
 #' They depends on seasson now
 get_symptoms_columns = function(season) {
   sympt.extra = survey_labels('weekly','symptoms.extra')
-  survey_variable_available(c(get_symptoms_aliases(), sympt.extra ), survey="weekly", season=season)
+  survey_variable_available(unique(c(get_symptoms_aliases(), sympt.extra )), survey="weekly", season=season)
 }
 
 # Create a file to describe the output

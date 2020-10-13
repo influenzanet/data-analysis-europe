@@ -2,6 +2,7 @@
 cohort.title = 'InfluenzaNet'
 color.web.primary = 'blue'
 color.web.secondary = 'darkgreen'
+monthday_format ='%d/%m'
 
 # Intake description
 gender_of_participants = 'gender of particpants'
@@ -257,6 +258,7 @@ antibio.med = "Prescribed by doctor"
 antibio.home = "Already have"
 
 # Cause of symptoms
+sympt.cause = "Self-reported cause"
 cause.ili = "Flu-like"
 cause.cold = "Cold"
 cause.allergy = "Allergy"

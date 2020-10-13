@@ -43,18 +43,18 @@ symptoms = get_symptoms_columns(season)
 
 symptoms.mask = create_binary_mask(symptoms)
 
-mesure.covid = survey_labels('weekly', "measures")
+measure.covid = survey_labels('weekly', "measures")
 reason.covid = survey_labels('weekly', "reason.covid")
 confin.work = survey_labels('weekly', "confin.work")
 confinstop.work = survey_labels('weekly', "confinstop.work")
 
-weekly.columns = c(symptoms, mesure.covid, reason.covid, confin.work, confinstop.work)
+weekly.columns = c(symptoms, measure.covid, reason.covid, confin.work, confinstop.work)
 
 other.questions <- list(
-  mesure = mesure.covid,
-  reason = reason.covid, 
-  confin = confin.work,
-  confinstop = confinstop.work
+  list(name="measure",  vars= measure.covid, type="bool", min.week=202011),
+  list(name="reason",  vars=reason.covid, type="bool", min.week=202011), 
+  list(name="confin",  vars=confin.work, type="bool", min.week=202011),
+  list(name="confinstop",  vars=confinstop.work, type="bool", min.week=202011)
 )
 
 for(country in countries) {
@@ -103,19 +103,30 @@ for(country in countries) {
   n1 = c('cough','fever')
   n2 = c("asthenia","dyspnea" )
   weekly$ch.covid = rowSums(weekly[, n1], na.rm=TRUE) > 0 & rowSums(weekly[, n2], na.rm=TRUE) > 0
-  
-  
+
   columns = c(symptoms, syndromes, syndromes.covid, syndromes.ecdc)
   
-  weekly = weekly %>% group_by(person_id, onset) %>% summarize_at(columns, sum)
+  weekly$yw = iso_yearweek(weekly$onset)
   
-  weekly[, columns] = weekly[, columns] > 0
+  ## Symptom by perceived cause
+  ww = weekly %>% filter(!no.sympt)
+  
+  ww = ww %>%
+    group_by(yw, person_id, sympt.cause) %>%
+    summarize_at(columns, sum, na.rm=TRUE) %>%
+    group_by(yw, sympt.cause) %>%
+    summarise_at(columns, ~sum(. > 0))
+
+  ww = data.frame(ww)
+    
+  ww$country = factor(country, countries)
+  collect_data("symptom_causes", ww)
+
   
  # in this list were predefined by the Israeli MOH (Ministry of Health): muscle pains, shortness of breath,
  #  fatigue, cough and a high fever (body temperature of over 38 degrees celsius. For responders under the
  # age of 18 nausea and vomiting was also included.
   
-  weekly$yw = iso_yearweek(weekly$onset)
   
   weekly = left_join(weekly, dataset$intake, by='person_id')
   age = weekly$age
@@ -127,7 +138,10 @@ for(country in countries) {
   weekly$count = apply(weekly[, cols], 1, sum)
   weekly$ratio = weekly$count / if_else(!is.na(age) & age < 18, 6, 5)
   
-  ww = weekly %>% group_by(yw) %>% 
+  ww = weekly %>% 
+        group_by(yw, person_id) %>%
+        summarize(ratio=max(ratio, na.rm=TRUE)) %>%
+        group_by(yw) %>% 
         summarize(
           mean=mean(ratio, na.rm=TRUE),
           q1=quantile(ratio, na.rm=TRUE, probs=.25),
@@ -195,7 +209,6 @@ for(country in countries) {
   
   ww = dataset$weekly %>% filter(!no.sympt)
   
-  
   ww = apply_binary_mask(ww, mask=symptoms.mask, column="g")
   
   # Flag to differentiate all symptoms (with extra) and olds
@@ -209,7 +222,8 @@ for(country in countries) {
         summarize(n_person=n(), n_syndrom=sum(count))
   ww = data.frame(ww)
 
-  ww$country = country
+  ww$country = factor(country, countries)
+
   collect_data("symptom_groups", ww)
 
   rm(ww)
@@ -226,6 +240,67 @@ for(country in countries) {
   
   collect_data("participants_week", ww)
   
+  ##
+  # Other questions
+  ##
+  
+  #' Frequency table for weekly & particpant data
+  #' @param data
+  freq_weekly = function(data, columns, type="bool") {
+    
+    #sum_na = function(x) { sum(x, na.rm=TRUE) }
+    any_notna = function(x) { any(!is.na(x)) } 
+    if(type == "bool") {
+      
+      d <- data %>% group_by(yw, person_id) %>% summarize_at(columns, sum, na.rm=TRUE) 
+      d <- d %>% ungroup() %>% group_by(yw) %>% summarize_at(columns, sum)
+      d <- tidyr::pivot_longer(d, -yw, names_to = 'variable', values_to = "count")
+      
+      # compute total
+      total <- data %>% group_by(yw, person_id) %>% summarize_at(columns, any_notna)
+      total = total %>% ungroup() %>% group_by(yw) %>% summarise_at(columns, sum)
+      total <- tidyr::pivot_longer(total, -yw, names_to = 'variable', values_to = "total")
+      
+      d$variable = factor(d$variable)
+      total$variable = factor(total$variable)
+    
+      d = full_join(total, d, by=c('yw','variable'))
+      
+    }
+    
+    d = data.frame(d)
+    attr(d, "type") <- type
+    d
+  }
+  
+  for(question in other.questions) {
+    
+    variables = question$vars
+    
+    ww <- dataset$weekly %>% select(yw, person_id, !!!variables)
+
+    if(!is.null(question$min.week)) {
+      ww = ww %>% filter(yw >= question$min.week)
+    }    
+  
+    if(nrow(ww) == 0) {
+      next()
+    } 
+      
+    d = freq_weekly(ww, variables, type=question$type)
+    
+    d$country = factor(country, countries)
+    
+    collect_data(question$name, d)
+    
+  }
+  
+  rm(ww, d)
+
+  ###
+  ## Analyse participants
+  ###
+
   # Number of survey by week & first day of week for each user
   ww = dataset$weekly %>% 
         select(date, person_id) %>% 
@@ -256,30 +331,16 @@ for(country in countries) {
   collect_data("participants_date", ww)
 
   rm(ww)
-  
-  for(name in names(other.questions)){
-    
-    variables = other.questions[[name]]
-    
-    ww <- dataset$weekly %>% select(yw, id, !!!variables) %>% filter(yw >= min.week)
-    
-    weekly.variable <- ww %>% group_by(yw) %>% summarize_at(variables, sum, na.rm = TRUE)
-    weekly.variable <- pivot_longer(weekly.variable, -yw, names_to = 'variable')
-    
-    answer.variable <- ww %>% group_by(yw) %>% summarize_at(variables, ~sum(!is.na(.)))
-    answer.variable <- pivot_longer(answer.variable, -yw, names_to = 'variable',values_to = 'nb')
-    
-    weekly.variable <- merge(weekly.variable, answer.variable, by=c('yw','variable'), all=TRUE)
 
-    weekly.variable$country = country
-    
-    collect_data(name, weekly.variable)
-    
-  }
-  
 }
+
+attr(data.all, "syndromes") <- list(
+  "covid"=structure(syndromes.covid, title="Covid syndromes"),
+  "ecdc"=structure(syndromes.ecdc, title="ECDC syndromes"),
+  "ifn"=structure(syndromes, title="Influenzanet syndroms")
+) 
 
 attr(data.all, "symptoms") <- symptoms
 attr(data.all, "symptoms.mask") <- symptoms.mask
-
+attr(data.all, "questions") <- other.questions
 saveRDS(data.all, file=my.path("weekly_syndromes.Rds"))
