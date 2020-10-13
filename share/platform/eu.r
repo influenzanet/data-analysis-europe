@@ -243,7 +243,8 @@ seasons = list(
   list(2016, pop=2016),
   list(2017, pop=2017),
   list(2018, pop=2018),
-  list(2019, pop=2018)
+  list(2019, pop=2018),
+  list(2020, pop=2018)
 )
 
 for(season in seasons) {
