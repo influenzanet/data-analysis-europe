@@ -235,17 +235,23 @@ seasons = list(
   list(2016, pop=2016),
   list(2017, pop=2017),
   list(2018, pop=2018),
-  list(2019, pop=2018),
-  list(2020, pop=2018)
+  list(2019, pop=2018, end='2020-08-31'),
+  list(2020, pop=2018, start='2020-09-01')
 )
 
 for(season in seasons) {
   y = season[[1]]
+  
+  dd = list()
+  
+  dd$start =  if(hasName(season, "start")) season$start else paste0(y, '-10-01')
+  dd$end =  if(hasName(season, "end")) season$end else paste0(y + 1, '-04-30')
+  
   platform_season_history(y,
         weekly='epidb_results_weekly',
         intake='epidb_results_intake',
         health='epidb_health_status_2012',
-        dates=list('start'=paste0(y, '-10-01'), 'end'=paste0(y + 1, '-04-30')),
+        dates=dd,
         year.pop=season$pop
   )
 }
