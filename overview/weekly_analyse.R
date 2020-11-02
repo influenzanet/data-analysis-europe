@@ -119,14 +119,12 @@ for(country in countries) {
 
   ww = data.frame(ww)
     
-  ww$country = factor(country, countries)
+  ww = mutate(ww, country=factor(country, countries))
   collect_data("symptom_causes", ww)
 
-  
  # in this list were predefined by the Israeli MOH (Ministry of Health): muscle pains, shortness of breath,
  #  fatigue, cough and a high fever (body temperature of over 38 degrees celsius. For responders under the
  # age of 18 nausea and vomiting was also included.
-  
   
   weekly = left_join(weekly, dataset$intake, by='person_id')
   age = weekly$age
@@ -209,24 +207,26 @@ for(country in countries) {
   
   ww = dataset$weekly %>% filter(!no.sympt)
   
-  ww = apply_binary_mask(ww, mask=symptoms.mask, column="g")
+  if(nrow(ww) > 0) {
+    ww = apply_binary_mask(ww, mask=symptoms.mask, column="g")
+    
+    # Flag to differentiate all symptoms (with extra) and olds
+    ww$all = apply(ww[, symptoms], 1, function(x) !any(is.na(x)))
   
-  # Flag to differentiate all symptoms (with extra) and olds
-  ww$all = apply(ww[, symptoms], 1, function(x) !any(is.na(x)))
+    ww = ww %>% 
+          mutate(yw=iso_yearweek(date)) %>% 
+          group_by(person_id, yw, all, g) %>% 
+          summarize(count=n()) %>%
+          group_by(yw, all, g) %>%
+          summarize(n_person=n(), n_syndrom=sum(count))
+    ww = data.frame(ww)
 
-  ww = ww %>% 
-        mutate(yw=iso_yearweek(date)) %>% 
-        group_by(person_id, yw, all, g) %>% 
-        summarize(count=n()) %>%
-        group_by(yw, all, g) %>%
-        summarize(n_person=n(), n_syndrom=sum(count))
-  ww = data.frame(ww)
-
-  ww$country = factor(country, countries)
-
-  collect_data("symptom_groups", ww)
-
-  rm(ww)
+    ww$country = factor(country, countries)
+  
+    collect_data("symptom_groups", ww)
+  
+    rm(ww)
+  }
   
   # Number of survey reported by week
   # Here use reporting date (timestamp) not the onset date for the week
