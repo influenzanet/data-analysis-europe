@@ -1,5 +1,5 @@
 ## Weekly syndromes
-# cli.args = list('country'="IT", season=2019)
+# cli.args = list('country'="IT", season=2020)
 
 source('conf.R')
 
@@ -46,7 +46,6 @@ for(n in ls(data.all)) {
 
 init.path(paste0(country, "/", season))
 
-
 caption = paste0(i18n("platform.copyright"),", ", Sys.time())
 
 colors = get_platform_colors()
@@ -56,7 +55,7 @@ if(country_title == "") {
   country_title = i18n(paste0("country_", tolower(country)))
 }
 
-min.week = season * 100 + 51
+min.week = get_graph_starting_week(season)
 
 g_save = function(...,  desc=NULL, plot=FALSE, width=12, height = 8) {
   p = my.path(..., ".pdf")
@@ -88,8 +87,11 @@ scale_sympt_freq = function() {
   scale_fill_viridis_c(direction = -1, option = "A", na.value="grey90", breaks=large_breaks)
 }
 
-if(nrow(data) > 0) {
-  ggplot(data %>% filter(yw >= min.week), aes(x=monday_of_week(yw), y=name, fill=100 * value/person)) +
+
+dd = data %>% filter(yw >= min.week)
+if(nrow(dd) > 0) {
+  
+  ggplot(dd, aes(x=monday_of_week(yw), y=name, fill=100 * value/person)) +
     geom_tile() + 
     scale_sympt_freq() +
     scale_x_date(date_labels=date_format) +
@@ -98,7 +100,7 @@ if(nrow(data) > 0) {
     guides(fill=guide_legend(i18n('percentage_of_participants')))
   g_save("symptom_prop", plot=TRUE, width=7, height = 6)  
   
-  ggplot(data %>% filter(yw >= min.week), aes(x=monday_of_week(yw), y=name, fill=100*value/person_with_sympt)) +
+  ggplot(dd, aes(x=monday_of_week(yw), y=name, fill=100*value/person_with_sympt)) +
     geom_tile() +
     scale_sympt_freq() +
     scale_y_discrete(labels=i18n) +
@@ -108,7 +110,7 @@ if(nrow(data) > 0) {
   g_save("symptom_prop_with_symptom", plot=TRUE, width=6, height = 8)  
   
   
-  ggplot(data %>% filter(yw >= min.week), aes(x=name, y=100*value/person_with_sympt, fill=100*value/person_with_sympt)) +
+  ggplot(dd, aes(x=name, y=100*value/person_with_sympt, fill=100*value/person_with_sympt)) +
     geom_bar(stat="identity") +
     facet_grid(cols=vars(yw), labeller=labeller(yw=week_format)) +
     scale_x_discrete(labels=i18n) +
@@ -120,33 +122,35 @@ if(nrow(data) > 0) {
     guides(fill=guide_legend(i18n('percentage_of_participants')))
   g_save("symptom_bar_prop_with_symptom", plot=TRUE, width=7, height = 7)  
   
-  # Short term graph
-  ggplot(data %>% filter(yw >= short.term), aes(x=monday_of_week(yw), y=name, fill=100*value/person_with_sympt)) +
-    geom_tile() +
-    scale_y_discrete(labels=i18n) +
-    scale_x_date(date_labels=date_format) +
-    scale_sympt_freq() +
-    g_labs(x=titlelize("week"), y=titlelize("symptom"), title=paste0(i18n('symptom_reported_by_part_with_sympt'), short.term.title)) +
-    guides(fill=guide_legend(i18n('percentage_of_participants')))
-  g_save("symptom_prop_with_symptom_shortterm", plot=TRUE, width=6, height = 14)  
-  
-  ggplot(data %>% filter(yw >= short.term), aes(x=name, y=100*value/person_with_sympt, fill=100*value/person_with_sympt)) +
-    geom_bar(stat="identity") +
-    scale_x_discrete(labels=i18n) +
-    facet_grid(cols=vars(yw), labeller=labeller(yw=week_format)) +
-    scale_sympt_freq() +
-    coord_flip() + 
-    theme_with("x_vertical") + theme(axis.text = element_text(size=5)) +
-    g_labs(x=titlelize("symptom"), y=i18n('percentage_of_participants'), title=paste0(i18n('symptom_reported_by_part_with_sympt'),", ", short.term.title)) +
-    guides(fill=guide_legend(i18n('percentage_of_participants')))
-  g_save("symptom_bar_prop_with_symptom_shortterm", plot=TRUE, width=8, height = 14)  
-
+  d = data %>% filter(yw >= short.term)
+  if(nrow(d) > 0) {
+    # Short term graph
+    ggplot(d, aes(x=monday_of_week(yw), y=name, fill=100*value/person_with_sympt)) +
+      geom_tile() +
+      scale_y_discrete(labels=i18n) +
+      scale_x_date(date_labels=date_format) +
+      scale_sympt_freq() +
+      g_labs(x=titlelize("week"), y=titlelize("symptom"), title=paste0(i18n('symptom_reported_by_part_with_sympt'), short.term.title)) +
+      guides(fill=guide_legend(i18n('percentage_of_participants')))
+    g_save("symptom_prop_with_symptom_shortterm", plot=TRUE, width=6, height = 14)  
+    
+    ggplot(d, aes(x=name, y=100*value/person_with_sympt, fill=100*value/person_with_sympt)) +
+      geom_bar(stat="identity") +
+      scale_x_discrete(labels=i18n) +
+      facet_grid(cols=vars(yw), labeller=labeller(yw=week_format)) +
+      scale_sympt_freq() +
+      coord_flip() + 
+      theme_with("x_vertical") + theme(axis.text = element_text(size=5)) +
+      g_labs(x=titlelize("symptom"), y=i18n('percentage_of_participants'), title=paste0(i18n('symptom_reported_by_part_with_sympt'),", ", short.term.title)) +
+      guides(fill=guide_legend(i18n('percentage_of_participants')))
+    g_save("symptom_bar_prop_with_symptom_shortterm", plot=TRUE, width=8, height = 14)  
+  }
 }
 
-data = data.all$syndromes
+data = data.all$syndromes %>% filter(yw >= min.week)
 
 if(nrow(data) > 0) {
-  ggplot(data %>% filter(yw >= min.week), aes(x=monday_of_week(yw), y=name, fill=100 * value / person)) +
+  ggplot(data, aes(x=monday_of_week(yw), y=name, fill=100 * value / person)) +
     geom_tile() +
     scale_x_date(date_labels=date_format) +
     scale_y_discrete(labels=i18n) +
@@ -156,9 +160,9 @@ if(nrow(data) > 0) {
   g_save("syndrome_prop", plot=TRUE, width=7, height = 6)  
 }
 
-data = data.all$syndromes.covid
+data = data.all$syndromes.covid %>% filter(yw >= min.week)
 if(nrow(data) > 0) {
-  ggplot(data %>% filter(yw >= min.week), aes(x=monday_of_week(yw), y=name, fill=100 * value / person)) +
+  ggplot(data, aes(x=monday_of_week(yw), y=name, fill=100 * value / person)) +
     geom_tile() +
     scale_x_date(date_labels=date_format) +
     scale_y_discrete(labels=i18n) +
@@ -168,9 +172,9 @@ if(nrow(data) > 0) {
   g_save("syndrome-covid_prop", plot=TRUE, width=7, height = 6)  
 }
 
-data = data.all$syndromes.ecdc
+data = data.all$syndromes.ecdc %>% filter(yw >= min.week)
 if(nrow(data) > 0) {
-  ggplot(data %>% filter(yw >= min.week), aes(x=monday_of_week(yw), y=name, fill=100 * value/person)) +
+  ggplot(data, aes(x=monday_of_week(yw), y=name, fill=100 * value/person)) +
     geom_tile() +
     scale_x_date(date_labels=date_format) +
     scale_y_discrete(labels=i18n) +
@@ -182,7 +186,7 @@ if(nrow(data) > 0) {
   d1 = data.all$syndromes.covid %>% mutate(name=gsub(".covid", "", name, fixed=TRUE))
   data = bind_rows(covid=d1, ecdc=data, .id="set")
   
-  if(nrow(data) ) {
+  if(nrow(data) > 0) {
     ggplot(data %>% filter(yw >= min.week), aes(x=monday_of_week(yw), y=100 *value/person, color=set)) +
       geom_line() +
       scale_color_discrete(labels=c('ecdc'=i18n("with_sudden"), "covid"=i18n("without_sudden"))) +
@@ -197,10 +201,9 @@ if(nrow(data) > 0) {
 
 }
 
-data = data.all$participants_date
+data = data.all$participants_date %>% filter(yw >= min.week)
 
 if(nrow(data) > 0) {
-  data = data %>% filter(yw >= min.week)
   days = c('7'="monday",'6'='tuesday','5'='wednesday', '4'='thursday','3'='friday','2'='saturday','1'='sunday')
   
   data = data %>% mutate(
@@ -220,7 +223,7 @@ if(nrow(data) > 0) {
   
 }
 
-data = data.all$symptom_groups
+data = data.all$symptom_groups %>% filter(yw >= short.term)
 
 if(nrow(data) > 0) {
   
@@ -230,7 +233,7 @@ if(nrow(data) > 0) {
   )
   
   symptoms.groups = lapply(symptoms.groups, function(n) {  n[n %in% symptoms ]})
-  overall = data %>% filter(yw >= short.term) %>% group_by(g) %>% summarize(count=sum(n_person))
+  overall = data %>% group_by(g) %>% summarize(count=sum(n_person))
   overall = get_labels_from_binary(overall, mask=symptoms.mask, group = "g")
 
   upset_plot(overall, symptoms, n.max=120, title=paste0("Symptom associations for the last ", short.term.size, " weeks"), opts=opts)
@@ -283,9 +286,10 @@ if(nrow(data) > 0) {
     ww = data %>% select(yw, sympt.cause, !!!syms(columns)) %>% filter(!is.na(sympt.cause))
     ww = ww %>% filter(yw >= min.week) 
     
-    #if(name != "ifn") {
-    #  ww =  ww %>% filter(sympt.cause %in% use.causes)
-    #}
+    if(nrow(ww) == 0) {
+      message(paste("No data for set", name))
+      next()
+    }
     
     ww$sympt.cause = factor(ww$sympt.cause)
     ww = tidyr::pivot_longer(ww, columns)
@@ -302,14 +306,15 @@ if(nrow(data) > 0) {
     
     # Radar plot 
     d = ww %>% filter(yw >= short.term) %>% group_by(sympt.cause, name) %>% summarise_at("value", sum)
-    d = d %>% ungroup() %>% group_by(name) %>% mutate(total=sum(value))
-    ggplot(d, aes(x=name, y=100*value/total, color=sympt.cause, group=sympt.cause)) + 
-      geom_line() + 
-      coord_radar() +
-      g_labs(y=i18n("percentagee"), x=i18n(name), title=paste0(i18n("percentage_of_cause_for_group"),", ", short.term.title) ) +
-      guides(color=guide_legend(i18n("sympt.cause")))
-    g_save(paste0("symptcause-weekly-", name), plot=TRUE, width=14, height = 8)  
-    
+    if(nrow(d) > 0) {
+      d = d %>% ungroup() %>% group_by(name) %>% mutate(total=sum(value))
+      ggplot(d, aes(x=name, y=100*value/total, color=sympt.cause, group=sympt.cause)) + 
+        geom_line() + 
+        coord_radar() +
+        g_labs(y=i18n("percentagee"), x=i18n(name), title=paste0(i18n("percentage_of_cause_for_group"),", ", short.term.title) ) +
+        guides(color=guide_legend(i18n("sympt.cause")))
+      g_save(paste0("symptcause-weekly-", name), plot=TRUE, width=14, height = 8)  
+    }    
   }
 }
 
