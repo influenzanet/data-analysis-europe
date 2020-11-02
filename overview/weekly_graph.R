@@ -4,6 +4,7 @@ library(dplyr)
 library(gridExtra)
 library(ggplot2)
 suppressPackageStartupMessages(library(cowplot))
+library(rlang)
 
 share.lib('upset')
 
@@ -12,7 +13,7 @@ season = get_current_season()
 # Population by country
 pop = load_population("country", 2018)
 
-min.week = season * 100 + 51
+min.week = get_graph_starting_week(season)
 
 short.term.size = 4
 short.term = iso_yearweek(Sys.Date() - short.term.size * 7)
@@ -81,18 +82,39 @@ ggplot(part, aes(x=monday_of_week(yw), y=weight, color=country)) +
 
 weights = part %>% select(country, yw, weight, total_weight)
 
+#' Helper to do action in expr only if filtered data has row
+#' @param data data.frame 
+#' @param exprs expression to evaluate if data is not empty
+#' @param .min minimum week to include, if NULL nothing is done
+with_data = function(data, expr, .min=min.week) {
+  ex = enexpr(expr)
+  if(is.null(.min)) {
+    d = data
+  } else {
+    d = data %>% filter(yw >= !!(.min))
+  }
+  if(nrow(d) > 0) {
+    eval_tidy(ex, list("."=d))
+  } else {
+    message("No data")
+  }
+}
 
 # graph height
 height = length(countries) * 1.75
 
 data = data.all$rossman
 
-ggplot(data %>% filter(yw >= min.week), aes(x=monday_of_week(yw), y=mean, group=country, color=country)) +
-  geom_line() +
-  facet_grid(rows=vars(country), scales="free_y") +
-  scale_color_brewer(palette="Dark2") +
-  g_labs(title="Symptoms ratio from Rossman H et al. 2019")
-g_save("symptom_ratio", plot=TRUE, width=12, height = 8)  
+with_data(data,
+  {
+    ggplot(., aes(x=monday_of_week(yw), y=mean, group=country, color=country)) +
+      geom_line() +
+      facet_grid(rows=vars(country), scales="free_y") +
+      scale_color_brewer(palette="Dark2") +
+      g_labs(title="Symptoms ratio from Rossman H et al. 2019")
+    g_save("symptom_ratio", plot=TRUE, width=12, height = 8)  
+  }
+)
 
 data = data.all$symptoms
 
@@ -102,70 +124,78 @@ scale_sympt_freq = function() {
 
 na.color = "grey90"
 
-ggplot(data %>% filter(yw >= min.week), aes(x=monday_of_week(yw), y=name, fill=100 * value/person)) +
-  geom_tile() +
-  facet_grid(rows=vars(country)) +
-  scale_sympt_freq() +
-  g_labs(x="Week", y="Symptom", title="% of symptom reported by participants") +
-  guides(fill=guide_legend("% of Participants"))
-g_save("symptom_prop", plot=TRUE, width=6, height = height)  
+with_data(data, {
+  ggplot(., aes(x=monday_of_week(yw), y=name, fill=100 * value/person)) +
+    geom_tile() +
+    facet_grid(rows=vars(country)) +
+    scale_sympt_freq() +
+    g_labs(x="Week", y="Symptom", title="% of symptom reported by participants") +
+    guides(fill=guide_legend("% of Participants"))
+  g_save("symptom_prop", plot=TRUE, width=6, height = height)  
+  
+  ggplot(., aes(x=monday_of_week(yw), y=name, fill=100 * value / person_with_sympt)) +
+    geom_tile() +
+    facet_grid(rows=vars(country)) +
+    scale_sympt_freq() +
+    g_labs(x="Week", y="Symptom", title="% of symptom reported by participants (with at least 1 symptom)") +
+    guides(fill=guide_legend("% of Participants (with symptom)"))
+  g_save("symptom_prop_with_symptom", plot=TRUE, width=6, height = height)  
+  
+  ggplot(., aes(x=name, y=100 * value / person_with_sympt, fill=100 * value / person_with_sympt)) +
+    geom_bar(stat="identity") +
+    facet_grid(rows=vars(country), cols=vars(yw)) +
+    scale_sympt_freq() +
+    coord_flip() + theme_with("x_vertical") +
+    theme(axis.text = element_text(size=5)) +
+    g_labs(x="Symptom", y="% of participants of the week", title="% of symptom reported by participants with at least 1 symptom") +
+    guides(fill=guide_legend("% of Participants (with symptom)"))
+  g_save("symptom_bar_prop_with_symptom", plot=TRUE, width=7, height = height)  
 
-ggplot(data %>% filter(yw >= min.week), aes(x=monday_of_week(yw), y=name, fill=100 * value / person_with_sympt)) +
-  geom_tile() +
-  facet_grid(rows=vars(country)) +
-  scale_sympt_freq() +
-  g_labs(x="Week", y="Symptom", title="% of symptom reported by participants (with at least 1 symptom)") +
-  guides(fill=guide_legend("% of Participants (with symptom)"))
-g_save("symptom_prop_with_symptom", plot=TRUE, width=6, height = height)  
+})
 
-ggplot(data %>% filter(yw >= min.week), aes(x=name, y=100 * value / person_with_sympt, fill=100 * value / person_with_sympt)) +
-  geom_bar(stat="identity") +
-  facet_grid(rows=vars(country), cols=vars(yw)) +
-  scale_sympt_freq() +
-  coord_flip() + theme_with("x_vertical") +
-  theme(axis.text = element_text(size=5)) +
-  g_labs(x="Symptom", y="% of participants of the week", title="% of symptom reported by participants with at least 1 symptom") +
-  guides(fill=guide_legend("% of Participants (with symptom)"))
-g_save("symptom_bar_prop_with_symptom", plot=TRUE, width=7, height = height)  
+with_data(data, .min=short.term, {
+  # Short term graph
+  ggplot(., aes(x=monday_of_week(yw), y=name, fill=100*value/person_with_sympt)) +
+    geom_tile() +
+    facet_grid(rows=vars(country)) +
+    scale_sympt_freq() +
+    g_labs(x="Week", y="Symptom", title=paste("% of symptom reported by participants"), subtitle=short.term.period) +
+    guides(fill=guide_legend("% of Participants"))
+  g_save("symptom_prop_with_symptom_shortterm", plot=TRUE, width=5, height = height)  
+  
+  ggplot(., aes(x=name, y=100*value/person_with_sympt, fill=100*value/person_with_sympt)) +
+    geom_bar(stat="identity") +
+    facet_grid(rows=vars(country), cols=vars(yw)) +
+    scale_sympt_freq() +
+    coord_flip() + theme_with("x_vertical") +
+    theme(axis.text = element_text(size=5)) +
+    g_labs(x="Symptom", y="% of participants of the week", title="% of symptom reported by participants with at least 1 symptom", subtitle=short.term.period) +
+    guides(fill=guide_legend("% of Participants"))
+  g_save("symptom_bar_prop_with_symptom_shortterm", plot=TRUE, width=4.5, height = height)  
+  
+})
 
-# Short term graph
-ggplot(data %>% filter(yw >= short.term), aes(x=monday_of_week(yw), y=name, fill=100*value/person_with_sympt)) +
-  geom_tile() +
-  facet_grid(rows=vars(country)) +
-  scale_sympt_freq() +
-  g_labs(x="Week", y="Symptom", title=paste("% of symptom reported by participants"), subtitle=short.term.period) +
-  guides(fill=guide_legend("% of Participants"))
-g_save("symptom_prop_with_symptom_shortterm", plot=TRUE, width=5, height = height)  
+with_data(data.all$syndromes, {
+ggplot(., aes(x=monday_of_week(yw), y=name, fill=100*value/person)) +
+    geom_tile() +
+    facet_grid(rows=vars(country)) +
+    scale_sympt_freq() +
+    g_labs(x="Week", y="Syndromes", title="% of syndromes reported by participants, Influenzanet syndromes set, by week") +
+    guides(fill=guide_legend("% of Participants"))
+  g_save("syndrome_prop", plot=TRUE, width=6, height = height )  
+})
+  
+data = 
 
-ggplot(data %>% filter(yw >= short.term), aes(x=name, y=100*value/person_with_sympt, fill=100*value/person_with_sympt)) +
-  geom_bar(stat="identity") +
-  facet_grid(rows=vars(country), cols=vars(yw)) +
-  scale_sympt_freq() +
-  coord_flip() + theme_with("x_vertical") +
-  theme(axis.text = element_text(size=5)) +
-  g_labs(x="Symptom", y="% of participants of the week", title="% of symptom reported by participants with at least 1 symptom", subtitle=short.term.period) +
-  guides(fill=guide_legend("% of Participants"))
-g_save("symptom_bar_prop_with_symptom_shortterm", plot=TRUE, width=4.5, height = height)  
-
-data = data.all$syndromes
-
-ggplot(data %>% filter(yw >= min.week), aes(x=monday_of_week(yw), y=name, fill=100*value/person)) +
-  geom_tile() +
-  facet_grid(rows=vars(country)) +
-  scale_sympt_freq() +
-  g_labs(x="Week", y="Syndromes", title="% of syndromes reported by participants, Influenzanet syndromes set, by week") +
-  guides(fill=guide_legend("% of Participants"))
-g_save("syndrome_prop", plot=TRUE, width=6, height = height )  
-
-data = data.all$syndromes.covid
-
-ggplot(data %>% filter(yw >= min.week), aes(x=monday_of_week(yw), y=name, fill=100*value/person)) +
-  geom_tile() +
-  facet_grid(rows=vars(country)) +
-  scale_sympt_freq() +
-  g_labs(x="Week", y="Syndromes", title="% of Influenzanet syndromes (without sudden) reported by participants") +
-  guides(fill=guide_legend("% of Participants"))
-g_save("syndrome-covid_prop", plot=TRUE, width=6, height = height)  
+with_data(data.all$syndromes.covid, {
+  ggplot(., aes(x=monday_of_week(yw), y=name, fill=100*value/person)) +
+    geom_tile() +
+    facet_grid(rows=vars(country)) +
+    scale_sympt_freq() +
+    g_labs(x="Week", y="Syndromes", title="% of Influenzanet syndromes (without sudden) reported by participants") +
+    guides(fill=guide_legend("% of Participants"))
+  g_save("syndrome-covid_prop", plot=TRUE, width=6, height = height)  
+})
 
 data = data.all$syndromes.ecdc
 
@@ -192,7 +222,6 @@ g_save("syndrome-covid-ecdc_prop", plot=TRUE, width=14, height = 12)
 
 ## Symptoms and Symptom causes
 data = data.all$symptom_causes
-
 data$sympt.cause = survey_recode(data$sympt.cause, "sympt.cause", "weekly")
 
 sets = attr(data.all, "syndromes")
@@ -207,84 +236,86 @@ for(i in seq_along(sets)) {
   ww = data %>% select(yw, country, sympt.cause, !!!syms(columns)) %>% filter(!is.na(sympt.cause))
   ww = ww %>% filter(yw >= min.week) 
   
-  if(name != "ifn") {
-    ww =  ww %>% filter(sympt.cause %in% use.causes)
-  }
-  
-  ww$sympt.cause = factor(ww$sympt.cause)
-  ww = tidyr::pivot_longer(ww, columns)
-  ww = data.frame(ww)
-  
-  # For all countries
-  ww = left_join(ww, weights, by=c('yw','country'))
-  
-  wg = ww %>% 
-        group_by(yw, sympt.cause, name) %>% 
-        summarise(
-            value=sum(value), 
-            weighted=sum(value*weight, na.rm=TRUE), 
-            total_w=min(total_weight)
-        ) %>%
-        mutate(weighted=weighted/total_w)
-
-  ggplot(wg, aes(x=monday_of_week(yw), color=sympt.cause, group=sympt.cause)) + 
-    geom_line(aes(y=value, linetype="value")) +
-    geom_line(aes(y=weighted, linetype="weighted")) +
-    facet_grid(cols=vars(name), rows=vars(sympt.cause), scales="free_y") +
-    scale_linetype_manual(values=c('value'='solid',"weighted"="dashed")) +
-    g_labs(title=paste0("Symptoms self-reported cause vs ", title), subtitle="Influenzanet, all countries", x="Week", y="Count") 
+  if(nrow(ww) >= 0) {
+    if(name != "ifn") {
+      ww =  ww %>% filter(sympt.cause %in% use.causes)
+    }
     
-  g_save(paste0("symptcause-weekly-",name,"-europe-weighted"), plot=TRUE, width=14, height = 8)  
-
-  ggplot(ww, aes(x=monday_of_week(yw), y=value, color=sympt.cause, group=sympt.cause)) + 
-    geom_line() + 
-    facet_grid(rows=vars(country), cols=vars(name), scales="free_y") +
-    g_labs(title=paste0("Symptoms self-reported cause vs  ", title), subtitle="Influenzanet, all countries", x="Week", y="Count") 
+    ww$sympt.cause = factor(ww$sympt.cause)
+    ww = tidyr::pivot_longer(ww, columns)
+    ww = data.frame(ww)
+    
+    # For all countries
+    ww = left_join(ww, weights, by=c('yw','country'))
+    
+    wg = ww %>% 
+          group_by(yw, sympt.cause, name) %>% 
+          summarise(
+              value=sum(value), 
+              weighted=sum(value*weight, na.rm=TRUE), 
+              total_w=min(total_weight)
+          ) %>%
+          mutate(weighted=weighted/total_w)
   
-  g_save(paste0("symptcause-weekly-",name,"-by_country"), plot=TRUE, width=14, height = 8)  
+    ggplot(wg, aes(x=monday_of_week(yw), color=sympt.cause, group=sympt.cause)) + 
+      geom_line(aes(y=value, linetype="value")) +
+      geom_line(aes(y=weighted, linetype="weighted")) +
+      facet_grid(cols=vars(name), rows=vars(sympt.cause), scales="free_y") +
+      scale_linetype_manual(values=c('value'='solid',"weighted"="dashed")) +
+      g_labs(title=paste0("Symptoms self-reported cause vs ", title), subtitle="Influenzanet, all countries", x="Week", y="Count") 
+      
+    g_save(paste0("symptcause-weekly-",name,"-europe-weighted"), plot=TRUE, width=14, height = 8)  
   
-  wg = ww %>% 
-        filter(yw >= short.term) %>%
-        group_by(country, sympt.cause, name) %>%
-        summarise(value=sum(value))
-  
-  wg = wg %>% group_by(country, sympt.cause) %>% mutate(total_cause=sum(value)) %>% ungroup()
-  wg = wg %>% group_by(country, name) %>% mutate(total_syndrome=sum(value)) %>% ungroup()
-  
-  width = length(unique(wg$sympt.cause)) * length(unique(wg$name)) * .25
-  
-  ggplot(wg, aes(x=sympt.cause, y=100*value/total_syndrome, fill=sympt.cause)) + 
-    geom_bar(stat="identity") + 
-    facet_grid(rows=vars(country), cols=vars(name), scales="free_y") +
-    theme_with('x_vertical') +
-    g_labs(title=paste0("% Symptoms self-reported cause vs ", title, " by country"), subtitle=paste("Influenzanet, all countries", short.term.period), x="Symptom cause", y=paste("Percentage of ",name,"set")) 
-  g_save(paste0("symptcause-freq-",name,"-by_cause_country"), plot=TRUE, width=width, height = 8)  
-  
-  ggplot(wg, aes(x=name, y=100*value/total_cause, fill=name)) + 
-    geom_bar(stat="identity") + 
-    facet_grid(rows=vars(country), cols=vars(sympt.cause), scales="free_y") +
-    theme_with('x_vertical') +
-    g_labs(title=paste0("Symptoms self-reported cause vs ", title, " by country"), subtitle=paste("Influenzanet, all countries,", short.term.period), x="Week", y="Percentage of reported cause") 
-  g_save(paste0("symptcause-freq-",name,"-by_syndrome_country"), plot=TRUE, width=width, height = 8)  
-  
-  wg = wg %>% select(-country) %>% group_by(sympt.cause, name) %>% summarise_all(sum)
-  
-  ggplot(wg, aes(x=sympt.cause, y=100*value/total_syndrome, fill=sympt.cause)) + 
-    geom_bar(stat="identity") + 
-    facet_grid(cols=vars(name), scales="free_y") +
-    theme_with('x_vertical') +
-    g_labs(title=paste0("% Symptoms self-reported cause vs ", title), subtitle=paste("Influenzanet, all countries", short.term.period,", non weighted"), x="Symptom cause", y=paste("Percentage of ",name,"set")) 
-  g_save(paste0("symptcause-freq-",name,"-europe-by_cause"), plot=TRUE, width=width, height = 6)  
-  
-  ggplot(wg, aes(x=name, y=100*value/total_cause, fill=name)) + 
-    geom_bar(stat="identity") + 
-    facet_wrap(~sympt.cause, scales="free_y") +
-    theme_with('x_vertical') +
-    g_labs(title=paste0("Symptoms self-reported cause vs ", title), subtitle=paste("Influenzanet, all countries,", short.term.period,", non weighted"), x="Week", y="Percentage of reported cause") 
-  g_save(paste0("symptcause-freq-",name,"-europe-by_syndrome"), plot=TRUE, width=length(unique(wg$name))+1, height = length(use.causes)*2)  
-  
-  
-}
+    ggplot(ww, aes(x=monday_of_week(yw), y=value, color=sympt.cause, group=sympt.cause)) + 
+      geom_line() + 
+      facet_grid(rows=vars(country), cols=vars(name), scales="free_y") +
+      g_labs(title=paste0("Symptoms self-reported cause vs  ", title), subtitle="Influenzanet, all countries", x="Week", y="Count") 
+    
+    g_save(paste0("symptcause-weekly-",name,"-by_country"), plot=TRUE, width=14, height = 8)  
+    
+    wg = ww %>% 
+          filter(yw >= short.term) %>%
+          group_by(country, sympt.cause, name) %>%
+          summarise(value=sum(value))
+    
+    if(nrow(wg) > 0) {
+      wg = wg %>% group_by(country, sympt.cause) %>% mutate(total_cause=sum(value)) %>% ungroup()
+      wg = wg %>% group_by(country, name) %>% mutate(total_syndrome=sum(value)) %>% ungroup()
+      
+      width = length(unique(wg$sympt.cause)) * length(unique(wg$name)) * .25
+      
+      ggplot(wg, aes(x=sympt.cause, y=100*value/total_syndrome, fill=sympt.cause)) + 
+        geom_bar(stat="identity") + 
+        facet_grid(rows=vars(country), cols=vars(name), scales="free_y") +
+        theme_with('x_vertical') +
+        g_labs(title=paste0("% Symptoms self-reported cause vs ", title, " by country"), subtitle=paste("Influenzanet, all countries", short.term.period), x="Symptom cause", y=paste("Percentage of ",name,"set")) 
+      g_save(paste0("symptcause-freq-",name,"-by_cause_country"), plot=TRUE, width=width, height = 8)  
+      
+      ggplot(wg, aes(x=name, y=100*value/total_cause, fill=name)) + 
+        geom_bar(stat="identity") + 
+        facet_grid(rows=vars(country), cols=vars(sympt.cause), scales="free_y") +
+        theme_with('x_vertical') +
+        g_labs(title=paste0("Symptoms self-reported cause vs ", title, " by country"), subtitle=paste("Influenzanet, all countries,", short.term.period), x="Week", y="Percentage of reported cause") 
+      g_save(paste0("symptcause-freq-",name,"-by_syndrome_country"), plot=TRUE, width=width, height = 8)  
+      
+      wg = wg %>% select(-country) %>% group_by(sympt.cause, name) %>% summarise_all(sum)
+      
+      ggplot(wg, aes(x=sympt.cause, y=100*value/total_syndrome, fill=sympt.cause)) + 
+        geom_bar(stat="identity") + 
+        facet_grid(cols=vars(name), scales="free_y") +
+        theme_with('x_vertical') +
+        g_labs(title=paste0("% Symptoms self-reported cause vs ", title), subtitle=paste("Influenzanet, all countries", short.term.period,", non weighted"), x="Symptom cause", y=paste("Percentage of ",name,"set")) 
+      g_save(paste0("symptcause-freq-",name,"-europe-by_cause"), plot=TRUE, width=width, height = 6)  
+      
+      ggplot(wg, aes(x=name, y=100*value/total_cause, fill=name)) + 
+        geom_bar(stat="identity") + 
+        facet_wrap(~sympt.cause, scales="free_y") +
+        theme_with('x_vertical') +
+        g_labs(title=paste0("Symptoms self-reported cause vs ", title), subtitle=paste("Influenzanet, all countries,", short.term.period,", non weighted"), x="Week", y="Percentage of reported cause") 
+      g_save(paste0("symptcause-freq-",name,"-europe-by_syndrome"), plot=TRUE, width=length(unique(wg$name))+1, height = length(use.causes)*2)  
+    }  # if wg  
+  } # if ww
+} # for i
 
 ## Day of week of provided data
 
@@ -296,39 +327,45 @@ data = data %>% mutate(
   day =  8 - ifelse(wday == 0, 7, wday)
 )
 
-ggplot(data, aes(x=monday_of_week(yw), y=factor(day), fill=100*n_survey/total_survey)) +
-  geom_tile() +
-  facet_grid(rows=vars(country)) +
-  scale_y_discrete(labels=days) +
-  scale_fill_viridis_c(direction = -1, option = "A" ) +
-  g_labs(x="Week", y="Day of week", title="% of surveys by week and weekday, by date of first report of the week") +
-  guides(fill=guide_legend("% of Participants"))
-g_save("week_survey_prop", plot=TRUE, width=6, height = height)  
+if(nrow(data) > 0) {
 
+  ggplot(data, aes(x=monday_of_week(yw), y=factor(day), fill=100*n_survey/total_survey)) +
+    geom_tile() +
+    facet_grid(rows=vars(country)) +
+    scale_y_discrete(labels=days) +
+    scale_fill_viridis_c(direction = -1, option = "A" ) +
+    g_labs(x="Week", y="Day of week", title="% of surveys by week and weekday, by date of first report of the week") +
+    guides(fill=guide_legend("% of Participants"))
+  g_save("week_survey_prop", plot=TRUE, width=6, height = height)  
+
+}
 
 ## Symptoms association
 
 data = data.all$symptom_groups
 
 overall = data %>% filter(yw >= short.term)
-overall = overall %>% group_by(g) %>% summarize(count=sum(n_person))
-overall = get_labels_from_binary(overall, mask=symptoms.mask, group = "g")
 
-opts=list(
-  matrix=list(label=titlelize("symptoms"), point.color=colors$primary,  line.color=colors$primary, point.empty="gray83"), 
-  freq=list(label="Frequency", bar.fill=colors$primary) 
-)
+if(nrow(overall) > 0) {
+  overall = overall %>% group_by(g) %>% summarize(count=sum(n_person))
+  overall = get_labels_from_binary(overall, mask=symptoms.mask, group = "g")
+  
+  opts=list(
+    matrix=list(label=titlelize("symptoms"), point.color=colors$primary,  line.color=colors$primary, point.empty="gray83"), 
+    freq=list(label="Frequency", bar.fill=colors$primary) 
+  )
+  
+  n.max = 150
+  upset_plot(overall, symptoms, n.max=n.max, title=paste0(n.max, " most frequent symptom associations, ", short.term.period), caption=ifn.copyright(FALSE), subtitle="Influenzanet, all countries", opts=opts)
+  g_save("symptom_upset_shortterm", plot=TRUE, width=16, height = 6)  
 
-n.max = 150
-upset_plot(overall, symptoms, n.max=n.max, title=paste0(n.max, " most frequent symptom associations, ", short.term.period), caption=ifn.copyright(FALSE), subtitle="Influenzanet, all countries", opts=opts)
-g_save("symptom_upset_shortterm", plot=TRUE, width=16, height = 6)  
-
-data = create_binary_groups(overall, symptoms.groups)
-opts$matrix$label = "Symptoms group"
-opts$matrix$point.size = 4
-opts$point.empty="gray60"
-upset_plot(data, sets=names(symptoms.groups), title=paste0("Grouped symptoms associations, ", short.term.period), caption=ifn.copyright(FALSE), subtitle="Influenzanet, all countries", opts=opts)
-g_save("grouped_symptom_upset_shortterm", plot=TRUE, width=13, height = 6)  
+  data = create_binary_groups(overall, symptoms.groups)
+  opts$matrix$label = "Symptoms group"
+  opts$matrix$point.size = 4
+  opts$point.empty="gray60"
+  upset_plot(data, sets=names(symptoms.groups), title=paste0("Grouped symptoms associations, ", short.term.period), caption=ifn.copyright(FALSE), subtitle="Influenzanet, all countries", opts=opts)
+  g_save("grouped_symptom_upset_shortterm", plot=TRUE, width=13, height = 6)  
+}
 
 questions = attr(data.all, "questions")
 

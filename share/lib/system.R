@@ -49,6 +49,16 @@ get_current_season = function() {
   calc_season(Sys.Date())
 }
 
+#' Starting week for analysis
+get_graph_starting_week = function(season) {
+  if(season < 2020) {
+    w = 51
+  } else {3
+    w = 41
+  }
+  season * 100 + 41
+}
+
 #' Get list of existing symptoms
 #' They depends on seasson now
 get_symptoms_columns = function(season) {
