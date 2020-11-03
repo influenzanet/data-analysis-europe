@@ -1,4 +1,5 @@
 source('conf.R')
+
 library(dplyr)
 library(swMisc)
 library(rlang)
@@ -6,10 +7,8 @@ library(rlang)
 ## Computation parameters
 share.lib('incidence')
 
-eu.params = get_eu_incidence_parameters()
-
-params = eu.params$estimator.params
-age.categories = eu.params$age.categories
+# Get all parameters sets
+eu.params.sets = get_eu_incidence_parameters("all")
 
 if(!exists("country") | is.null(country)) {
   rlang::abort("Country not defined")
@@ -32,16 +31,9 @@ if(!season %in% seasons) {
 
 init.path(paste0('indicator/', country))
 
-#' Create output file
-#' @param .data data to output
-#' @param name data set name
-output = function(.data, name) {
-  write.csv2(.data, file=my.path(paste0(name, '_', season, '.csv')), row.names = FALSE)
-}
-
 provider = SyndromeProviderRS2019$new()
 
-r = load_results_for_incidence(season=season, age.categories=age.categories, country=country, syndrome.from = list(provider=provider$compute, health.status=FALSE), first.season=T, columns=list(keep.all=TRUE))
+r = load_results_for_incidence(season=season, age.categories=NULL, country=country, syndrome.from = list(provider=provider$compute, health.status=FALSE), first.season=T, columns=list(keep.all=TRUE))
 
 if( is.null(r) | is.null(r$weekly) | is.null(r$intake) ) {
   rlang::abort("No data", class = "error_no_data")
@@ -55,67 +47,44 @@ if( nrow(r$weekly) == 0 ) {
 r$intake$country = factor(country) 
 
 h = season_definition(season = season)
-design = design_incidence(age.categories = age.categories, year.pop = h$year.pop, geo="country", geo_area = toupper(country))
 
-estimator = IncidenceRS2014$new(weekly=r$weekly, intake=r$intake, params=params, syndromes = r$syndromes, design=design, output=c("inc"))
+results = list()
 
-weeks = sort(unique(iso_yearweek(r$weekly$date)))
-results = rlang::with_abort(estimator$compute(weeks = unique(r$weekly$yw), verticalize = TRUE, verbose=FALSE))
+for(eu.params in eu.params.sets) {
+  
+  message("Computing ", eu.params$name)
+  
+  params = eu.params$estimator.params
+  age.categories = eu.params$age.categories
 
-if(is.error(results)) {
-  rlang::abort("Error during computation", parent=results)
+  # compute age.cat according to current age groups
+  r$intake$age.cat  = cut_age(r$intake$age, age.categories = age.categories)
+  
+  design = design_incidence(age.categories = age.categories, year.pop = h$year.pop, geo="country", geo_area = toupper(country))
+  
+  estimator = IncidenceRS2014$new(weekly=r$weekly, intake=r$intake, params=params, syndromes = r$syndromes, design=design, output=c("inc", "participant"))
+  
+  weeks = sort(unique(iso_yearweek(r$weekly$date)))
+  
+  inc.data = rlang::with_abort(estimator$compute(weeks = unique(r$weekly$yw), verticalize = TRUE, verbose=FALSE))
+  
+  if(is.error(inc.data)) {
+    rlang::abort("Error during computation", parent=inc.data)
+  }
+  
+  if(is.null(inc.data$inc)) {
+    rlang::abort("No incidence data", class = "error_no_data")
+  }
+  
+  inc.data$country = country
+  inc.data$season = season
+
+  results[[eu.params$name]] = inc.data
 }
 
-if(is.null(results$inc)) {
-  rlang::abort("No incidence data", class = "error_no_data")
-}
-results$country = country
-results$season = season
-saveRDS(results, file=my.path('incidence-', season,'-', Sys.Date(),'.Rds'))
+attr(results, "methods") <- names(results)
+attr(results, "version") <- 2 
 
-# Create output
-use.type = "adj"
-current.week = iso_yearweek(Sys.Date())
-
-ii = results$inc %>%
-  filter(syndrome == "ili.ecdc" & type %in% c(use.type,"count")) 
- 
-count = ii %>%
-  filter(type =="count") %>%
-  select(-upper, -lower, -type) %>%
-  rename(count=value)
-
-inc = ii %>%
-  filter(type == !!use.type) %>%
-  select(-type) %>%
-  rename(incidence=value)
-
-inc = merge(inc, count, by=c('syndrome','yw'), all=TRUE)
-
-pp = results$inc %>%
-  filter(syndrome == "active" & type == "count") %>%
-  select(-c(type, syndrome, upper, lower)) %>%
-  rename(part=value)
-
-inc = left_join(inc, pp, by=c('yw'))
-
-inc$country = country
-inc$season = as.integer(season)
-
-inc = inc %>% arrange(yw, syndrome)
-
-inc = filter(inc, yw < current.week)
-
-active = results$inc %>%
-  filter(syndrome == "active" & type == "count") %>%
-  select(-c(type, syndrome, upper, lower)) %>%
-  rename(active=value) %>%
-  arrange(yw) %>%
-  filter(yw < current.week)
-
-active$active = as.integer(active$active)
-active$season = as.integer(season)
-active$country = country
-
-output(inc, 'incidence')
-output(active, 'active')
+fn = paste0('incidence-', season,'-', Sys.Date(),'.Rds')
+saveRDS(results, file=my.path(fn))
+write(fn, file=my.path("incidence-", season,".last"))

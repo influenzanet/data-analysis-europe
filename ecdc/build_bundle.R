@@ -1,14 +1,82 @@
+##
+# Build bundle files from the computed data
+# - Build incidence datasets by combining all the available data
+# - Build csv outputs for the results website
+##
 source("conf.R")
 
 library(dplyr)
 library(rlang)
+library(swMisc)
+library(magrittr)
 
 countries = platform_env("COUNTRY_CODES")
 seasons = get_historical_seasons()
 
 init.path('indicator')
 
+## Incidence datasets
+# Collect all incidence files in their last version
+datasets = rlang::new_environment()
+
+# Load dataset and collect it
+load_incidence_country = function(country) {
+  path = my.path(country, "/")
+  ff = list.files(path, pattern="^incidence-.*\\.last$", full.names = TRUE)
+  last = unlist(lapply(ff, readLines))
+  message(paste(country, " found", length(last) ))
+  for(last.file in last) {
+    r = try(readRDS(paste0(path, last.file)))
+    if(is.error(r)) {
+      message(paste0(country, ": Unable to load ", sQuote(last)))
+    }
+    methods = names(r)
+    for(method in methods) {
+      rr = r[[method]]
+      inc = rr$inc
+      season = as.integer(rr$season)
+      # Reorganize data to extract active participants
+      active = inc %>% filter(syndrome == "active") %>% select(-upper, -lower, -type) %>% rename(active=value)
+      count = inc %>% filter(type == "count") %>% select(-upper, -lower, -type) %>% rename(count=value)
+      inc = inc %>% filter(type != "count") %>% rename(incidence=value)
+      inc = left_join(inc, count, by=c('yw','syndrome'))
+      inc$type = factor(inc$type, c('adj','crude'))
+      inc$country = country
+      inc$method = method
+      inc$season = season
+      
+      active$country = country
+      active$method = method
+      active$season = season
+      datasets$inc = bind_rows(datasets$inc, inc)
+      datasets$active = bind_rows(datasets$active, active)
+    }
+  }
+  invisible(list(country=country, count=length(last)))
+}
+
+lapply(countries, load_incidence_country)
+
+datasets$active %<>% 
+                    mutate_at(c("syndrome", "country", "method"), factor) %>% 
+                    arrange(season, yw)
+
+datasets$inc %<>%
+    mutate_at(c("syndrome", "country", "method"), factor) %>% 
+    arrange(yw, syndrome)
+
+saveRDS(datasets, my.path("incidences.rds"))
+
 dir.create(my.path('bundles'), showWarnings = FALSE)
+
+filters = list(
+  list()
+  
+  
+  
+  
+)
+
 
 #' @param path path where are by seasons files
 #' @param name name of file to create

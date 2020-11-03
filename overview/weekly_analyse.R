@@ -16,7 +16,7 @@ share.lib('upset')
 
 season = get_current_season()
 
-eu.params = get_eu_incidence_parameters()
+eu.params = get_eu_incidence_parameters("default")
 
 countries = platform_env("COUNTRY_CODES")
 age.categories = eu.params$age.categories

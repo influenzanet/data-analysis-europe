@@ -34,7 +34,7 @@ short.term = iso_yearweek(Sys.Date() - short.term.size * 7)
 
 caption = ifn.copyright # get then caption graph 
 
-eu.params = get_eu_incidence_parameters()
+eu.params = get_eu_incidence_parameters("default")
 
 countries = platform_env("COUNTRY_CODES")
 colors.web = platform_env("colors.web")
