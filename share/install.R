@@ -1,6 +1,6 @@
 
 dependencies = list(
-  need= c("RColorBrewer", "reshape2", "ggplot2", "dplyr", "maps", "epitools","swMisc", "ifnBase", "methods", "jsonlite", "wordcloud"),
+  need= c("RColorBrewer", "reshape2", "ggplot2", "dplyr", "maps", "epitools","swMisc", "ifnBase", "methods", "jsonlite", "wordcloud", "swResults", "tidyr"),
   suggested = c("swOutput")
 )
 
