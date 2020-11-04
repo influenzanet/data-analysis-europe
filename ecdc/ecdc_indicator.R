@@ -39,9 +39,9 @@ output = function(.data, name) {
   write.csv2(.data, file=my.path(paste0(name, '_', season, '.csv')), row.names = FALSE)
 }
 
-provider = SyndromeProviderRS2019$new()
 
-r = load_results_for_incidence(season=season, age.categories=age.categories, country=country, syndrome.from = list(provider=provider$compute, health.status=FALSE), first.season=T, columns=list(keep.all=TRUE))
+
+r = load_results_for_incidence(season=season, age.categories=age.categories, country=country, syndrome.from = ecdc_syndrome_from, first.season=T, columns=list(keep.all=TRUE))
 
 if( is.null(r) | is.null(r$weekly) | is.null(r$intake) ) {
   rlang::abort("No data", class = "error_no_data")

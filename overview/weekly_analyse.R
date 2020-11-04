@@ -23,6 +23,7 @@ age.categories = eu.params$age.categories
 
 data.all = new.env(parent=emptyenv())
 
+# Helper to put data for all countries in data.frame
 collect_data = function(name, data) {
   if(is.data.frame(data)) {
     data.all[[name]] = bind_rows(data.all[[name]], data)
@@ -62,7 +63,7 @@ for(country in countries) {
   dataset = load_results_for_incidence(season=season, age.categories=age.categories, country=country, syndrome.from = syndrome.from, onset=onset, columns=list(keep.all=TRUE, weekly=weekly.columns))
   
   if(is.null(dataset$weekly) || is.null(dataset$intake) || nrow(dataset$weekly) == 0 || nrow(dataset$intake) == 0) {
-    cat("not data for", country, "\n")
+    message("not data for", country, "\n")
     next()
   }
   
@@ -97,10 +98,15 @@ for(country in countries) {
   
   syndromes.ecdc = n[ n != "id"]
   
+  sdc = SyndromeProviderCovid$new()
+  ww = sdc$compute(weekly=weekly, intake=dataset$intake)
+  
+  weekly = left_join(weekly, data.frame(ww), by="id")
+  
   # Suggested by Ania 
   #  fever and/OR cough (+ any combination of those with shortness of breath and fatigue).
   #
-  n1 = c('cough','fever')
+  n1 = c(ifnBase::SYMPT_COUGH, ifnBase::SYMPT_FEVER)
   n2 = c("asthenia","dyspnea" )
   weekly$ch.covid = rowSums(weekly[, n1], na.rm=TRUE) > 0 & rowSums(weekly[, n2], na.rm=TRUE) > 0
 
