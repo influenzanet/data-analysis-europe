@@ -82,7 +82,7 @@ env$weekly = left_join(env$weekly, env$intake[, c('person_id','age.cat')])
 freqs.ecdc = NULL # Data to export
 
 #syndromes = env$syndromes
-syndromes = "ari.ecdc"
+syndromes = "ili.ecdc"
 
 for(syndrome.column in syndromes) {
   cat(syndrome.column,"\n")
