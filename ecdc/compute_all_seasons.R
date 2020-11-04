@@ -6,7 +6,8 @@ if(!interactive()) {
   
   compute = parseArgs(list(
     "incidence"=list(type="bool", default=TRUE),
-    "healthcare"=list(type="bool", default=TRUE)
+    "healthcare"=list(type="bool", default=TRUE),
+    "update"=list(type="bool", default=FALSE),
   ))
 } else {
   if(!exists("compute")) {
@@ -25,12 +26,19 @@ run_script = function(season, country, name) {
     return()
   }
   
+  if(is(attr(r,"condition"), "error_already_done")) {
+    message("Update mode: already computed")
+    return()
+  }
+
   if( is.error(r) ) {
     warning("Error during computing")
     print(r)
   }
   r
 }
+
+update.mode = compute$update
 
 seasons = get_historical_seasons()
 for(season in seasons) {

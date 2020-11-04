@@ -18,6 +18,9 @@ if(!exists("season") | is.null(season)) {
   rlang::abort("Season not defined")
 }
 
+update.mode = get0("update.mode", ifnotfound = FALSE)
+
+
 countries = platform_env("COUNTRY_CODES")
 seasons = get_historical_seasons()
 
@@ -30,6 +33,16 @@ if(!season %in% seasons) {
 }
 
 init.path(paste0('indicator/', country))
+
+results.file = my.path(paste0('incidence-', season,'-', Sys.Date(),'.Rds'))
+last.file = my.path("incidence-", season,".last")
+if(update.mode && file.exists(results.file)) {
+  if(!file.exists(last.file)) {
+    message("Last file updated")
+    write(results.file, file=last.file)
+  }
+  rlang::abort("Already computed", class="error_already_done")
+}
 
 # Age group will be computed later
 r = load_results_for_incidence(season=season, age.categories=NULL, country=country, syndrome.from = ecdc_syndrome_from, first.season=T, columns=list(keep.all=TRUE))
@@ -83,7 +96,6 @@ for(eu.params in eu.params.sets) {
 
 attr(results, "methods") <- names(results)
 attr(results, "version") <- 2 
-
-fn = paste0('incidence-', season,'-', Sys.Date(),'.Rds')
-saveRDS(results, file=my.path(fn))
-write(fn, file=my.path("incidence-", season,".last"))
+attr(results, "file") <- results.file
+saveRDS(results, file=results.file)
+write(results.file, file=last.file)
