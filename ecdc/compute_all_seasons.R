@@ -7,7 +7,7 @@ if(!interactive()) {
   compute = parseArgs(list(
     "incidence"=list(type="bool", default=TRUE),
     "healthcare"=list(type="bool", default=TRUE),
-    "update"=list(type="bool", default=FALSE),
+    "update"=list(type="bool", default=FALSE)
   ))
 } else {
   if(!exists("compute")) {
