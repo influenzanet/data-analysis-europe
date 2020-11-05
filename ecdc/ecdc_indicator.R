@@ -45,7 +45,15 @@ if(update.mode && file.exists(results.file)) {
 }
 
 # Age group will be computed later
-r = load_results_for_incidence(season=season, age.categories=NULL, country=country, syndrome.from = ecdc_syndrome_from, first.season=T, columns=list(keep.all=TRUE))
+r = load_results_for_incidence(
+  season=season, 
+  age.categories=NULL, 
+  country=country, 
+  syndrome.from = ecdc_syndrome_from, 
+  first.season=T, 
+  columns=list(keep.all=TRUE),
+  onset = episode_onset_design()
+)
 
 if( is.null(r) | is.null(r$weekly) | is.null(r$intake) ) {
   rlang::abort("No data", class = "error_no_data")
