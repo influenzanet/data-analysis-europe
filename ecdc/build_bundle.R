@@ -63,7 +63,7 @@ datasets$active %<>%
     mutate_at(c("syndrome", "country", "method"), factor) %>% 
     arrange(season, yw)
 
-datasets$inc %<>%
+datasets$incidence %<>%
     mutate_at(c("syndrome", "country", "method"), factor) %>% 
     arrange(yw, syndrome)
 
@@ -137,7 +137,7 @@ bundles = list(
   list(
     name="incidence", 
     sorting=c("yw","syndrome"), 
-    dataset="inc", 
+    dataset="incidence", 
     filters = list(
       filter_base,
       filter_season_weeks,
@@ -177,7 +177,7 @@ for(bundle in bundles) {
     data = do.call(f, list(data))
   }
   
-  datasets[[name]] = data
+  datasets[[bundle$dataset]] = data
   
   data %>% group_by(country) %>% group_walk(create_bundle_country, bundle=bundle)
 
