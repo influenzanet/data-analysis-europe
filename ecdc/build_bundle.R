@@ -50,7 +50,7 @@ load_incidence_country = function(country) {
       active$country = country
       active$method = method
       active$season = season
-      datasets$inc = bind_rows(datasets$inc, inc)
+      datasets$incidence = bind_rows(datasets$incidence, inc)
       datasets$active = bind_rows(datasets$active, active)
     }
   }
