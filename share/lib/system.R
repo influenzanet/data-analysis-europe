@@ -10,6 +10,8 @@ if(!library(ifnBase, logical.return = TRUE)) {
   }
 }
 
+options("swResults"=list("path_provider"=my.path))
+
 library(swResults)
 
 load_platform()
