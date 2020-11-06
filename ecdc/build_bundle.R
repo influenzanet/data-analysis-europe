@@ -40,6 +40,8 @@ load_incidence_country = function(country) {
       count = inc %>% filter(type == "count") %>% select(-upper, -lower, -type) %>% rename(count=value)
       inc = inc %>% filter(type != "count") %>% rename(incidence=value)
       inc = left_join(inc, count, by=c('yw','syndrome'))
+      pp = active %>% rename(part=active) %>% select(part, yw)
+      inc = left_join(inc, pp, by=c('yw'))
       inc$type = factor(inc$type, c('adj','crude'))
       inc$country = country
       inc$method = method
@@ -65,7 +67,8 @@ datasets$inc %<>%
     mutate_at(c("syndrome", "country", "method"), factor) %>% 
     arrange(yw, syndrome)
 
-saveRDS(datasets, my.path("incidences.rds"))
+# All computed data, not filtered
+saveRDS(datasets, my.path("datatsets.rds"))
 
 dir.create(my.path('bundles'), showWarnings = FALSE)
 
@@ -173,29 +176,12 @@ for(bundle in bundles) {
   for(f in filters) {
     data = do.call(f, list(data))
   }
+  
+  datasets[[name]] = data
+  
   data %>% group_by(country) %>% group_walk(create_bundle_country, bundle=bundle)
+
 }
 
-# for(country in countries) {
-#   path = my.path(country,"/")
-#   create_bundle(path, "active", country, "yw")
-#   create_bundle(path, "incidence", country, c("yw","syndrome"), filter=filter_incidence )
-#   create_bundle(path, "visits_weekly", country, c('yw','variable'), out.name="visits_weekly_all")
-#   visits = create_bundle(path, "visits_weekly", country, c('yw','variable'), filter=filter_visits)
-#   if(!is.null(visits)) {
-#     last = visits %>% 
-#               group_by(season) %>%
-#               mutate(max_yw=max(yw)) %>%
-#               ungroup() %>%
-#               filter(yw == max_yw) %>% 
-#               select(yw, variable, cum_prop, cum_prop_upper, cum_prop_lower, season)
-#     
-#     if(nrow(last) > 0) {
-#       last$cum_prop_upper[!is.na(last$cum_prop_upper) & last$cum_prop_upper > 1] = 1
-#       last$cum_prop_lower[!is.na(last$cum_prop_lower) & last$cum_prop_lower < 0] = 0
-#     }
-#     
-#     write.csv(last, file=my.path('bundles/', country, '_visits_cumul.csv'), row.names = FALSE)
-#   } 
-#   
-# }
+# Exported data
+saveRDS(datasets, my.path("bundles.rds"))

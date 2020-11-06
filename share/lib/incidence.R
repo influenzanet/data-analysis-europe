@@ -24,6 +24,14 @@
       ignore.first.only.new=TRUE
     ),
     age.categories = c(0, 21, 65, 200)
+  ),
+  "w0"=list(
+    design.type = "age",
+    estimator.params = list(
+      active.week.before=0,
+      active.week.after=0
+    ),
+    age.categories = c(0, 21, 65, 200)
   )
 )
 
