@@ -10,6 +10,8 @@ if(!library(ifnBase, logical.return = TRUE)) {
   }
 }
 
+library(swResults)
+
 load_platform()
 
 # Load default translations
@@ -64,20 +66,6 @@ get_graph_starting_week = function(season) {
 get_symptoms_columns = function(season) {
   sympt.extra = survey_labels('weekly','symptoms.extra')
   survey_variable_available(unique(c(get_symptoms_aliases(), sympt.extra )), survey="weekly", season=season)
-}
-
-# Create a file to describe the output
-# Descriptive file are stored in the directory of the file prefixed by '.d_'
-desc_output = function(path, desc=NULL, plot=FALSE) {
-  if(isTRUE(plot)) {
-    plot = ggplot2::last_plot()
-    desc = plot$labels$title  
-  }
-  if(!is.null(desc)) {
-    dir = dirname(path)
-    desc_file = paste0(".d_", basename(path))
-    write(desc, file=paste0(dir, "/", desc_file))
-  }
 }
 
 #' Default copyrght text

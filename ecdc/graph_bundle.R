@@ -3,125 +3,139 @@ source("conf.R")
 library(dplyr)
 library(rlang)
 library(ggplot2)
+library(swResults)
 
 countries = platform_env("COUNTRY_CODES")
 seasons = get_historical_seasons()
 
-init.path('indicator/bundles')
+init.path('indicator')
 
-load_bundle = function(country, name) {
-  file = my.path(country, '_', name,'.csv')
-  if(file.exists(file)) {
-    cat("Loading ", country, name, "\n")
-    d = read.csv(file)
-    if(nrow(d) > 0) {
-      if(!hasName(d, "country")) {
-        d$country = country
-      }
-      d$country = as.character(d$country)
-    }
-    return(d)
-  }
-  NULL
-}
-
-load_bundles = function(name) {
-  data = NULL
-  for(country in countries) {
-    d = load_bundle(country, name)
-    data = bind_rows(data, d)
-    
-  }
-  data
-}
+bundles = readRDS(my.path('bundles.rds'))
 
 # Local version
 g_labs = ifn_labs
 
 caption = ifn.copyright
 
-active = load_bundles('active')
-inc = load_bundles("incidence")
+active = bundles$active
+inc = bundles$inc
 
 max.active = inc %>% group_by(country, season) %>% summarize(max_active=max(part))
 inc = left_join(inc, max.active, by=c("country","season"))
 inc = inc %>% mutate(active_limit=.35 * max_active, censored=part < active_limit)
 
+inc.censored = inc %>% filter(!censored)
+inc.censored = inc.censored %>% group_by(country, season) %>% mutate(ymax=max(incidence, na.rm=TRUE))
+inc.censored = inc.censored %>% mutate(upper=ifelse(upper > ymax * 2, NA, upper))
 
-ii = inc %>% filter(!censored)
-ii = ii %>% group_by(country, season) %>% mutate(ymax=max(incidence, na.rm=TRUE))
-ii = ii %>% mutate(upper=ifelse(upper > ymax * 2, NA, upper))
+#saveRDS(data.frame(ii), my.path('inc.rds'))
 
-saveRDS(data.frame(ii), my.path('inc.rds'))
+methods = unique(inc$method)
+syndromes = unique(inc$syndrome)
 
-ggplot(ii, aes(x=monday_of_week(yw), y=incidence, group=syndrome, color=syndrome)) + 
-  geom_vline(data=inc %>% filter(censored), aes(xintercept=monday_of_week(yw)), color="grey90") +
-  geom_line() +
-  geom_ribbon(aes(ymin=lower, ymax=upper), fill="red", color="transparent", alpha=.40) +
-  facet_grid(rows=vars(country), cols=vars(season), scales = "free") +
-  theme_with("legend_top") +
-  g_labs(x="Week", y="Incidence rate", title="Weekly incidence rate by country and season")
-ggsave(my.path("incidence_country+season.pdf"), width=12, height=8)
+library(swResults)
 
-ii = calc_season_fixed(ii)
-ggplot(ii, aes(x=season.index, y=incidence, group=season.year, color=factor(season.year))) + 
-  geom_line() +
-  geom_line(data=ii[ ii$season == max(seasons), ], size=1.2) +
-  facet_grid(rows=vars(country), scales = "free") +
-  theme_with("legend_top") +
-  g_labs(x="Season week index (1=Week of last 1st september)", y="Incidence rate", title="Weekly incidence rate by country and season") +
-  guides(color=guide_legend("Season") )
-ggsave(my.path("incidence_country+season_superpose.pdf"), width=4, height=12)
+context = ResultContext$new()
 
-d = ii %>% 
-      filter(season < max(seasons)) %>%
-      group_by(season.index, country) %>% 
-      summarize( 
-                min=min(incidence, na.rm = TRUE), 
-                max=max(incidence, na.rm = TRUE), 
-                median=median(incidence, na.rm=TRUE), 
-                q1=quantile(incidence, probs=.25, na.rm = TRUE), 
-                q3=quantile(incidence, probs=.75, na.rm=TRUE)
-      )
+g_save = function(..., width, height, desc=NULL) {
+  path = my.path(..., ".pdf")
+  desc = context$resolve()
+  desc_output(path)
+  ggsave(path, width=width, height=height)
+}
 
-labels = c('range'="Min/Max","median"="Median", "current"="Current season", "quantile"="1st, 3rd quantiles")
-ggplot(d, aes(x=season.index)) +
-  geom_line(aes(y=min, color="range", linetype="range")) +
-  geom_line(aes(y=max, color="range", linetype="range")) +
-  geom_line(aes(y=median, color="median", linetype="median")) +
-  geom_line(aes(y=q1, color="quantile", linetype="quantile")) +
-  geom_line(aes(y=q1, color="quantile", linetype="quantile")) +
-  geom_line(data=ii[ ii$season == max(seasons), ], aes(y=incidence, color="current", linetype="current"), size=1.2) +
-  scale_color_manual(values=c('range'="darkblue","median"="blue", "current"="red", "quantile"="steelblue"), labels=labels)  +
-  scale_linetype_manual(values=c('range'="dotted","median"="solid", "current"="solid", "quantile"="dashed"), labels=labels)  +
-  facet_grid(rows="country") +
-  g_labs(x="Season week index (1=Week of last 1st september)", y="Incidence rates")
-ggsave(my.path("incidence_country+season_distrib.pdf"), width=4, height=12)
+for(method in methods) {
+  
+  context$push()
+  
+  context$set(method=method)
+  
+  ii = inc.censored %>% filter(method == !!method & type == "adj" & syndrome %in% c('ili.ecdc', 'covid.ecdc'))
 
+  subtitle = paste("Incidence parameters", method)
+ 
+  context$set("what"="incidence")
+  
+  ggplot(ii, aes(x=monday_of_week(yw), y=incidence, group=syndrome, color=syndrome)) + 
+    geom_vline(data=inc %>% filter(censored), aes(xintercept=monday_of_week(yw)), color="grey90") +
+    geom_line() +
+    geom_ribbon(aes(ymin=lower, ymax=upper, fill=syndrome), color="transparent", alpha=.40) +
+    facet_grid(rows=vars(country), cols=vars(season), scales = "free") +
+    theme_with("legend_top") +
+    g_labs(x="Week", y="Incidence rate", title="Weekly incidence rate by country and season", subtitle=subtitle)
+  g_save(method,"_incidence_country+season", width=12, height=8)
 
-d = left_join(active, inc[,c('country','season','yw','incidence','censored') ], by=c('country','season','yw'))
-d = d %>%
-      group_by(season, country) %>% 
-      mutate(
-        max_inc=max(incidence, na.rm=TRUE), 
-        max_active=max(active),
-        inc.r=max_active * incidence / max_inc
-      )
+  ii = calc_season_fixed(ii)
+  ggplot(ii, aes(x=season.index, y=incidence, group=season.year, color=factor(season.year))) + 
+    geom_line() +
+    geom_line(data=ii[ ii$season == max(seasons), ], size=1.2) +
+    facet_grid(rows=vars(country), cols=vars(syndrome), scales = "free") +
+    theme_with("legend_top") +
+    g_labs(
+      x="Season week index (1=Week of last 1st september)", 
+      y="Incidence rate", 
+      title="Weekly incidence rate by country and season", 
+      subtitle=subtitle) +
+    guides(color=guide_legend("Season") )
+  g_save(method,"_incidence_country+season_superpose", width=4, height=12)
 
-ggplot(d, aes(x=monday_of_week(yw), y=active)) + 
-  geom_bar(stat="identity", fill="steelblue") +
-  geom_line(aes(y= inc.r)) +
-  geom_point(data=~filter(., censored),aes(y= inc.r), color="red", size=1) +
-  facet_grid(rows=vars(country), cols=vars(season), scales = "free") +
-  g_labs(x="Week", y="Active participant", title="Active participants by country and season (incidence superposed)")
-ggsave(my.path("active+inc_country+season.pdf"), width=12, height=8)
+  d = ii %>% 
+    filter(season < max(seasons)) %>%
+    group_by(season.index, country, syndrome) %>% 
+    summarize( 
+              min=min(incidence, na.rm = TRUE), 
+              max=max(incidence, na.rm = TRUE), 
+              median=median(incidence, na.rm=TRUE), 
+              q1=quantile(incidence, probs=.25, na.rm = TRUE), 
+              q3=quantile(incidence, probs=.75, na.rm=TRUE)
+    )
 
-ggplot(d, aes(x=monday_of_week(yw), y=active)) + 
-  geom_bar(stat="identity", fill="steelblue") +
-  facet_grid(rows=vars(country), cols=vars(season), scales = "free") +
-  g_labs(y="Active participants", x="Week", title="Active participants by ")
-ggsave(my.path("active_country+season.pdf"), width=12, height=8)
+  labels = c('range'="Min/Max","median"="Median", "current"="Current season", "quantile"="1st, 3rd quantiles")
+  ggplot(d, aes(x=season.index)) +
+    geom_line(aes(y=min, color="range", linetype="range")) +
+    geom_line(aes(y=max, color="range", linetype="range")) +
+    geom_line(aes(y=median, color="median", linetype="median")) +
+    geom_line(aes(y=q1, color="quantile", linetype="quantile")) +
+    geom_line(aes(y=q1, color="quantile", linetype="quantile")) +
+    geom_line(data=ii[ ii$season == max(seasons), ], aes(y=incidence, color="current", linetype="current"), size=1.2) +
+    scale_color_manual(values=c('range'="darkblue","median"="blue", "current"="red", "quantile"="steelblue"), labels=labels)  +
+    scale_linetype_manual(values=c('range'="dotted","median"="solid", "current"="solid", "quantile"="dashed"), labels=labels)  +
+    facet_grid(rows=vars(country), cols=vars(syndrome)) +
+    g_labs(x="Season week index (1=Week of last 1st september)", y="Incidence rates", subtitle=subtitle)
+  g_save(method,"_incidence_country+season_distrib", width=4, height=12)
+  
+  context$set(what="active")
+  
+  active$syndrome = NULL
+  
+  d = left_join(active, inc[, c('country','season','yw','incidence','censored','syndrome') ], by=c('country','season','yw'))
+  d = d %>%
+        group_by(season, country, syndrome) %>% 
+        mutate(
+          max_inc=max(incidence, na.rm=TRUE), 
+          max_active=max(active),
+          inc.r=max_active * incidence / max_inc
+        )
+  
+  ggplot(d, aes(x=monday_of_week(yw), y=active)) + 
+    geom_bar(stat="identity", fill="steelblue") +
+    geom_line(aes(y= inc.r)) +
+    geom_point(data=~filter(., censored),aes(y= inc.r), color="red", size=1) +
+    facet_grid(rows=vars(country), cols=vars(season), scales = "free") +
+    g_labs(x="Week", y="Active participant", title="Active participants by country and season (incidence superposed)")
+  g_save(method,"_active+inc_country+season", width=12, height=8)
+  
+  ggplot(d, aes(x=monday_of_week(yw), y=active)) + 
+    geom_bar(stat="identity", fill="steelblue") +
+    facet_grid(rows=vars(country), cols=vars(season), scales = "free") +
+    g_labs(y="Active participants", x="Week", title="Active participants by ")
+  g_save(method,"_active_country+season.pdf", width=12, height=8)
+  
+  context$pop()
+  
+}
 
+context$push()
 visits = load_bundles("visits_weekly")
 
 ggplot(visits, aes(x=monday_of_week(yw), y=prop, color=variable)) + 
