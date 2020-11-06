@@ -23,7 +23,7 @@ datasets = rlang::new_environment()
 load_incidence_country = function(country) {
   path = my.path(country, "/")
   ff = list.files(path, pattern="^incidence-.*\\.last$", full.names = TRUE)
-  last = unlist(lapply(ff, readLines))
+  last = basename(unlist(lapply(ff, readLines)))
   message(paste(country, " found", length(last) ))
   for(last.file in last) {
     r = try(readRDS(paste0(path, last.file)))
