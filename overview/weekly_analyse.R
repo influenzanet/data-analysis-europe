@@ -49,14 +49,19 @@ reason.covid = survey_labels('weekly', "reason.covid")
 confin.work = survey_labels('weekly', "confin.work")
 confinstop.work = survey_labels('weekly', "confinstop.work")
 
-weekly.columns = c(symptoms, measure.covid, reason.covid, confin.work, confinstop.work)
+weekly.columns = c(symptoms,  reason.covid, confinstop.work)
 
 other.questions <- list(
-  list(name="measure",  vars= measure.covid, type="bool", min.week=202011),
   list(name="reason",  vars=reason.covid, type="bool", min.week=202011), 
-  list(name="confin",  vars=confin.work, type="bool", min.week=202011),
   list(name="confinstop",  vars=confinstop.work, type="bool", min.week=202011)
 )
+
+if(season == 2019) {
+  other.questions[[length(other.questions) + 1]] = list(name="measure",  vars= measure.covid, type="bool", min.week=202011)
+  other.questions[[length(other.questions) + 1]] = list(name="confin",  vars=confin.work, type="bool", min.week=202011)
+  weekly.columns = c(weekly.columns, measure.covid,  confin.work)
+}
+
 
 for(country in countries) {
   
