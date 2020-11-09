@@ -33,7 +33,7 @@ update.mode = get0("update.mode", ifnotfound = FALSE)
 
 init.path(paste0('indicator/', country))
 
-results.file = my.path(paste0('incidence-', season,'-', Sys.Date(),'.Rds'))
+results.file = my.path(paste0('healthcare-', season,'-', Sys.Date(),'.Rds'))
 last.file = my.path("healthcare-", season,".last")
 if(update.mode && file.exists(results.file)) {
   if(!file.exists(last.file)) {
@@ -42,7 +42,6 @@ if(update.mode && file.exists(results.file)) {
   }
   rlang::abort("Already computed", class="error_already_done")
 }
-
 
 
 # Current season data (population,...)
