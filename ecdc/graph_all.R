@@ -35,10 +35,7 @@ syndromes = unique(inc$syndrome)
 context = ResultContext$new()
 
 g_save = function(..., width, height, desc=NULL) {
-  path = my.path(..., ".pdf")
-  desc = context$resolve()
-  desc_output(path, desc = desc)
-  ggsave(path, width=width, height=height)
+  save_graph_with_context(paste0(...), formats="pdf", width=width, height=height, context = context)
 }
 
 init.path('indicator/all')
@@ -101,7 +98,7 @@ for(syndrome in syndromes) {
     scale_linetype_manual(values=c('range'="dotted","median"="solid", "current"="solid", "quantile"="dashed"), labels=labels)  +
     facet_grid(rows=vars(country), cols=vars(method)) +
     g_labs(x="Season week index (1=Week of last 1st september)", y="Incidence rates", subtitle=subtitle)
-  g_save(syndrome,"_incidence_distrib_country+season", width=4, height=12)
+  g_save(syndrome,"_incidence_distrib_country+season", width=10, height=12)
   
   context$pop()
   
