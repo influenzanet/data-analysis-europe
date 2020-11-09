@@ -1,4 +1,6 @@
 
+default.age.categories = c(0, 21, 65, 200)
+
 #' Common parameters
 .eu_parameters_sets = list(
   "w1_s2_if2_ex"=list(
@@ -11,19 +13,19 @@
       ignore.first.delay=6, 
       ignore.first.only.new=TRUE
     ),
-    age.categories = c(0, 21, 65, 200)
+    age.categories = default.age.categories
   ),
   "w0_s2_if2_ex"=list(
     design.type = "age",
     estimator.params = list(
-      active.week.before=1, 
-      active.week.after=1, 
+      active.week.before=0, 
+      active.week.after=0, 
       active.min.surveys=2, 
       exclude.same=TRUE,
       ignore.first.delay=6, 
       ignore.first.only.new=TRUE
     ),
-    age.categories = c(0, 21, 65, 200)
+    age.categories = default.age.categories
   ),
   "w0"=list(
     design.type = "age",
@@ -31,7 +33,7 @@
       active.week.before=0,
       active.week.after=0
     ),
-    age.categories = c(0, 21, 65, 200)
+    age.categories = default.age.categories
   )
 )
 
