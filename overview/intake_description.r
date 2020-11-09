@@ -21,6 +21,8 @@ theme_set(theme_minimal())
 
 init.path(paste0(season, '/intake'))
 
+result_desc_filters(auto=TRUE, filters=list())
+
 # Get list of columns for questions in survey
 condition.columns = survey_labels('intake', 'condition')
 hear.columns = survey_labels('intake', 'hear.about')
@@ -86,14 +88,16 @@ season.title = paste("\nSeason ", season,"-", season + 1)
 
 g_title = ifn_labs
 
+context = ResultContext$new()
+
+#' Save helper with default parameters
 g_save=function(..., width, height, desc=NULL) {
-  p = out_path(..., '.pdf', plot=is.null(desc), desc=desc)
-  message(basename(p))
-  graph.save(p, width=width, height=height)
-  
-  p = out_path(..., '.svg', plot=is.null(desc), desc=desc)
-  graph.save(p, width=width, height=height)
+  save_graph_with_context(paste0(...), formats=c('pdf','svg'), width=width, height=height, context=context, desc=desc)
 }
+
+context$push()
+
+context$set(subject="age")
 
 gg_barplot_percent(intake$age.cat, col="darkgreen", label.size =2) +
   g_title(title=paste("Participants by age-group (all countries)",season.title))
@@ -106,6 +110,8 @@ g_save('europe-gender', width=8, height=6)
 gg_barplot_percent(intake$vacc.curseason, col="darkgreen", label.size = 2) +
   g_title(title=paste("Flu vaccination for the current season (all countries)",season.title))
 g_save('europe-vacc-curseason', width=8, height=6)
+
+context$pop()
 
 # Graph by country
 
@@ -130,11 +136,12 @@ freq_plot = function(column, trans=NULL, width, title, file=NULL, h=NA, data=int
       y = factor(y)
     }
   }
+  title = i18n(title)
   g = gg_barplot_percent(y, label.size = 2, ...) +
-    g_title(title=i18n(title), x="", subtitle=subtitle, y=i18n('percentage'))
+    g_title(title=title, x="", subtitle=subtitle, y=i18n('percentage'))
   h = ifelse(is.na(h), width / 1.618, h)
   file = if(is.null(file)) column else file
-  g_save(file, width=width, height=h)
+  g_save(file, width=width, height=h, desc=list(level="europe", title=title))
   g
 }
 
@@ -193,10 +200,10 @@ plot_by_country = function(name, trans=NULL, title, x.rotate=90, x.vjust=NULL, f
   }
 
   if( !is.null(file) ) {
-    desc = title
     if(group == "country") {
-      desc = paste(desc, "by country")
+      title = paste(title, "by country")
     }
+    desc = list(title=title, level="country")
     g_save(paste0(file,'-', type, if(group == "country") "-by_country"), desc=desc, width=width, height=height)
   }
   attr(g, "freqs") <- freq
@@ -206,51 +213,61 @@ plot_by_country = function(name, trans=NULL, title, x.rotate=90, x.vjust=NULL, f
 trans = TRUE
 
 # Main Activity
+context$set(subject="main.activity")
 freq_plot('main.activity', trans="activities", title='graph_main_activity', width=8, file="europe-activity")
 plot_by_country("main.activity", trans=trans, title='graph_main_activity', type="prop")
 plot_by_country("main.activity", trans=trans, title='graph_main_activity', type="prop", group="country")
 
 # Transports
+context$set(subject="transport")
 freq_plot('transport', trans=trans, title='graph_transport', width=8, file="europe-transport")
 plot_by_country("transport", trans=trans, title='graph_transport', type="prop")
 plot_by_country("transport", trans=trans, title='graph_transport', type="prop", group="country")
 
 # How often ili
+context$set(subject="often.ili")
 freq_plot('often.ili', trans=trans, title='graph_often.ili', width=8, file="europe-transport")
 plot_by_country("often.ili", trans=trans, title='graph_often.ili', type="prop")
 plot_by_country("often.ili", trans=trans, title='graph_often.ili', type="prop", group="country")
 
 # Smoker
+context$set(subject="smoker")
 freq_plot('smoker', trans=trans, title='graph_smoker', width=8, file="europe-smoker")
 plot_by_country("smoker", trans=trans, title='graph_smoker', type="prop")
 plot_by_country("smoker", trans=trans, title='graph_smoker', type="prop", group="country")
 
 # Pregnant
+context$set(subject="pregnant")
 freq_plot('pregnant', trans=trans, title='graph_pregnant', width=8, file="europe-pregnant")
 plot_by_country("pregnant", trans=trans, title='graph_pregnant', type="prop")
 plot_by_country("pregnant", trans=trans, title='graph_pregnant', type="prop", group="country")
 
 # Condition columns
+context$set(subject="condition")
 g = freq_plot(condition.columns,  width=8, title="graph_condition", file="european-condition")
 plot_by_country(condition.columns, trans=trans, title='graph_condition', type="prop", file="country-condition")
 plot_by_country(condition.columns, trans=trans, title='graph_condition', type="prop", group="country", file="country-condition")
 
 # Allergies
+context$set(subject="allergy")
 g = freq_plot(allergy.columns,  width=8, title="graph_allergy", file="european-allergy")
 plot_by_country(allergy.columns, trans=trans, title='graph_allergy', type="prop", file="country-allergy")
 plot_by_country(allergy.columns, trans=trans, title='graph_allergy', type="prop", group="country", file="country-allergy")
 
 # Education
+context$set(subject="education")
 g = freq_plot(education.columns,  width=8, title="graph_education", file="european-education")
 plot_by_country(education.columns, trans=trans, title='graph_education', type="prop", file="country-education")
 plot_by_country(education.columns, trans=trans, title='graph_education', type="prop", group="country", file="country-education")
 
 # Pets
+context$set(subject="pets")
 g = freq_plot(pets.columns,  width=8, title="graph_pets", file="european-pets")
 plot_by_country(pets.columns, trans=trans, title='graph_pets', type="prop", file="country-pets")
 plot_by_country(pets.columns, trans=trans, title='graph_pets', type="prop", group="country", file="country-pets")
 
 # Diet
+context$set(subject="diet")
 g = freq_plot(diet.columns,  width=8, title="graph_diet", file="european-diet")
 plot_by_country(diet.columns, trans=trans, title='graph_diet', type="prop", file="country-diet")
 plot_by_country(diet.columns, trans=trans, title='graph_diet', type="prop", group="country", file="country-diet")
@@ -259,6 +276,8 @@ pop.age = rbind(
   data.frame(age.cat=pop$age.cat, country=pop$country, count=pop$male, gender="male"),
   data.frame(age.cat=pop$age.cat, country=pop$country, count=pop$female, gender="female")
 )
+
+context$set(subject="age")
 
 pop.age$pop = factor("pop")
 
@@ -285,9 +304,13 @@ p_labs = function(title) {
 }
 
 g = plot_age_pyramid(europe.ages, female=q_female, w=.5)
-g_save('age-pyramid-eu-overall', width=6, height=5)
+g_save('age-pyramid-eu-overall', width=6, height=5, desc=list(level="europe", title="Age pyramid (all countries)"))
 
 countries = levels(intake$country)
+
+# Graph by country
+context$push()
+context$set(level="country")
 for(v in countries) {
   g = plot_age_pyramid(ages[ ages$country == v,], female=q_female) + p_labs(title=paste(v, "- Influenzanet by age-group"))
   g_save(paste0('age-pyramid-',v), desc=paste("Age-gender population pyramid for country", v), width=6, height=5)
@@ -297,7 +320,7 @@ g = plot_age_pyramid(ages, female=q_female) +
   facet_grid(~country) + 
   theme_with("x_vertical") + 
   p_labs(title="Age-gender population pyramid by country")
-g_save("country-age-pyramid", desc="Age-gender population pyramid by countr ", width=20, height=5)
+g_save("country-age-pyramid", desc="Age-gender population pyramid by country", width=20, height=5)
 
 intake.gender = intake.age %>%
             group_by(country, gender) %>%
@@ -312,4 +335,5 @@ ggplot(intake.gender, aes(x=country, fill=gender, y=count/total)) +
   g_title(ttle="Gender by country", y=i18n('percentage_of_participants'))
 g_save("country-gender", width=20, height=8)
 
+context$pop()
 

@@ -27,11 +27,13 @@ init.path(paste0(season,'/weekly'))
 symptoms = attr(data.all, "symptoms") 
 symptoms.mask = attr(data.all, "symptoms.mask") 
 
+context = ResultContext$new()
+
+result_desc_filters(auto=TRUE, filters=list())
+
 # Graph save shortcut
 g_save = function(...,  desc=NULL, plot=FALSE, width=12, height = 8) {
-  file = out_path(..., ".pdf", plot=plot, desc=desc)
-  cat(basename(file), "\n")
-  ggsave(file, width=width, height = height)  
+  save_graph_with_context(paste0(...), formats = "pdf", context = context, desc=desc, width=width, height=height)
 }
 
 large_breaks = function(range) {
@@ -103,6 +105,8 @@ with_data = function(data, expr, .min=min.week) {
 # graph height
 height = length(countries) * 1.75
 
+context$set(subject="rossman", span="full")
+
 data = data.all$rossman
 
 with_data(data,
@@ -123,6 +127,8 @@ scale_sympt_freq = function() {
 }
 
 na.color = "grey90"
+
+context$set(subject="symptoms", span="full")
 
 with_data(data, {
   ggplot(., aes(x=monday_of_week(yw), y=name, fill=100 * value/person)) +
@@ -153,6 +159,9 @@ with_data(data, {
 
 })
 
+
+context$set(span="short")
+
 with_data(data, .min=short.term, {
   # Short term graph
   ggplot(., aes(x=monday_of_week(yw), y=name, fill=100*value/person_with_sympt)) +
@@ -175,6 +184,8 @@ with_data(data, .min=short.term, {
   
 })
 
+context$set(subject="syndromes", span="full")
+
 with_data(data.all$syndromes, {
 ggplot(., aes(x=monday_of_week(yw), y=name, fill=100*value/person)) +
     geom_tile() +
@@ -185,7 +196,7 @@ ggplot(., aes(x=monday_of_week(yw), y=name, fill=100*value/person)) +
   g_save("syndrome_prop", plot=TRUE, width=6, height = height )  
 })
   
-data = 
+context$set(subject="syndromes.covid", span="full")
 
 with_data(data.all$syndromes.covid, {
   ggplot(., aes(x=monday_of_week(yw), y=name, fill=100*value/person)) +
@@ -198,6 +209,8 @@ with_data(data.all$syndromes.covid, {
 })
 
 data = data.all$syndromes.ecdc
+
+context$set(subject="syndromes.ecdc", span="full")
 
 ggplot(data %>% filter(yw >= min.week), aes(x=monday_of_week(yw), y=name, fill=100*value/person)) +
   geom_tile() +
@@ -212,6 +225,8 @@ d1$name = gsub(".covid", "", d1$name, fixed=TRUE)
 d2 = data.all$syndromes.ecdc
 data = bind_rows(covid=d1, ecdc=d2, .id="set")
 
+context$set(span="short")
+
 ggplot(data %>% filter(yw >= min.week), aes(x=monday_of_week(yw), y=100*value/person, color=set)) +
   geom_line() +
   scale_color_discrete(labels=c('ecdc'="With sudden (ECDC)", "covid"="Without sudden")) +
@@ -221,6 +236,9 @@ ggplot(data %>% filter(yw >= min.week), aes(x=monday_of_week(yw), y=100*value/pe
 g_save("syndrome-covid-ecdc_prop", plot=TRUE, width=14, height = 12)  
 
 ## Symptoms and Symptom causes
+
+context$set(subject="cause")
+
 data = data.all$symptom_causes
 data$sympt.cause = survey_recode(data$sympt.cause, "sympt.cause", "weekly")
 
@@ -229,8 +247,13 @@ sets$symptoms = structure(attr(data.all, "symptoms"), title="Symptoms")
 
 use.causes = c('cause.ili','cause.cold','cause.covid')
 
+context$push() # New layer
+
 for(i in seq_along(sets)) {
   name = names(sets[i])
+  
+  context$set(cause_group=name)
+
   columns = sets[[i]]
   title = attr(sets[[i]], "title")
   ww = data %>% select(yw, country, sympt.cause, !!!syms(columns)) %>% filter(!is.na(sympt.cause))
@@ -317,6 +340,8 @@ for(i in seq_along(sets)) {
   } # if ww
 } # for i
 
+context$pop()
+
 ## Day of week of provided data
 
 data = data.all$participants_date
@@ -329,6 +354,8 @@ data = data %>% mutate(
 
 if(nrow(data) > 0) {
 
+  context$set(subject="participation_day")
+  
   ggplot(data, aes(x=monday_of_week(yw), y=factor(day), fill=100*n_survey/total_survey)) +
     geom_tile() +
     facet_grid(rows=vars(country)) +
@@ -341,6 +368,10 @@ if(nrow(data) > 0) {
 }
 
 ## Symptoms association
+
+context$push()
+
+context$set(subject="symptoms", span="short")
 
 data = data.all$symptom_groups
 
@@ -367,14 +398,20 @@ if(nrow(overall) > 0) {
   g_save("grouped_symptom_upset_shortterm", plot=TRUE, width=13, height = 6)  
 }
 
+context$pop()
+
 questions = attr(data.all, "questions")
 
 for(question in questions) {
+  
   data = data.all[[question$name]]
   name = question$name
+
   if(is.null(data)) {
     cat("No data for", question$name,"\n")
   }
+  
+  context$set(subject=name)
   
   data = left_join(data, weights, by=c('yw','country'))
   
@@ -389,11 +426,13 @@ for(question in questions) {
         ) %>%
         mutate(weighted=weighted/total_weight)
  
+  title = i18n(question$name)
+  
   ggplot(wg, aes(x=monday_of_week(yw), y=round(count/total * 100, 2))) +
     geom_bar(stat = "identity", fill = colors$primary) +
     g_labs(y=i18n('percentage'), x=i18n('week'), title=question$name) +
     facet_wrap(. ~ variable, labeller=labeller(variable=i18n))
-  g_save(paste0(name, "-europe-percent"), width=10, height=10) 
+  g_save(paste0(name, "-europe-percent"), width=10, height=10, desc=list(level="europe", title=paste0(title, ", percent, european level"))) 
 
   ggplot(wg, aes(x=monday_of_week(yw))) +
     geom_line(aes(y=100 * count/total, linetype="value") ) +
@@ -401,7 +440,7 @@ for(question in questions) {
     g_labs(y=i18n('percentage'), x=i18n('week'), title=question$name) +
     scale_linetype_manual(values=c('value'='solid',"weighted"="dashed")) +
     facet_wrap(. ~ variable, labeller=labeller(variable=i18n))
-  g_save(paste0(name, "-europe-weighted-percent"), width=10, height=10) 
+  g_save(paste0(name, "-europe-weighted-percent"), width=10, height=10, desc=list(level="europe", title=paste0(title, ", percent, european level"))) 
   
   ggplot(data, aes(x=monday_of_week(yw), y=round(count/total * 100, 2), color=variable)) +
     geom_line() +
