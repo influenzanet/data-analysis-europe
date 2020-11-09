@@ -68,7 +68,7 @@ datasets$incidence %<>%
     arrange(yw, syndrome)
 
 # All computed data, not filtered
-saveRDS(datasets, my.path("datatsets.rds"))
+saveRDS(datasets, my.path("datasets.rds"))
 
 dir.create(my.path('bundles'), showWarnings = FALSE)
 
