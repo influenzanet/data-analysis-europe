@@ -4,6 +4,8 @@ library(dplyr)
 library(rlang)
 library(ggplot2)
 
+share.lib('incidence')
+
 countries = platform_env("COUNTRY_CODES")
 seasons = get_historical_seasons()
 
@@ -66,7 +68,7 @@ for(syndrome in syndromes) {
   
   subtitle = i18n(syndrome)
   
-  ggplot(ii, aes(x=monday_of_week(yw), y=incidence, group=syndrome, color=method)) + 
+  ggplot(ii, aes(x=monday_of_week(yw), y=incidence, group=method, color=method)) + 
     geom_vline(data=inc %>% filter(censored), aes(xintercept=monday_of_week(yw)), color="grey90") +
     geom_line() +
     facet_grid(rows=vars(country), cols=vars(season), scales = "free") +
