@@ -167,13 +167,23 @@ for(syndrome.column in syndromes) {
             arrange(person_id, episode, timestamp) %>%
              group_by(person_id, episode) %>%
              mutate(order=row_number()) %>%
-             filter( !(!!sym(syndrome.column) & order > 1))
+             ungroup()
+            
+  # Compute weekly frequency by participant. Reduce all surveys to one by week & participant
+  # Each var = any(var), TRUE if at least one survey has true
+  freq_bool_weekly = function(ww, vars) {
+    ww = ww %>% group_by(person_id, yw) %>% summarize(across(vars, ~sum(.) >0 ), weight=max(weight)) 
+    freq_bool_by(design_weight(ww), vars, "yw")
+  }
+  
+  f_raw = freq_bool_weekly(w.sd, syndrome.column)
+  
+  w.sd = w.sd %>% filter( !(!!sym(syndrome.column) & order > 1))
+  
+  f_episode = freq_bool_weekly(w.sd, syndrome.column)
   
   # Frequency 
-  freqs_syndrome = bind_freqs(
-    raw=freq_bool_by(env$weekly, syndrome.column, "yw", design_weight(env$weekly)),
-    episode=freq_bool_by(w.sd, syndrome.column, by="yw", design_weight(w.sd))
-  )
+  freqs_syndrome = bind_freqs(raw=f_raw, episode=f_episode)
   
   collect("syndrome", freqs_syndrome, syndrome=syndrome.column)
   
@@ -201,8 +211,6 @@ for(syndrome.column in syndromes) {
   }
   
   collect("cumul", freqs_cumul, syndrome=syndrome.column)
-  
-  freqs$cumul = freqs_cumul
   
   ## Count number of surveys by participants by weeks
   ww = env$weekly %>% filter(!!sym(syndrome.column))
