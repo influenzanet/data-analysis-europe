@@ -17,6 +17,18 @@ season = cli.args$season
 
 init.path(paste0(country, "/", season))
 
+context = ResultContext$new()
+
+g_save = function(file, width, height=NA, r=1.618, plot=FALSE) {
+  
+  if( is.na(height) ) {
+    height = width / r
+  }
+  save_graph_with_context(file, c('pdf','svg'), width=width, height = height, context = context)
+}
+
+result_desc_filters(auto=TRUE, filters=list())
+
 i18n_load("i18n/", language = tolower(country))
 
 sub.text = i18n("platform.copyright")
@@ -46,16 +58,18 @@ intake = recode_intake(intake)
 
 g_barplot(intake$gender, x.rotate = 0) +
   g_title(title=i18n("gender_of_participants"), y=titlelize('percentage'), x=titlelize('gender'))
-g_save(my.path('gender'), width=3, height=3)
+g_save('gender', width=3, height=3)
 
 age.categories = c(seq(0, 90, by=5), 200)
 
 intake$age.cat = cut_age(intake$age, age.categories)
 
+context$set(subject="age_structure")
+
 g_barplot(intake$age.cat, order=FALSE, label.size = 1.5) +
   g_title(title=i18n("age_of_participants"), x=i18n('age_group')) +
   theme(axis.text.x=element_text(angle=-45, vjust=.5))
-g_save(my.path('age'), width=9, height=4)
+g_save('age', width=9, height=4)
 
 if( has.population) {
   # National population
@@ -93,13 +107,13 @@ if( has.population) {
     scale_fill_manual(values=pop.colors, labels=pop.labels) +
     guides(fill=guide_legend("")) +
     g_title(title=i18n("age_of_participants_and_pop"), y=i18n('percentage'), x=i18n('age_group'))
-  g_save(my.path('age_of_participants_pop'), width=6, height=4)
+  g_save('age_of_participants_pop', width=6, height=4)
 
   female = age_sexe_structure$gender == i18n("female")
   scales = list(label=c(cohort=cohort.title, pop=population.title), color= pop.colors)
   plot_age_pyramid(age_sexe_structure, female=female, prop=FALSE, scales=scales) +
     g_title(x="age_group", y=i18n("age_gender_proportion")) + guides(fill=guide_legend(""), alpha=FALSE)
-  g_save(my.path('age_pyramid'), width=6, height=5)
+  g_save('age_pyramid', width=6, height=5)
 
 }
 
@@ -126,5 +140,3 @@ simple_plot(allergy.columns, title="graph_allergy", width=6.8, file="allergy")
 
 simple_plot(pets.columns, title="graph_pets", width=6.8, file="pets")
 
-# Save graph list
-save_outputs()

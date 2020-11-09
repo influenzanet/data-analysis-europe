@@ -57,22 +57,16 @@ if(country_title == "") {
 
 min.week = get_graph_starting_week(season)
 
+context = ResultContext$new()
+
 g_save = function(...,  desc=NULL, plot=FALSE, width=12, height = 8) {
-  p = my.path(..., ".pdf")
-  message(basename(p))
-  desc_output(p, desc=desc, plot=plot)
-  ggsave(p, width=width, height = height) 
-  p = my.path(..., ".svg")
-  message(basename(p))
-  desc_output(p, desc=desc, plot=plot)
-  ggsave(p, width=width, height = height) 
+  p = paste0(...)
+  save_graph_with_context(p, formats = c('pdf','svg'), width=width, height=height, context=context, desc=desc)
 }
 
 g_labs = function(...) {
   ggplot2::labs(..., caption = caption, subtitle = i18n("country_label")) 
 }
-
-data = data.all$symptoms
 
 date_format = i18n("monthday_format")
 week_format = function(d) { format(monday_of_week(d), date_format) }
@@ -87,9 +81,14 @@ scale_sympt_freq = function() {
   scale_fill_viridis_c(direction = -1, option = "A", na.value="grey90", breaks=large_breaks)
 }
 
+context$push()
+
+data = data.all$symptoms
 
 dd = data %>% filter(yw >= min.week)
 if(nrow(dd) > 0) {
+  
+  context$set(subject="symptoms")
   
   ggplot(dd, aes(x=monday_of_week(yw), y=name, fill=100 * value/person)) +
     geom_tile() + 
@@ -147,9 +146,14 @@ if(nrow(dd) > 0) {
   }
 }
 
+context$push()
+
+context$set(subject="syndromes")
+
 data = data.all$syndromes %>% filter(yw >= min.week)
 
 if(nrow(data) > 0) {
+  context$set(syndrome_group="ifn")
   ggplot(data, aes(x=monday_of_week(yw), y=name, fill=100 * value / person)) +
     geom_tile() +
     scale_x_date(date_labels=date_format) +
@@ -159,6 +163,8 @@ if(nrow(data) > 0) {
     guides(fill=guide_legend(i18n('percentage_of_participants')))
   g_save("syndrome_prop", plot=TRUE, width=7, height = 6)  
 }
+
+context$set(syndrome_group="covid")
 
 data = data.all$syndromes.covid %>% filter(yw >= min.week)
 if(nrow(data) > 0) {
@@ -174,6 +180,9 @@ if(nrow(data) > 0) {
 
 data = data.all$syndromes.ecdc %>% filter(yw >= min.week)
 if(nrow(data) > 0) {
+  
+  context$set(syndrome_group="ecdc")
+  
   ggplot(data, aes(x=monday_of_week(yw), y=name, fill=100 * value/person)) +
     geom_tile() +
     scale_x_date(date_labels=date_format) +
@@ -201,29 +210,13 @@ if(nrow(data) > 0) {
 
 }
 
-data = data.all$participants_date %>% filter(yw >= min.week)
+context$pop()
 
-if(nrow(data) > 0) {
-  days = c('7'="monday",'6'='tuesday','5'='wednesday', '4'='thursday','3'='friday','2'='saturday','1'='sunday')
-  
-  data = data %>% mutate(
-    day =  8 - ifelse(wday == 0, 7, wday)
-  )
-  
-  data$day = factor(data$day, names(days), days)
-  
-  ggplot(data, aes(x=monday_of_week(yw), y=day, fill=100 * n_person/total_person)) +
-    geom_tile() +
-    scale_x_date(date_labels=date_format) +
-    scale_y_discrete(labels=i18n) +
-    scale_fill_viridis_c(direction = -1, option = "A") +
-    g_labs(x=titlelize("week"), y=titlelize("week"), title=i18n("participant_week_by_weekday")) +
-    guides(fill=guide_legend(i18n('percentage_of_participants')))
-  g_save("week_participant_prop", plot=TRUE, width=7, height = 6)  
-  
-}
+context$push()
 
 data = data.all$symptom_groups %>% filter(yw >= short.term)
+
+context$set(subject="symptoms")
 
 if(nrow(data) > 0) {
   
@@ -245,11 +238,41 @@ if(nrow(data) > 0) {
   g_save("grouped_symptom_upset_shortterm", plot=TRUE, width=14, height = 6)  
 }
 
+context$pop()
+
+data = data.all$participants_date %>% filter(yw >= min.week)
+
+if(nrow(data) > 0) {
+  
+  context$set(subject="day_if_participation")
+  
+  days = c('7'="monday",'6'='tuesday','5'='wednesday', '4'='thursday','3'='friday','2'='saturday','1'='sunday')
+  
+  data = data %>% mutate(
+    day =  8 - ifelse(wday == 0, 7, wday)
+  )
+  
+  data$day = factor(data$day, names(days), days)
+  
+  ggplot(data, aes(x=monday_of_week(yw), y=day, fill=100 * n_person/total_person)) +
+    geom_tile() +
+    scale_x_date(date_labels=date_format) +
+    scale_y_discrete(labels=i18n) +
+    scale_fill_viridis_c(direction = -1, option = "A") +
+    g_labs(x=titlelize("week"), y=titlelize("week"), title=i18n("participant_week_by_weekday")) +
+    guides(fill=guide_legend(i18n('percentage_of_participants')))
+  g_save("week_participant_prop", plot=TRUE, width=7, height = 6)  
+  
+}
+
 questions = attr(data.all, "questions")
 
 for(question in questions) {
   data = data.all[[question$name]]
   name = question$name
+  
+  context$set(subject=name)
+  
   if(is.null(data)) {
     cat("No data for", question$name,"\n")
   }
@@ -267,8 +290,11 @@ for(question in questions) {
 
 }
 
+
 ## Symptoms and Symptom causes
 data = data.all$symptom_causes
+
+context$set(subject="symptom_cause")
 
 if(nrow(data) > 0) {
 
