@@ -87,5 +87,50 @@ ifn_labs = function(..., caption=NULL, internal=TRUE) {
   ggplot2::labs(..., caption=caption)
 }
 
+#' Create a descriptive structure to path to desc_output()
+#' Merge context data with the ones enventualy directly with the graph output (desc param)
+#' @param context ResultContext instance
+#' @param desc desc param, title or list passed to the graph output functions
+as_output_desc = function(context, desc=NULL) {
+  ctx = context$resolve()
+  if(!is.null(desc)) {
+    if(is.character(desc)) {
+      ctx$desc = desc
+      desc = ctx
+    } else {
+      ctx = modifyList(ctx, desc)
+    }    
+  } else {
+    desc = ctx
+  }
+  if(hasName(desc, "title") && !hasName(desc, "desc")) {
+    desc$desc = desc$title # Current field for title is "desc"
+    desc$title = NULL
+  }
+  desc
+}
+
+#' Save graph helper
+#' Output a graph file with desc
+#' @param path relative name (will be passed to my.paths)
+#' @param formats list of extensions to use as output
+#' @param context ResultContext instance with current context
+#' @param desc graph specific extra desc
+#' @param verbose logical if TRUE show the current graph name
+save_graph_with_context = function(path, formats, width, height, context, desc=NULL, verbose=TRUE, dpi=300) {
+  if(is.null(desc)) {
+    desc = result_desc_plot(ggplot2::last_plot())
+  }
+  desc = as_output_desc(context, desc)
+  if(verbose) {
+    message(path)
+  }
+  p = my.path(path)
+  for(format in formats) {
+    file = paste0(p, '.', format)  
+    result_desc_output(file, desc=desc, plot=plot)
+    ggplot2::ggsave(file, width=width, height=height, dpi=dpi)
+  }
+}
 
 
