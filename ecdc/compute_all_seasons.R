@@ -7,7 +7,8 @@ if(!interactive()) {
   compute = parseArgs(list(
     "incidence"=list(type="bool", default=TRUE),
     "healthcare"=list(type="bool", default=TRUE),
-    "update"=list(type="bool", default=FALSE)
+    "update"=list(type="bool", default=FALSE),
+    season=list(type="int", default=get_historical_seasons(), range=TRUE, multiple=TRUE)
   ))
 } else {
   if(!exists("compute")) {
@@ -38,9 +39,14 @@ run_script = function(season, country, name) {
   r
 }
 
+if(hasName(compute, "season") && !is.null(compute$season)) {
+  seasons = unique(compute$season)
+} else {
+  seasons = get_historical_seasons()
+} 
+
 update.mode = compute$update
 
-seasons = get_historical_seasons()
 for(season in seasons) {
   countries = platform_env("COUNTRY_CODES")
   for(country in countries) {
