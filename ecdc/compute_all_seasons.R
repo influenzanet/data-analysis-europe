@@ -49,10 +49,12 @@ for(season in seasons) {
     if(isTRUE(compute$incidence)) {
       run_script(season, country, "ecdc_indicator")
     }
-    
+    gc()
+        
     if(isTRUE(compute$healthcare)) {
      run_script(season, country, "ecdc_healthcare")
     }
-
+    gc()
+    
   }
 }
