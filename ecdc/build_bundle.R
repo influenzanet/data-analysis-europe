@@ -57,7 +57,55 @@ load_incidence_country = function(country) {
   invisible(list(country=country, count=length(last)))
 }
 
-lapply(countries, load_incidence_country)
+load_healthcare_country = function(country) {
+  path = my.path(country, "/")
+  ff = list.files(path, pattern="^healthcare-.*\\.last$", full.names = TRUE)
+  last = NULL
+  if(length(ff)) {
+    
+    last = basename(unlist(lapply(ff, readLines)))
+    message(paste(country, " found", length(last) ))
+    for(last.file in last) {
+      r = try(readRDS(paste0(path, last.file)))
+      if(is.error(r)) {
+        message(paste0(country, ": Unable to load ", sQuote(last)))
+      }
+      meta = attr(r, "meta")
+      season = meta$season
+      
+      # Variables frequencies
+      ff = r$vars
+      ff$country = country
+      ff$season = season
+      
+      datasets$vars = bind_rows(datasets$vars, ff)
+      
+      # Cumulated frequency over each season for variables
+      ff = r$cumul
+      ff$country = country
+      ff$season = season
+      
+      datasets$vars_cumulated =  bind_rows(datasets$vars_cumulated, ff)
+      
+      ff = r$syndrome
+      ff$country = country
+      ff$season = season
+      
+      datasets$freq_syndrome = bind_rows(datasets$freq_syndrome, ff)
+    }
+  }
+  invisible(list(country=country, count=length(last)))
+} 
+
+message("Loading Incidence indicators")
+ii = lapply(countries, load_incidence_country)
+
+message("Loading Healthcare indicators")
+datasets$vars=NULL
+datasets$freq_syndrome=NULL
+datasets$vars_cumulated=NULL
+
+hh = lapply(countries, load_healthcare_country)
 
 datasets$active %<>% 
     mutate_at(c("syndrome", "country", "method"), factor) %>% 
@@ -66,6 +114,25 @@ datasets$active %<>%
 datasets$incidence %<>%
     mutate_at(c("syndrome", "country", "method"), factor) %>% 
     arrange(yw, syndrome)
+
+datasets$vars %<>%
+  mutate_at(c("syndrome", "country", "variable", "type","level"), factor) %>% 
+  arrange(yw, syndrome, variable) %>%
+  mutate(cumulated=FALSE) %>%
+  rename(estimator=type)  
+
+datasets$vars_cumulated %<>%
+  mutate_at(c("syndrome", "country", "variable","level"), factor) %>% 
+  arrange(yw, syndrome, variable) %>%
+  mutate(cumulated=TRUE, estimator="episode")
+
+datasets$vars = bind_rows(datasets$vars, datasets$vars_cumulated)
+rm("vars_cumulated", envir = datasets)
+
+datasets$freq_syndrome %<>%
+  mutate_at(c("syndrome", "country", "variable","level"), factor) %>% 
+  arrange(yw, syndrome, variable)
+
 
 # All computed data, not filtered
 saveRDS(datasets, my.path("datasets.rds"))
@@ -118,11 +185,6 @@ filter_incidence = function(data) {
     filter( (syndrome == "ili.ecdc" & method == "w1_s2_if2_ex") | (syndrome == "covid.ecdc" & method == "w0_s2_if2_ex") )
 }
 
-
-filter_visits = function(data) {
-  data %>% filter(estimator == "adj")
-}
-
 #' Remove non constistent data
 filter_base = function(data) {
   data %>% filter(
@@ -131,6 +193,24 @@ filter_base = function(data) {
   )
   
 }
+
+filter_visits = function(data) {
+  data = data %>% 
+          filter(estimator == "episode" & grepl("^visit", variable) & level == "TRUE") %>% 
+          select(-level, -estimator)
+  dd = data %>% filter(!cumulated) %>% select(-cumulated)
+  cum = data %>% filter(cumulated) %>% 
+          select(-cumulated) %>%
+          rename_with(~paste0("cum_",.), c(starts_with("prop_"), starts_with('n_'),  starts_with('total')))
+  
+  keys = c('yw','variable','syndrome','season','country')
+  
+  dd = left_join(dd, cum, by=keys)
+ 
+  r = dd %>% select(!!!syms(keys), starts_with('prop_'), starts_with('cum_prop_'), starts_with('n_'), starts_with('total') )
+   
+}
+
 
 # Bundles definition
 bundles = list(
@@ -152,6 +232,16 @@ bundles = list(
       filter_base,
       filter_season_weeks
     )
+  ),
+  list(
+    name="visits_weekly",
+    sorting="yw",
+    dataset="vars",
+    filters= list(
+      filter_base,
+      filter_season_weeks,
+      filter_visits
+    )
   )
 )
 
@@ -163,6 +253,8 @@ create_bundle_country = function(data, .keys, bundle) {
   write.csv(data, file=my.path('bundles/', country, '_', bundle$name,'.csv'), row.names = FALSE) 
 }
 
+
+outputs = list()
 # Build bundles
 for(bundle in bundles) {
   name = bundle$name
@@ -177,11 +269,11 @@ for(bundle in bundles) {
     data = do.call(f, list(data))
   }
   
-  datasets[[bundle$dataset]] = data
+  outputs[[bundle$name]] = data
   
   data %>% group_by(country) %>% group_walk(create_bundle_country, bundle=bundle)
 
 }
 
 # Exported data
-saveRDS(datasets, my.path("bundles.rds"))
+saveRDS(outputs, my.path("bundles.rds"))

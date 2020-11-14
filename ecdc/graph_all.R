@@ -49,8 +49,9 @@ result_desc_filters(
 )
 
 result_desc_readme(
-  "This directory contains graphics for all computed incidence (all syndromes and all estimators for incidence)",
+  c("This directory contains graphics for all computed incidence (all syndromes and all estimators for incidence)",
   paste("Estimators used are ", paste(methods, collapse = ","))
+  )
 )
 
 for(syndrome in syndromes) {
@@ -149,5 +150,28 @@ for(method in methods) {
 
 }
 context$pop()
+
+context$push()
+
+context$set(subject="visits")
+for(syndrome in syndromes) {
+  dd = datasets$vars %>% filter(syndrome == !!syndrome & grepl("^visit", variable))
+  context$set(syndrome=syndrome, cumulated="no")
+  ggplot(dd %>% filter(cumulated==FALSE), aes(y=prop_raw, color=variable, x=monday_of_week(yw))) + 
+    geom_line() + 
+  facet_grid(country~season, scales = "free") +
+  theme_with("legend_top", "x_vertical") +
+  g_labs(x="Week", y="Healthcare seeking rate", title="Healthcare seeking rate by country and season", subtitle=syndrome)
+  g_save(syndrome,"_visits_country+season", width=12, height=8)
+  
+  context$set(syndrome=syndrome, cumulated="yes")
+  ggplot(dd %>% filter(cumulated == TRUE), aes(y=prop_raw, color=variable, x=monday_of_week(yw))) + 
+    geom_line() + 
+    facet_grid(country~season, scales = "free") +
+    theme_with("legend_top", "x_vertical") +
+    g_labs(x="Week", y="Healthcare seeking rate", title="Healthcare seeking rate by country and season", subtitle=syndrome)
+  g_save(syndrome,"_visits-cumlated_country+season", width=12, height=8)
+
+}
 
 

@@ -41,6 +41,7 @@ g_save = function(..., width, height, desc=NULL) {
 
 init.path('indicator/bundles')
 
+
 result_desc_filters(
   auto=TRUE, 
   filters=list(
@@ -147,6 +148,31 @@ for(syndrome in syndromes) {
 }
 
 context$push()
+
+
+
+context$set(subject="visits")
+for(syndrome in syndromes) {
+  dd = datasets$vars %>% filter(syndrome == !!syndrome & grepl("^visit", variable))
+  context$set(syndrome=syndrome, cumulated="no")
+  ggplot(dd %>% filter(cumulated==FALSE), aes(y=prop_raw, color=variable, x=monday_of_week(yw))) + 
+    geom_line() + 
+    facet_grid(country~season, scales = "free") +
+    theme_with("legend_top", "x_vertical") +
+    g_labs(x="Week", y="Healthcare seeking rate", title="Healthcare seeking rate by country and season", subtitle=syndrome)
+  g_save(syndrome,"_visits_country+season", width=12, height=8)
+  
+  context$set(syndrome=syndrome, cumulated="yes")
+  ggplot(dd %>% filter(cumulated == TRUE), aes(y=prop_raw, color=variable, x=monday_of_week(yw))) + 
+    geom_line() + 
+    facet_grid(country~season, scales = "free") +
+    theme_with("legend_top", "x_vertical") +
+    g_labs(x="Week", y="Healthcare seeking rate", title="Healthcare seeking rate by country and season", subtitle=syndrome)
+  g_save(syndrome,"_visits-cumlated_country+season", width=12, height=8)
+  
+}
+
+
 visits = load_bundles("visits_weekly")
 
 ggplot(visits, aes(x=monday_of_week(yw), y=prop, color=variable)) + 
