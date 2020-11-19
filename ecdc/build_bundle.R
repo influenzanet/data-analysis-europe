@@ -182,7 +182,7 @@ filter_incidence = function(data) {
   data %>% 
     mutate(across(c(upper, lower), na_to_zero )) %>%
     filter(type == "adj") %>%
-    filter( (syndrome == "ili.ecdc" & method == "w1_s2_if2_ex") | (syndrome == "covid.ecdc" & method == "w0_s2_if2_ex") )
+    filter( (syndrome == "ili.ecdc" & method == "w1_s2_if2_ex") | (syndrome == "covid.ecdc" & method == "w0") )
 }
 
 #' Remove non constistent data
