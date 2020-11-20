@@ -137,6 +137,8 @@ datasets$freq_syndrome %<>%
 # All computed data, not filtered
 saveRDS(datasets, my.path("datasets.rds"))
 
+gc()
+
 dir.create(my.path('bundles'), showWarnings = FALSE)
 
 #' Remove first estimated point of the season and restrict range (for season < 2020)
@@ -211,6 +213,17 @@ filter_visits = function(data) {
    
 }
 
+filter_visits_cumulated = function(data) {
+  
+  data = data %>% group_by(season, country) %>% 
+            mutate(max_yw=max(yw)) %>%
+            ungroup() %>%
+            filter(yw ==  max_yw) %>%
+            select(-max_yw)
+ 
+  data 
+}
+
 
 # Bundles definition
 bundles = list(
@@ -242,7 +255,17 @@ bundles = list(
       filter_season_weeks,
       filter_visits
     )
+  ),
+  list(
+    name="visits_cumulated",
+    sorting="yw",
+    source="bundle",
+    dataset="visits_weekly",
+    filters= list(
+      filter_visits_cumulated
+    )
   )
+  
 )
 
 # Create a bundle for a country
@@ -253,13 +276,20 @@ create_bundle_country = function(data, .keys, bundle) {
   write.csv(data, file=my.path('bundles/', country, '_', bundle$name,'.csv'), row.names = FALSE) 
 }
 
-
 outputs = list()
 # Build bundles
 for(bundle in bundles) {
   name = bundle$name
+  data = NULL
   message(paste("Bundle", name))
-  data = datasets[[bundle$dataset]]
+  if(hasName(bundle,"source")) {
+    if(bundle$source == "bundle") {
+      data = outputs[[bundle$dataset]]
+    } 
+    
+  } else {
+    data = datasets[[bundle$dataset]]
+  }
   if(is.null(data)) {
     message(paste("No data for bundle", name))
     next()
@@ -274,6 +304,7 @@ for(bundle in bundles) {
   data %>% group_by(country) %>% group_walk(create_bundle_country, bundle=bundle)
 
 }
+
 
 # Exported data
 saveRDS(outputs, my.path("bundles.rds"))
