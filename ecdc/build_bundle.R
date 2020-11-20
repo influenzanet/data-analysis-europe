@@ -71,7 +71,7 @@ load_healthcare_country = function(country) {
         message(paste0(country, ": Unable to load ", sQuote(last)))
       }
       meta = attr(r, "meta")
-      season = meta$season
+      season = as.integer(meta$season)
       
       # Variables frequencies
       ff = r$vars
