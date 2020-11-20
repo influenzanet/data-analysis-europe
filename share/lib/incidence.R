@@ -71,7 +71,9 @@ get_eu_incidence_parameters = function(which="default") {
 # Common function to compute syndromes for ecdc indicators
 ##
 
-
+#' Syndrome to compute from weekly & intake data
+#' @param weekly weekly survey data
+#' @param intake intake survey data
 ecdc_syndrome_provider = function(weekly, intake) {
   sd = SyndromeProviderRS2019$new()
   sdc = SyndromeProviderCovid$new()
