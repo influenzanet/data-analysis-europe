@@ -5,6 +5,8 @@
 ##
 source("conf.R")
 
+options(warn=1) # Show warnings as they occur
+
 library(dplyr)
 library(rlang)
 library(swMisc)
@@ -92,6 +94,9 @@ load_healthcare_country = function(country) {
       ff$season = season
       
       datasets$freq_syndrome = bind_rows(datasets$freq_syndrome, ff)
+      
+      r = NULL
+      gc()
     }
   }
   invisible(list(country=country, count=length(last)))
@@ -100,6 +105,8 @@ load_healthcare_country = function(country) {
 message("Loading Incidence indicators")
 ii = lapply(countries, load_incidence_country)
 
+gc()
+
 message("Loading Healthcare indicators")
 datasets$vars=NULL
 datasets$freq_syndrome=NULL
@@ -107,6 +114,9 @@ datasets$vars_cumulated=NULL
 
 hh = lapply(countries, load_healthcare_country)
 
+gc()
+
+message("Building datasets")
 datasets$active %<>% 
     mutate_at(c("syndrome", "country", "method"), factor) %>% 
     arrange(season, yw)
@@ -133,11 +143,12 @@ datasets$freq_syndrome %<>%
   mutate_at(c("syndrome", "country", "variable","level"), factor) %>% 
   arrange(yw, syndrome, variable)
 
-
 # All computed data, not filtered
 saveRDS(datasets, my.path("datasets.rds"))
 
 gc()
+
+message("Bundles")
 
 dir.create(my.path('bundles'), showWarnings = FALSE)
 
@@ -209,7 +220,7 @@ filter_visits = function(data) {
   
   dd = left_join(dd, cum, by=keys)
  
-  r = dd %>% select(!!!syms(keys), starts_with('prop_'), starts_with('cum_prop_'), starts_with('n_'), starts_with('total') )
+  dd %>% select(!!!syms(keys), starts_with('prop_'), starts_with('cum_prop_'), starts_with('n_'), starts_with('total') )
    
 }
 
