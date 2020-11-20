@@ -107,12 +107,6 @@ upset_plot <- function(data, sets, n.max=40, point_size=3, name_size_scale=1, ti
   data = data %>% arrange(desc(count))
   data$label = reorder(data$label, order(data$count, decreasing=TRUE))
   
-  if(!is.na(n.max)) {
-    d = data[1:n.max, ]
-  } else {
-    d = data
-  }
-  
   left_margin = 1
   
   if(!is.null(opts$freq)) {
@@ -124,13 +118,55 @@ upset_plot <- function(data, sets, n.max=40, point_size=3, name_size_scale=1, ti
   freq_opts = swMisc::merge_list(freq_opts, list(
     bar.color=NA,
     bar.fill="black",
-    label="Frequency"
+    label="Frequency",
+    prop = NULL # Compute cumulative proportion 
   ))
 
+  show_prop = !is.null(freq_opts[['prop']])
+  
+  if(show_prop) {
+    prop_opts = swMisc::merge_list(freq_opts[['prop']], list(
+        breaks=seq(.1, 1, by=.1),
+        line.color="grey",
+        label.size=2
+      )
+    )
+  }
+  
+  if(show_prop) {
+    # Compute prop on all combinations, before row selection
+    data[['.up_prop']] = data$count / sum(data$count)
+  }
+  
+  if(!is.na(n.max)) {
+    d = data[1:n.max, ]
+  } else {
+    d = data
+  }
+  
   # freq_plot
   d$row = 1:nrow(d)
-  freq_plot = ggplot(d, aes(x=row, y=count)) + 
-    geom_bar(stat="identity", color=freq_opts$bar.color, fill=freq_opts$bar.fill) 
+  
+  if(show_prop) {
+    d[['.up_prop_cum']] = cumsum(d[['.up_prop']])
+    i = sapply(prop_opts$breaks, function(b) {
+      min(which(d[['.up_prop_cum']] >= b))
+    })
+    # Flag where to show the line & the label
+    d[['.up_prop_break']] = FALSE
+    d[['.up_prop_break']][i] = TRUE
+  }
+  
+  freq_plot = ggplot(d, aes(x=row, y=count))
+  
+  if(show_prop) {
+    ymax = max(d$count)
+    freq_plot = freq_plot + 
+      geom_segment(data=~filter(., .up_prop_break), aes(x=row, xend=row, y=0, yend=!!ymax), color=prop_opts$line.color) +
+      geom_text(data=~filter(., .up_prop_break), aes(label=paste0(round(100 * .up_prop_cum),"%"), y=!!ymax), size=prop_opts$label.size)
+  }
+  
+  freq_plot = freq_plot + geom_bar(stat="identity", color=freq_opts$bar.color, fill=freq_opts$bar.fill) 
   
   freq_plot = freq_plot  + 
     theme(
@@ -215,7 +251,7 @@ upset_plot <- function(data, sets, n.max=40, point_size=3, name_size_scale=1, ti
     matrix_plot = matrix_plot + mat_opts$theme
   }
   
-  plot_grid(freq_plot, matrix_plot, align="v", ncol=1)
+  cowplot::plot_grid(freq_plot, matrix_plot, align="v", ncol=1)
   
 }
 
