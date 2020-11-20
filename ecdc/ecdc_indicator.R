@@ -44,6 +44,8 @@ if(update.mode && file.exists(results.file)) {
   rlang::abort("Already computed", class="error_already_done")
 }
 
+symptoms = get_symptoms_columns(season)
+
 # Age group will be computed later
 r = load_results_for_incidence(
   season=season, 
@@ -51,7 +53,7 @@ r = load_results_for_incidence(
   country=country, 
   syndrome.from = ecdc_syndrome_from, 
   first.season=T, 
-  columns=list(keep.all=TRUE),
+  columns=list(weekly=symptoms, keep.all=TRUE),
   onset = episode_onset_design()
 )
 
@@ -68,6 +70,10 @@ r$intake$country = factor(country)
 
 h = season_definition(season = season)
 
+ss = symptoms[symptoms != ifnBase::NO_SYMPTOM]
+r$weekly['any_symptom'] = rowSums(r$weekly[, ss], na.rm=TRUE) > 0
+r$syndromes = c(r$syndromes, 'any_symptom')
+
 results = list()
 
 for(eu.params in eu.params.sets) {
@@ -81,6 +87,7 @@ for(eu.params in eu.params.sets) {
   r$intake$age.cat  = cut_age(r$intake$age, age.categories = age.categories)
   
   design = design_incidence(age.categories = age.categories, year.pop = h$year.pop, geo="country", geo_area = toupper(country))
+  
   
   estimator = IncidenceRS2014$new(weekly=r$weekly, intake=r$intake, params=params, syndromes = r$syndromes, design=design, output=c("inc", "participant"))
   
