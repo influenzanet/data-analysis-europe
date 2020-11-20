@@ -44,12 +44,14 @@ result_desc_filters(
   auto=TRUE, 
   filters=list(
     result_filter("syndrome","Syndrome"),
-    result_filter("what","Subject")
+    result_filter("what","Subject"),
+    result_filter("adj","Adjustment"),
+    result_filter("method","Participant selection")
   )
 )
 
 result_desc_readme(
-  c("This directory contains graphics for all computed incidence (all syndromes and all estimators for incidence)",
+  c("This directory contains graphics for all computed incidence (all syndromes and all estimators for incidence) and indicators",
   paste("Estimators used are ", paste(methods, collapse = ","))
   )
 )
@@ -129,7 +131,6 @@ for(method in methods) {
   
   context$set("what"="incidence")
   
-  
   context$set("syndrome"="all")
   ggplot(ii, aes(x=monday_of_week(yw), y=incidence, group=syndrome, color=syndrome)) + 
     geom_vline(data=inc %>% filter(censored), aes(xintercept=monday_of_week(yw)), color="grey90") +
@@ -153,25 +154,70 @@ context$pop()
 
 context$push()
 
+scale_linetype_adjusted = scale_linetype_manual(values=c('adj'='solid','raw'="dashed"), labels=c('adj'="Adjusted","raw"="Non adjusted"))
+
 context$set(subject="visits")
 for(syndrome in syndromes) {
-  dd = datasets$vars %>% filter(syndrome == !!syndrome & grepl("^visit", variable))
-  context$set(syndrome=syndrome, cumulated="no")
-  ggplot(dd %>% filter(cumulated==FALSE), aes(y=prop_raw, color=variable, x=monday_of_week(yw))) + 
-    geom_line() + 
-  facet_grid(country~season, scales = "free") +
-  theme_with("legend_top", "x_vertical") +
-  g_labs(x="Week", y="Healthcare seeking rate", title="Healthcare seeking rate by country and season", subtitle=syndrome)
-  g_save(syndrome,"_visits_country+season", width=12, height=8)
+  dd = bundles$vars %>% filter(syndrome == !!syndrome & grepl("^visit", variable))
   
-  context$set(syndrome=syndrome, cumulated="yes")
-  ggplot(dd %>% filter(cumulated == TRUE), aes(y=prop_raw, color=variable, x=monday_of_week(yw))) + 
-    geom_line() + 
+  if(nnow(dd) == 0) {
+    next()
+  }
+  
+  context$set(syndrome=syndrome, cumulated="no")
+  
+  d = dd %>% filter(cumulated==FALSE)
+  ggplot(d, aes( color=variable, x=monday_of_week(yw))) + 
+    geom_line(aes(y=prop_adj, linetype="adj")) +
+    geom_line(aes(y=prop_raw, linetype="raw")) +
+  facet_grid(country~season, scales = "free") +
+  scale_linetype_adjusted +
+  theme_with("legend_top", "x_vertical") +
+  g_labs(x="Week", y="Healthcare seeking rate", title="Healthcare seeking rate by country and season, weekly value", subtitle=paste(syndrome,", adjusted and not adjusted"))
+  g_save(syndrome,"_visits_adj+raw_country+season", width=12, height=8, desc=list(adj="both"))
+  
+  ggplot(d, aes(color=variable, x=monday_of_week(yw))) + 
+    geom_line(aes(y=prop_adj)) +
+    facet_grid(country ~ season, scales = "free") +
+    theme_with("legend_top", "x_vertical") +
+    g_labs(x="Week", y="Healthcare seeking rate", title="Healthcare seeking rate by country and season, weekly value", subtitle=paste(syndrome, ", adjusted"))
+  g_save(syndrome,"_visits_adj+raw__country+season", width=12, height=8, desc=list(adj="adj"))
+  
+  ggplot(d, aes(color=variable, x=monday_of_week(yw))) + 
+    geom_ribbon(aes(ymin=prop_adj_low, ymax=prop_adj_up, fill=variable), alpha=.30, color="transparent") +
+    geom_line(aes(y=prop_adj)) +
     facet_grid(country~season, scales = "free") +
     theme_with("legend_top", "x_vertical") +
-    g_labs(x="Week", y="Healthcare seeking rate", title="Healthcare seeking rate by country and season", subtitle=syndrome)
-  g_save(syndrome,"_visits-cumlated_country+season", width=12, height=8)
+    g_labs(x="Week", y="Healthcare seeking rate", title="Healthcare seeking rate by country and season, weekly value", subtitle=paste(syndrome, ", adjusted with ci"))
+  g_save(syndrome,"_visits_adj+raw__country+season", width=12, height=8, desc=list(adj="adj"))
+  
+  context$set(cumulated="yes")
+  
+  d = dd %>% filter(cumulated == TRUE)
+  ggplot(d, aes( color=variable, x=monday_of_week(yw))) + 
+    geom_line(aes(y=prop_adj, linetype="adj")) +
+    geom_line(aes(y=prop_raw, linetype="raw")) +
+    facet_grid(country~season, scales = "free") +
+    scale_linetype_adjusted +
+    theme_with("legend_top", "x_vertical") +
+    g_labs(x="Week", y="Healthcare seeking rate", title="Healthcare seeking rate by country and season, cumulated values", subtitle=paste(syndrome,", adjusted and not adjusted"))
+  g_save(syndrome,"_visits-cumul_adj+raw_country+season", width=12, height=8, desc=list(adj="both"))
+  
+  ggplot(d, aes(color=variable, x=monday_of_week(yw))) + 
+    geom_line(aes(y=prop_adj)) +
+    facet_grid(country ~ season, scales = "free") +
+    theme_with("legend_top", "x_vertical") +
+    g_labs(x="Week", y="Healthcare seeking rate", title="Healthcare seeking rate by country and season, cumulated values", subtitle=paste(syndrome, ", adjusted"))
+  g_save(syndrome,"_visits-cumul_adj+raw__country+season", width=12, height=8, desc=list(adj="adj"))
+  
+  ggplot(d, aes(color=variable, x=monday_of_week(yw))) + 
+    geom_ribbon(aes(ymin=prop_adj_low, ymax=prop_adj_up, fill=variable), alpha=.30, color="transparent") +
+    geom_line(aes(y=prop_adj)) +
+    facet_grid(country~season, scales = "free") +
+    theme_with("legend_top", "x_vertical") +
+    g_labs(x="Week", y="Healthcare seeking rate", title="Healthcare seeking rate by country and season, weekly values", subtitle=paste(syndrome, ", adjusted with ci"))
+  g_save(syndrome,"_visits-cumul_adj+raw__country+season", width=12, height=8, desc=list(adj="adj"))
 
 }
 
-
+context$pop()
