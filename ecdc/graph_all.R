@@ -160,7 +160,7 @@ context$set(subject="visits")
 for(syndrome in syndromes) {
   dd = bundles$vars %>% filter(syndrome == !!syndrome & grepl("^visit", variable))
   
-  if(nnow(dd) == 0) {
+  if(nrow(dd) == 0) {
     next()
   }
   
