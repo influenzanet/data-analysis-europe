@@ -78,6 +78,7 @@ for(syndrome in syndromes) {
 
   ii = calc_season_fixed(ii)
   
+  
   d = ii %>% 
     filter(season < max(seasons)) %>%
     group_by(season.index, country, syndrome) %>% 
@@ -88,21 +89,23 @@ for(syndrome in syndromes) {
       q1=quantile(incidence, probs=.25, na.rm = TRUE), 
       q3=quantile(incidence, probs=.75, na.rm=TRUE)
     )
-  subtitle = syndrome
-  labels = c('range'="Min/Max","median"="Median", "current"="Current season", "quantile"="1st, 3rd quantiles")
-  ggplot(d, aes(x=season.index)) +
-    geom_line(aes(y=min, color="range", linetype="range")) +
-    geom_line(aes(y=max, color="range", linetype="range")) +
-    geom_line(aes(y=median, color="median", linetype="median")) +
-    geom_line(aes(y=q1, color="quantile", linetype="quantile")) +
-    geom_line(aes(y=q1, color="quantile", linetype="quantile")) +
-    geom_line(data=ii[ ii$season == max(seasons), ], aes(y=incidence, color="current", linetype="current"), size=1.2) +
-    scale_color_manual(values=c('range'="darkblue","median"="blue", "current"="red", "quantile"="steelblue"), labels=labels)  +
-    scale_linetype_manual(values=c('range'="dotted","median"="solid", "current"="solid", "quantile"="dashed"), labels=labels)  +
-    facet_grid(rows=vars(country), cols=vars(method)) +
-    g_labs(x="Season week index (1=Week of last 1st september)", y="Incidence rates", subtitle=subtitle)
-  g_save(syndrome,"_incidence_distrib_country+season", width=10, height=12)
   
+  if(nrow(d) > 0) {
+    subtitle = syndrome
+    labels = c('range'="Min/Max","median"="Median", "current"="Current season", "quantile"="1st, 3rd quantiles")
+    ggplot(d, aes(x=season.index)) +
+      geom_line(aes(y=min, color="range", linetype="range")) +
+      geom_line(aes(y=max, color="range", linetype="range")) +
+      geom_line(aes(y=median, color="median", linetype="median")) +
+      geom_line(aes(y=q1, color="quantile", linetype="quantile")) +
+      geom_line(aes(y=q1, color="quantile", linetype="quantile")) +
+      geom_line(data=ii[ ii$season == max(seasons), ], aes(y=incidence, color="current", linetype="current"), size=1.2) +
+      scale_color_manual(values=c('range'="darkblue","median"="blue", "current"="red", "quantile"="steelblue"), labels=labels)  +
+      scale_linetype_manual(values=c('range'="dotted","median"="solid", "current"="solid", "quantile"="dashed"), labels=labels)  +
+      facet_grid(rows=vars(country), cols=vars(method)) +
+      g_labs(x="Season week index (1=Week of last 1st september)", y="Incidence rates", subtitle=subtitle)
+    g_save(syndrome,"_incidence_distrib_country+season", width=10, height=12)
+  }
   context$pop()
   
 }
