@@ -33,14 +33,11 @@ syndromes = unique(inc$syndrome)
 context = ResultContext$new()
 
 g_save = function(..., width, height, desc=NULL) {
-  path = my.path(..., ".pdf")
-  desc = context$resolve()
-  desc_output(path, desc = desc)
-  ggsave(path, width=width, height=height)
+  path = paste0(...) 
+  save_graph_with_context(path, 'pdf', width, height, context=context, desc=desc) 
 }
 
 init.path('indicator/bundles')
-
 
 result_desc_filters(
   auto=TRUE, 
@@ -149,53 +146,73 @@ for(syndrome in syndromes) {
 
 context$push()
 
+visits = bundles$visits_weekly
 
+scale_linetype_adjusted = scale_linetype_manual(values=c('adj'='solid','raw'="dashed"), labels=c('adj'="Adjusted","raw"="Non adjusted"))
+  
 
-context$set(subject="visits")
 for(syndrome in syndromes) {
-  dd = datasets$vars %>% filter(syndrome == !!syndrome & grepl("^visit", variable))
-  context$set(syndrome=syndrome, cumulated="no")
-  ggplot(dd %>% filter(cumulated==FALSE), aes(y=prop_raw, color=variable, x=monday_of_week(yw))) + 
-    geom_line() + 
-    facet_grid(country~season, scales = "free") +
-    theme_with("legend_top", "x_vertical") +
-    g_labs(x="Week", y="Healthcare seeking rate", title="Healthcare seeking rate by country and season", subtitle=syndrome)
-  g_save(syndrome,"_visits_country+season", width=12, height=8)
+ 
+  context$set(what="healthcare", syndrome=syndrome)
   
-  context$set(syndrome=syndrome, cumulated="yes")
-  ggplot(dd %>% filter(cumulated == TRUE), aes(y=prop_raw, color=variable, x=monday_of_week(yw))) + 
-    geom_line() + 
-    facet_grid(country~season, scales = "free") +
-    theme_with("legend_top", "x_vertical") +
-    g_labs(x="Week", y="Healthcare seeking rate", title="Healthcare seeking rate by country and season", subtitle=syndrome)
-  g_save(syndrome,"_visits-cumlated_country+season", width=12, height=8)
+  dd = visits %>% filter(syndrome == !!syndrome)
   
+  ggplot(dd, aes(x=monday_of_week(yw), y=prop_adj, color=variable)) + 
+    geom_line(aes(y=prop_adj, linetype="adj")) +
+    geom_line(aes(y=prop_raw, linetype="raw")) +
+    facet_grid(rows=vars(country), cols=vars(season), scales="free", labeller=labeller(variable=i18n)) +
+    scale_linetype_adjusted +
+    guides(color=guide_legend("Variable")) +
+    g_labs(
+      y="% of participants with syndrome", x="Week", 
+      title=paste("Health care seeking with ", syndrome),
+      subtitle="Adjusted and not adjusted values"
+    ) 
+    
+  g_save(syndrome, "_visits_weekly_adj+raw_country+season", width=12, height=8)
+  
+  ggplot(dd, aes(x=monday_of_week(yw), y=prop_adj, color=variable)) + 
+    geom_line() +
+    facet_grid(rows=vars(country), cols=vars(season), scales="free", labeller=labeller(variable=i18n)) +
+    g_labs(y="% of participants with syndrome", x="Week", title=paste("Health care seeking with ", syndrome), subtitle="Adjusted proportions") +
+    guides(color=guide_legend("Variable"))
+  g_save(syndrome, "_visits_weekly_adj_country+season", width=12, height=8)
+  
+  ggplot(dd, aes(x=monday_of_week(yw), y=prop_adj, color=variable)) + 
+    geom_ribbon(aes(ymin=prop_adj_low, ymax=prop_adj_up, fill=variable), alpha=.30, color="transparent") +
+    geom_line() +
+    facet_grid(rows=vars(country), cols=vars(season), scales="free", labeller=labeller(variable=i18n)) +
+    g_labs(
+      y="% of participants with syndrome", x="Week", 
+      title=paste0("Health care seeking with ",syndrome,", weekly % cumulated over the season"),
+      subtitle="Adjusted proportions with confidence interval"
+    ) +
+    guides(color=guide_legend("Variable"), fill=FALSE)
+  g_save(syndrome, "_visits_weekly_adj+ci_country+season.pdf", width=12, height=8)
+  
+  
+  ggplot(dd, aes(x=monday_of_week(yw), color=variable)) + 
+    geom_line(aes(y=cum_prop_adj, linetype="adj")) +
+    geom_line(aes(y=cum_prop_raw, linetype="raw")) +
+    facet_grid(rows=vars(country), cols=vars(season), scales="free", labeller=labeller(variable=i18n)) +
+    scale_linetype_adjusted +
+    g_labs(
+        y="% of participants with syndrome", x="Week", 
+        title=paste0("Health care seeking with ",syndrome,", weekly % cumulated over the season"),
+        subtitle="Adjusted and non adjusted proportions"
+    ) +
+    guides(color=guide_legend("Variable"))
+  g_save(syndrome, "_visits_weekly_cumulated_adj+raw_country+season.pdf", width=12, height=8)
+
+  ggplot(dd, aes(x=monday_of_week(yw), y=cum_prop_adj, color=variable)) + 
+    geom_ribbon(aes(ymin=cum_prop_adj_low, ymax=cum_prop_adj_up, fill=variable), alpha=.30, color="transparent") +
+    geom_line() +
+    facet_grid(rows=vars(country), cols=vars(season), scales="free", labeller=labeller(variable=i18n)) +
+    g_labs(
+      y="% of participants with syndrome", x="Week", 
+      title=paste0("Health care seeking with ",syndrome,", weekly % cumulated over the season"),
+      subtitle="Adjusted proportions with confidence interval"
+    ) +
+    guides(color=guide_legend("Variable"), fill=FALSE)
+  g_save(syndrome, "_visits_weekly_cumulated_adj+ci_country+season.pdf", width=12, height=8)
 }
-
-
-visits = load_bundles("visits_weekly")
-
-ggplot(visits, aes(x=monday_of_week(yw), y=prop, color=variable)) + 
-  geom_line() + 
-  facet_grid(rows=vars(country), cols=vars(season), scales="free", labeller=labeller(variable=i18n)) +
-  g_labs(y="% of participants with syndrome", x="Week", title="Health care seeking with ari.ecdc") +
-  guides(color=guide_legend("Variable"))
-ggsave(my.path("visits_weekly_country+season.pdf"), width=12, height=8)
-
-ggplot(visits, aes(x=monday_of_week(yw), y=cum_prop, color=variable)) + 
-  geom_line() +
-  facet_grid(rows=vars(country), cols=vars(season), scales="free", labeller=labeller(variable=i18n)) +
-  g_labs(y="% of participants with syndrome", x="Week", title="Health care seeking with ari.ecdc, weekly % cumulated over the season") +
-  guides(color=guide_legend("Variable"))
-ggsave(my.path("visits_weekly_cumulated_country+season.pdf"), width=12, height=8)
-
-visits.cumul = load_bundles("visits_cumul")
-
-ggplot(visits.cumul, aes(x=factor(season), color=variable, group=variable)) + 
-  geom_ribbon(aes(ymin=cum_prop_lower, ymax=cum_prop_upper, fill=variable), color=NA, alpha=.3) +
-  geom_point(aes(y=cum_prop)) +
-  facet_grid(rows=vars(country), scales="free", labeller=labeller(variable=i18n)) +
-  g_labs(y="% of participants with syndrome", x="Week", title="Health care seeking with ari.ecdc, cumulated over each season") +
-  guides(color=guide_legend("Variable"), fill=FALSE) + ylim(0,NA)
-ggsave(my.path("visits_season_cumulated.pdf"), width=8, height=8)
-
