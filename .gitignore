@@ -40,3 +40,8 @@ rsconnect/
 location.R
 local/
 _output/
+
+*.nb.html
+*.tex
+*.pdf
+/*_files/

@@ -1,0 +1,367 @@
+---
+title: "InfluenzaNet, Syndromes & reported symptom exploration"
+author: "Clément Turbelin, GrippeNet.fr team (Iplesp, Inserm/Sorbonne Université, France)."
+date: '2020-11-18'
+output:
+  html_notebook:
+    fig_caption: yes
+  pdf_document: 
+    keep_tex: no
+---
+```{r setup, include=FALSE, debug=FALSE}
+source("conf.R")
+
+library(dplyr)
+library(ggplot2)
+
+share.lib('upset')
+
+g_labs = ifn_labs
+
+knitr::opts_chunk$set(
+	echo = FALSE,
+	warning=FALSE,
+	fig.height = 4,
+	fig.width = 6.5
+)
+
+add_path_prefix("project", "exploratory")
+init.path('')
+
+rds = readRDS(my.path("syndromes.rds"))
+
+participations = rds$participants %>%
+    group_by(yw, country, season) %>%
+    summarize(
+      n_survey_max = max(n_survey),
+      n_survey_median=median(n_survey),
+      n_survey_q95=quantile(n_survey, probs = .95, names=FALSE),
+      sympt_count_max = max(sympt_count),
+      sympt_count_median=median(sympt_count),
+      sympt_count_q95=quantile(sympt_count, probs = .95, names=FALSE),
+      sympt_count_q25=quantile(sympt_count, probs = .25, names=FALSE),
+      sympt_count_q75=quantile(sympt_count, probs = .75, names=FALSE),
+      .groups="drop"
+    )
+
+data.all = rds$syndromes
+
+surveys = rds$surveys
+
+seasons = rds$seasons
+
+symptoms = rds$symptoms
+
+symptoms.groups.labels = c(
+  "other"="Other",
+  "sensorial"="Sensorials",
+  "abdo"="Abdominal",
+  "upper"="Upper respiratory",
+  "lower"="Lower Respiratory",
+  "fever"="Fever",
+  "weakness"="Weakness",
+  "no.sympt"="No symptom reported"
+)
+
+sd.sets = list(
+  syndromes=list(
+    vars=c('covid.ecdc','ili.ecdc', 'covid.ecdc2', 'ili.ecdc2', 'any_sympt'),
+    name="syndromes",
+    title="syndromes",
+    sub="'2' is checking version rewritten"
+  ),
+  symptoms.all=list(
+    name="symptoms.all",
+    title="symptoms (by thematic groups)",
+    labels=symptoms.groups.labels,
+    vars=c(names(symptoms.groups), ifnBase::NO_SYMPTOM)
+  ),
+  symptoms=list(
+    name="symptoms",
+    title="symptoms (by thematic groups) without `no symptom` response",
+    labels=symptoms.groups.labels,
+    vars=c(names(symptoms.groups))
+  )
+)
+
+do_plot = function(set_name, plot_name, selection=NULL, season=TRUE) {
+  sd = sd.sets[[set_name]]
+  dd =    data.all %>% filter(name %in% !!sd$vars)
+  
+  if(!is.null(selection)) {
+    dd = dd %>% filter({{selection}})
+  }
+
+  switch(plot_name,
+    count=count_plot(sd, dd, season=season),
+    prop= prop_plot(sd, dd, season=season),
+    active=active_count_plot(sd, dd, season=season),
+    stop(paste("Unknown plot", sQuote(plot_name)))  
+  )
+}
+
+count_plot = function(sd, dd, season=TRUE) {
+  labels = if(is.null(sd$labels)) identity else sd$labels
+  column = if(season) vars(season) else NULL
+  ggplot(dd, aes(x=monday_of_week(yw), y=value, color=name)) +
+    geom_line() +
+    scale_color_brewer(labels=labels, palette="Dark2") +
+    facet_grid(rows=vars(country), cols=column, scales="free") +
+    g_labs(title=paste("Count of ", sd$title), subtitle=sd$sub, x="Week")
+}
+
+prop_plot = function(sd, dd, season=TRUE) {
+  labels = if(is.null(sd$labels)) identity else sd$labels
+  column = if(season) vars(season) else NULL
+  ggplot(dd, aes(x=monday_of_week(yw), y=100 *value/n, color=name)) +
+    geom_line() +
+    facet_grid(rows=vars(country), cols=column, scales="free") +
+    scale_color_brewer(labels=labels, palette="Dark2") +
+    g_labs(title=paste("Proportion of ", sd$title), subtitle=sd$sub, x="Week", y="Proportion (%)")
+}
+
+active_count_plot = function(sd, dd, season=TRUE) {
+  labels = if(is.null(sd$labels)) identity else sd$labels
+  column = if(season) vars(season) else NULL
+  ggplot(dd, aes(x=monday_of_week(yw), y=value, color=name)) +
+    geom_line() +
+    geom_line(aes(y=n), linetype="dotted") +
+    scale_color_brewer(labels=labels, palette="Dark2") +
+    facet_grid(rows=vars(country),cols=column, scales="free") +
+    g_labs(title=paste("active count and count of ", sd$title), subtitle=sd$sub, x="Week")
+}
+
+upset_opts =list(
+    matrix=list(label=titlelize("symptoms"), point.color="blue",  line.color="blue", point.empty="gray83", point.size=2), 
+    freq=list(label="Frequency", bar.fill="blue", prop=list(breaks=c(.25, .50, .75, .90))) 
+)
+
+symptoms.mask = rds$symptoms.mask
+ 
+symptoms_upset_data = function(selection) {
+  overall = rds$symptoms.assoc 
+  
+  if(!is.null(selection)) {
+    overall = overall %>% filter({{selection}})
+  }
+  
+  overall = overall %>% group_by(g) %>% summarize(count=sum(n_person))
+  overall = get_labels_from_binary(overall, mask=symptoms.mask, group = "g")
+} 
+
+symptoms_upset_plot = function(selection=NULL, n.max=200, subtitle="") {
+  symptoms = rds$symptoms
+  symptoms = symptoms[symptoms != ifnBase::NO_SYMPTOM]
+  
+  overall = symptoms_upset_data(selection)
+
+  ss = symptoms[ symptoms %in% names(overall)]
+  
+  upset_plot(overall, ss, n.max=n.max, 
+             title=paste0(n.max, " most frequent symptom associations,"), 
+             caption=ifn.copyright(FALSE), subtitle=subtitle, 
+             opts=upset_opts
+  )
+}
+
+symptoms_upset_grouped_plot = function(selection=NULL, subtitle="") {
+  data = symptoms_upset_data(selection)
+  data = create_binary_groups(data, symptoms.groups)
+  opts = upset_opts
+  opts$matrix$label = "Symptoms group"
+  opts$matrix$point.size = 4
+  opts$point.empty="gray60"
+  upset_plot(data, 
+             sets=names(symptoms.groups), 
+             title=paste0("Grouped symptoms associations"), 
+             caption=ifn.copyright(FALSE), 
+             opts=opts,
+             subtitle=subtitle
+  )
+}
+
+
+```
+
+## Preliminary
+
+In the following results, data are computed by week, for each country.
+Weekly active participants, used as denominator for the proportion is computed with the number of participants with at least one survey in a given week (for incidence computation this is known as the `w0` method).
+
+## Syndrome computation checking
+
+Syndrome computation have been rewritten and compared (for the `ili.ecdc` and `covid.ecdc` definition).
+
+### Weekly count  
+Below the weekly count of syndromes computed for each country. Each curve reprensents one computed syndrome, the syndrome named with a '2' are the computed using a rewritten version in order to check the ones provided by the `ifnBase` package. 
+
+```{r, echo=FALSE, fig.cap=""}
+
+do_plot("syndromes","count")
+```
+
+With the number of participants providing a survey each week
+
+```{r, echo=FALSE, fig.cap=""}
+do_plot("syndromes", "active")
+```
+
+### Proportion
+
+And the computed weekly proportion of each syndrome definition (count of participant with a survey matching the syndrome definition / count of participant with a survey )
+
+```{r, echo=FALSE, fig.cap=""}
+
+do_plot("syndromes", "prop")
+```
+
+## Reported symptoms
+
+### Number of reported symptoms by participants
+
+Repartition of the number of reported symptoms for each week.
+On a give week, only the the maximum number of symptoms by each participant is considerer for a given week.
+
+```{r, echo=FALSE, fig.cap=""}
+ggplot(participations, aes(x=monday_of_week(yw))) +
+   geom_ribbon(aes(ymin=sympt_count_q25, ymax=sympt_count_q75, fill="iqr") ) +
+   geom_line(aes(y=sympt_count_max, color="max")) +
+   geom_line(aes(y=sympt_count_median, color="median")) +
+   scale_color_manual(values=c("max"="darkblue", "median"="red")) +
+   scale_fill_manual(values=c("iqr"="lightblue"), labels=c('iqr'="IQR")) +
+   facet_grid(rows=vars(country), cols=vars(season), scales="free") +
+   guides(colour=guide_legend("Metrics"), fill=guide_legend("")) +
+   g_labs(title="Distribution of number of reported symptoms by participant", subtitle="Using maximum number of symptoms by participant for each week", y="Count", x="Week")
+```
+
+We can also count the number of reported symptoms by survey, as a participant can respond several times in a week (in this case a participant who responded several times will have a greater weight in the results) :
+
+```{r, echo=FALSE, fig.cap=""}
+  ggplot(surveys, aes(x=monday_of_week(yw))) +
+   geom_ribbon(aes(ymin=sympt_count_q25, ymax=sympt_count_q75, fill="iqr") ) +
+   geom_line(aes(y=sympt_count_max, color="max")) +
+   geom_line(aes(y=sympt_count_median, color="median")) +
+   scale_color_manual(values=c("max"="darkblue", "median"="red")) +
+   scale_fill_manual(values=c("iqr"="lightblue"), labels=c('iqr'="IQR")) +
+   facet_grid(rows=vars(country), cols=vars(season), scales="free") +
+   g_labs(title="Distribution of reported symptoms by survey", subtitle="", x="Week", y="Count")
+```
+
+The following graph compare the both ways of counting symptoms (by participant and by survey counting are distinct by line type (plain and dashed):
+  
+```{r, echo=FALSE, fig.cap=""}
+  cols = c('yw','country','season', 'sympt_count_q25','sympt_count_max', 'sympt_count_median','sympt_count_q75')
+  d = bind_rows(participants=participations[, cols], surveys=surveys[, cols], .id="dataset")
+
+  ggplot(d, aes(x=monday_of_week(yw), linetype=dataset)) +
+   geom_line(aes(y=sympt_count_q25, color="iqr")) +
+   geom_line(aes(y=sympt_count_q75, color="iqr")) +
+   geom_line(aes(y=sympt_count_max, color="max")) +
+   geom_line(aes(y=sympt_count_median, color="median")) +
+   scale_color_manual(values=c("max"="darkblue", "median"="red", "iqr"="orange")) +
+   facet_grid(rows=vars(country), cols=vars(season), scales="free") +
+   guides(color=guide_legend("Metric")) +
+   g_labs(title="Distribution of reported symptoms counted by survey or participants", subtitle="", x="Week",y="Count")
+```
+
+Same graph but without maximum number of symptoms
+
+```{r, echo=FALSE, fig.cap=""}
+  cols = c('yw','country','season', 'sympt_count_q25','sympt_count_max', 'sympt_count_median','sympt_count_q75')
+  d = bind_rows(participants=participations[, cols], surveys=surveys[, cols], .id="dataset")
+
+  ggplot(d, aes(x=monday_of_week(yw), linetype=dataset)) +
+   geom_line(aes(y=sympt_count_q25, color="iqr")) +
+   geom_line(aes(y=sympt_count_q75, color="iqr")) +
+   geom_line(aes(y=sympt_count_median, color="median")) +
+   scale_color_manual(values=c("max"="darkblue", "median"="red", "iqr"="orange")) +
+   facet_grid(rows=vars(country), cols=vars(season), scales="free") +
+   guides(color=guide_legend("Metric")) +
+   g_labs(title="Distribution of reported symptoms counted by survey or participants", subtitle="", x="Week",y="Count")
+```
+
+
+### Type of symptoms reported
+
+#### With 'no symptom'
+The weekly count of participants for each symptom group (count is here the number of participants with at least a survey with reported symptoms in the given group) :
+
+```{r, echo=FALSE, fig.cap=""}
+do_plot("symptoms.all","count")
+```
+
+And the weekly proportion for each group :
+
+```{r, echo=FALSE, fig.cap=""}
+do_plot("symptoms.all","prop")
+```
+
+#### Without no symptoms
+
+To better view the frequency of reported symptoms (flattened by the high frequency of the `no symptom` response), the following graphs (9 & 10) show the same data without th no symptom response.
+
+```{r, echo=FALSE, fig.cap=""}
+do_plot("symptoms","count")
+```
+
+And the weekly proportion for each group, without the `no symptom` response :
+
+```{r, echo=FALSE, fig.cap=""}
+do_plot("symptoms","prop")
+```
+
+#### Only the recenct (from week 10 of 2020 )
+
+```{r, echo=FALSE, fig.cap=""}
+do_plot("symptoms","count", selection=quo(yw>=202010))
+```
+
+And the weekly proportion for each group, without the `no symptom` response :
+
+```{r, echo=FALSE, fig.cap=""}
+do_plot("symptoms","prop", selection=quo(yw>=202010), season=T)
+```
+
+### Symptoms Associations
+
+The following plots show the frequency of each distinct group of symptoms reported together (in the same survey). 
+On the upper plot, each bar indicates the symptom assocation frequency (over all the selecged period). The bars are ordered by the association frequency, vertical lines indicates the cumulative percentage of associations on the left of the vertical line.
+The lower plot describes each association, by connecting symptoms reported together with a dotted blue line.
+
+#### Last seasons all together 
+
+```{r, echo=FALSE, fig.height=8, fig.width=8}
+  symptoms_upset_plot(subtitle=paste("Influenzanet, season ", paste(range(seasons), collapse="-")))
+```
+
+By thematic group of symptoms :
+
+````{r, echo=FALSE, fig.height=8, fig.width=8}
+symptoms_upset_grouped_plot(subtitle=paste("Influenzanet, season ", paste(range(seasons), collapse="-")))
+```
+
+### The last season (2019, until 1st september 2020)
+
+```{r, echo=FALSE, fig.height=8, fig.width=8}
+  symptoms_upset_plot(selection=quo(season==2019), subtitle="Season 2019")
+```
+
+By thematic group of symptoms :
+
+````{r, echo=FALSE, fig.height=8, fig.width=8}
+symptoms_upset_grouped_plot(selection=quo(season==2019), subtitle="Season 2019")
+```
+
+
+### For the current season 
+
+```{r, echo=FALSE, fig.height=8, fig.width=8}
+  symptoms_upset_plot(selection=quo(season==2020), subtitle="Season 2020")
+```
+
+By thematic group of symptoms :
+
+````{r, echo=FALSE, fig.height=8, fig.width=8}
+symptoms_upset_grouped_plot(selection=quo(season==2020), subtitle="Season 2020")
+```
+
