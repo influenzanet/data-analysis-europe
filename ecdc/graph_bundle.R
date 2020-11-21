@@ -150,7 +150,6 @@ visits = bundles$visits_weekly
 
 scale_linetype_adjusted = scale_linetype_manual(values=c('adj'='solid','raw'="dashed"), labels=c('adj'="Adjusted","raw"="Non adjusted"))
   
-
 for(syndrome in syndromes) {
  
   context$set(what="healthcare", syndrome=syndrome)

@@ -159,7 +159,7 @@ context$push()
 
 scale_linetype_adjusted = scale_linetype_manual(values=c('adj'='solid','raw'="dashed"), labels=c('adj'="Adjusted","raw"="Non adjusted"))
 
-context$set(subject="visits")
+context$set(what="visits")
 for(syndrome in syndromes) {
   dd = bundles$vars %>% filter(syndrome == !!syndrome & grepl("^visit", variable))
   
