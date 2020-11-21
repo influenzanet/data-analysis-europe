@@ -224,6 +224,11 @@ for(syndrome.column in syndromes) {
   collect("participants", pp, syndrome=syndrome.column)
 }
 
+# Transform all char vector to factor, reduce memory footprint
+results = lapply(results, function(data) {
+  data %>% mutate_if(is.character, factor)
+})
+
 attr(results,"meta") <- list(
   time=Sys.time(),
   country=country,
