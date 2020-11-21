@@ -10,7 +10,7 @@ need_update = function(results.file, last.file) {
   if(!ok && file.exists(last.file)) {
     f = readLines(last.file)
     delay = as.integer(difftime(Sys.time(), file.mtime(f), units = "hours"))
-    if(delay < 24) {
+    if(!is.na(delay) && delay < 24) {
       ok = TRUE
     }
   }
