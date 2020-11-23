@@ -98,7 +98,7 @@ as_output_desc = function(context, desc=NULL) {
       ctx$desc = desc
       desc = ctx
     } else {
-      ctx = modifyList(ctx, desc)
+      desc = modifyList(ctx, desc)
     }    
   } else {
     desc = ctx
