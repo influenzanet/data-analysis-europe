@@ -1,142 +1,132 @@
-## Build field index
-source("../system.R")
+# Index 
+## Manage output directory index 
+## This  script doesnt do data analysis, just prepare the output diretories
 
-library(htmltools)
-library(rlang)
-# base_analysis_url defined in location.R
-base_url = function(u) {
-  paste0(base_analysis_url, u)
-}
+source("conf.R")
 
-build_index = function(dir) {
-  desc_files = list.files(dir, pattern="^\\.d_", all.files = TRUE, full.names = FALSE)
-  descriptions = list()
-  lapply(desc_files,function(file) {
-    p = file.path(dir, file)
-    desc = readLines(p)
-    org_file = gsub("^\\.d_","", file)
-    descriptions[[org_file]] <<- list(file=org_file, desc=desc)
-  })
-  
-  files = list.files(dir, pattern="\\.(pdf|png|svg|csv)$", all.files = FALSE, full.names = FALSE, include.dirs = TRUE)
-  
-  files = lapply(files, function(file) {
-    target = basename(file)
-    info = file.info(file.path(dir, file))
-    d = descriptions[[target]]
-    desc = NULL
-    if(!is.null(d)) {
-      desc = d$desc
-    }
-    flat <- function(...) paste(..., collapse = " ")
-    withTags(
-      div(class="card graph mb-3", style="width:100%",
-        div(class="row no-gutter",
-          div(class="col-md-6",
-            figure()    
-          ),
-          div(class="col-md-6",
-            div(class="card-body",
-              h5(class="card-title", a(href=target, target)),
-              p(class="card-text", span(class="text-muted", format(info$mtime, "%Y-%m-%d %T"))),
-              if(!is.null(desc)) p(class="card-text", small(flat(desc)))
-            )
-          ) # Col
-        ) # Row
+add_path_prefix("project","")
+
+dirs = list(
+  list(
+    dir="", 
+    nofile=TRUE, 
+    nodir=TRUE,
+    readme=list(
+      title="Influenzanet internal results",
+      desc=c(
+          "Welcome on Influenzanet website for internal results",
+          "These pages presents the analysis run with the data shared by participating platforms",
+          "They are intented for being used and shared only by the participating partners,",
+          "please do not share the link of these website outside the INfluenzanet group."
+      ),
+      links=list(
+        "country"="By country results",
+        "overview"="Global results at european levels and comparing countries",
+        "ecdc"="ECDC indicators"
       )
     )
-  })
-  tags$div(class="graph-index", tagList(files))
-}
-
-build_dirs = function(dir) {
-  dirs = list.dirs(dir, full.names = FALSE, recursive = FALSE)
-  dirs = dirs[!grepl("\\.+", dirs)]
-  dirs = dirs[dirs != ""]
-  dirs = lapply(dirs, function(d) {
-    tags$a(class="nav-link active", href=d, paste0("[", d,"]"))
-  })
-  tags$div("Subdirectories", class="subdirs",
-    tags$nav(class="nav", tagList(dirs)) 
-  )
-}
-
-
-build_navbar = function() {
-  
-  navs = list(
-    "country"="Country results",
-    "ecdc"="ECDC Indicators",
-    "overview"="Overview results"
-  )
-  
-  navs = Map(function(nav, link) {
-    tags$a(class="nav-item nav-link", href=base_url(link), nav)
-  }, navs, names(navs))
-  
-  withTags(
-    nav("Influenzanet Results", class="navbar navbar-expand-lg navbar-light bg-light",
-        div(class="collapse navbar-collapse", id="navbarNav",
-         div(class="navbar-nav", tagList(navs))
-        )
+  ),
+  list(
+    dir="country", 
+    nofile=TRUE, 
+    readme=list(
+      title="Results by country"
+    )
+  ),
+  list(
+    dir="overview", 
+    nofile=TRUE, 
+    readme=list(
+      title="Global results and country comparisons",
+      desc=c(
+        "Analysis are done by season, select a sub directory for the season you want to see"
+      )
+    )
+  ),
+  list(
+    dir="ecdc", 
+    nofile=TRUE, 
+    readme=list(
+      title="ECDC Results",
+      links=list(
+        "./indicator"="ECDC Indicators",
+        "./archives"="Archives"
+      )
+    )
+  ),
+  list(
+    dir="ecdc/indicator", 
+    nofile=TRUE, 
+    readme=list(
+      title="ECDC Results",
+      links=list(
+        "./all"="All results",
+        "./bundles"="Selected data for ECDC and website"
+      )
     )
   )
+  
+  
+)
+
+create_readme = function(r, dir) {
+  out = c()
+  if(hasName(r, "title")) {
+    out = c(out, paste0('# ', r$title, "\n"))
+  }
+  if(hasName(r, "desc")) {
+    out = c(out, paste0(paste(r$desc, collapse="\n"), "\n"))
+  }
+  if(hasName(r, "links")) {
+    ll = Map(function(link, ref) {
+      if(grepl("^\\./", link)) {
+        link = gsub("^\\.", "", link)
+        link = paste(dir, link)
+      }
+      paste0('- [',link,'](',ref,')')  
+    }, r$links, names(r$links))
+    out = c(out, "\n", paste(ll, collapse = "\n"),"\n")
+  }
+  out = paste(out, collapse = "")
+  out
 }
 
-build_scripts=function() {
-  tagList(
-    tags$script(src="https://code.jquery.com/jquery-3.4.1.min.js", integrity="sha256-CSXorXvZcTkaix6Yvo6HppcZGetbYMGWSFlBw8HfCJo=", crossorigin="anonymous"),
-    tags$script(src=base_url("pdf.js"))
-  )
-  #   <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.0/dist/umd/popper.min.js" integrity="sha384-Q6E9RHvbIyZFJoft+2mJbHaEWldlvI9IOYy5n3zV9zzTtmI3UksdQRVvoxMfooAo" crossorigin="anonymous"></script>
-  #   <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/js/bootstrap.min.js" integrity="sha384-wfSDF2E50Y2D1uUdj0O3uMBJnjuUD4Ih7YwaYd1iqfktj0Uod8GCExl3Og8ifwB6" crossorigin="anonymous"></script>
-} 
-
-
-build_page = function(dir, name="index.html") {
- index = build_index(dir)
- dirs = build_dirs(dir) 
- page = withTags(
-   html(
-     head(
-       link(rel="stylesheet", href="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css",integrity="sha384-Vkoo8x4CGsO3+Hhxv8T/Q5PaXtkKtu6ug5TOeNV6gBiFeWPGFN9MuhOf23Q9Ifjh", crossorigin="anonymous"),
-       link(rel="stylesheet", href=base_url("pdf.css"))
-     ),
-     body(
-       build_navbar(),
-       div(class="alert alert-warning","All graphics and results available on these pages are for internal purposes of Influenzanet only, please do not link diretly these files on any website"),
-       h1(basename(dir)),
-       div(class="container",
-         dirs,
-        index
-       ),
-       build_scripts()
-     )
-   )
- )
- save_html(page, file.path(dir, name))
+readme_file = function(from) {
+  f = try(readLines(from))
+  readme = NULL
+  if(is(f, "try-error")) {
+    print(f)
+  } else {
+    if(length(f) > 0) {
+      f = f[1]
+      readme = readLines(f)
+      readme = paste(readme, collapse="\n")
+    }
+  }
+  readme
 }
-
-add_path_prefix("project", "")
+ 
 init.path('')
 
-libs = c('pdf.js','pdf.css')
-for(f in libs) {
-  lib = share_path(file.path("resources/", f))
-  target =my.path(f)
-  if(!file.exists(target)) {
-    file.symlink(lib, target)
-  }  
-}
-
-dirs = list.dirs(my.path(), recursive = TRUE, full.names = TRUE)
-for(dir in dirs) {
-  cat(dir,"\n")
-  r = try(rlang::with_abort((build_page(dir))))
-  if(is_try_error(r)) {
-    cat("Error during page build")
-    print(r)
+for(def in dirs) {
+  message(def$dir)
+  init.path(def$dir)
+  print(my.path())
+  if(isTRUE(def$nofile)) {
+    write("", my.path('.nofile'))
   }
+  
+  if(isTRUE(def$nodir)) {
+    write("", my.path('.nodir'))
+  }
+  
+  if(hasName(def, "readme")) {
+    if(is.list(def$readme)) {
+      readme = create_readme(def$readme, def$dir)
+    } else {
+      readme = readme_file(def$readme)
+    }
+    write(readme, my.path('README.md'))
+  }
+
 }
-
-
