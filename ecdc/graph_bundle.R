@@ -58,8 +58,8 @@ last.season = max(seasons)
 
 spans = list(
   list(name="all", season=NA, title="All seasons"),
-  list(name="2_seasons", season=short.season, title="last 2 seasons"),
-  list(name="last_season", season=last.season, title="last season")
+  list(name="2_seasons", season=short.season, title="last 2 seasons", width=8),
+  list(name="last_season", season=last.season, title="last season", width=6)
 )
 
 rate_unit   = "Incidence rate (per 1000)"
