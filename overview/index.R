@@ -78,12 +78,12 @@ create_readme = function(r, dir) {
     out = c(out, paste0(paste(r$desc, collapse="\n"), "\n"))
   }
   if(hasName(r, "links")) {
-    ll = Map(function(link, ref) {
+    ll = Map(function(text, link) {
       if(grepl("^\\./", link)) {
         link = gsub("^\\.", "", link)
-        link = paste(dir, link)
+        link = paste0(dir, link)
       }
-      paste0('- [',link,'](',ref,')')  
+      paste0('- [',text,'](',link,')')  
     }, r$links, names(r$links))
     out = c(out, "\n", paste(ll, collapse = "\n"),"\n")
   }
