@@ -31,6 +31,7 @@ inc.censored = inc.censored %>% group_by(country, season) %>% mutate(ymax=max(in
 inc.censored = inc.censored %>% mutate(upper=ifelse(upper > ymax * 2, NA, upper))
 
 seasons = unique(inc$season)
+countries = unique(inc$country)
 methods = unique(inc$method)
 syndromes = unique(inc$syndrome)
 
@@ -63,6 +64,7 @@ spans = list(
 
 rate_unit   = "Incidence rate (per 1000)"
 rate_factor = 1000
+height = length(countries) + 2
 
 context$set(span="all") # Default period
 
@@ -95,6 +97,8 @@ for(syndrome in syndromes) {
       d = ii
     }
     
+    width = if(hasName(span, "width")) span$width else 12
+    
     ss = unique(d$season)
     suffix = if(is.na(span$season)) "" else paste0("_", span$name)
     
@@ -105,7 +109,7 @@ for(syndrome in syndromes) {
       facet_grid(rows=vars(country), cols=vars(season), scales = "free") +
       theme_with("legend_top") +
       g_labs(x="Week", y=rate_unit, title="Weekly incidence rate by country and season", subtitle=paste0(subtitle, ", ", span$title))
-    g_save(syndrome,"_incidence_country+season", suffix, width=12, height=8)
+    g_save(syndrome,"_incidence_country+season", suffix, width=width, height=height)
     
     ggplot(d, aes(x=monday_of_week(yw), y=count, group=syndrome, color=syndrome)) + 
       geom_vline(data=inc %>% filter(censored & season %in% ss), aes(xintercept=monday_of_week(yw)), color="grey90") +
@@ -114,7 +118,7 @@ for(syndrome in syndromes) {
       facet_grid(rows=vars(country), cols=vars(season), scales = "free") +
       theme_with("legend_top") +
       g_labs(x="Week", y="Number of participants", title="Weekly incident count by country and season", subtitle=paste0(subtitle, ", ", span$title))
-    g_save(syndrome,"_count_country+season", suffix, width=12, height=8, desc=list(what="count"))
+    g_save(syndrome,"_count_country+season", suffix, width=width, height=height, desc=list(what="count"))
     
     context$pop()
     
@@ -131,7 +135,7 @@ for(syndrome in syndromes) {
       title="Weekly incidence rate by country and season", 
       subtitle=subtitle) +
     guides(color=guide_legend("Season") )
-  g_save(syndrome,"_incidence_country+season_superpose", width=4, height=12)
+  g_save(syndrome,"_incidence_country+season_superpose", width=4, height=height)
 
   d = ii %>% 
     filter(season < max(seasons)) %>%
@@ -156,7 +160,7 @@ for(syndrome in syndromes) {
     scale_linetype_manual(values=c('range'="dotted","median"="solid", "current"="solid", "quantile"="dashed"), labels=labels)  +
     facet_grid(rows=vars(country), cols=vars(syndrome)) +
     g_labs(x="Season week index (1=Week of last 1st september)", y=rate_unit, subtitle=subtitle)
-  g_save(syndrome,"_incidence_country+season_distrib", width=4, height=12)
+  g_save(syndrome,"_incidence_country+season_distrib", width=4, height=height)
   
   context$set(what="active")
   
@@ -177,13 +181,13 @@ for(syndrome in syndromes) {
     geom_point(data=~filter(., censored),aes(y= inc.r), color="red", size=1) +
     facet_grid(rows=vars(country), cols=vars(season), scales = "free") +
     g_labs(x="Week", y="Active participant", title="Active participants by country and season (incidence superposed)")
-  g_save(syndrome,"_active+inc_country+season", width=12, height=8)
+  g_save(syndrome,"_active+inc_country+season", width=12, height=height)
   
   ggplot(d, aes(x=monday_of_week(yw), y=active)) + 
     geom_bar(stat="identity", fill="steelblue") +
     facet_grid(rows=vars(country), cols=vars(season), scales = "free") +
     g_labs(y="Active participants", x="Week", title="Active participants by ")
-  g_save(syndrome,"_active_country+season.pdf", width=12, height=8)
+  g_save(syndrome,"_active_country+season.pdf", width=12, height=height)
   
   context$pop()
   
@@ -213,7 +217,7 @@ for(syndrome in syndromes) {
       subtitle="Adjusted and not adjusted values"
     ) 
     
-  g_save(syndrome, "_visits_weekly_adj+raw_country+season", width=12, height=8)
+  g_save(syndrome, "_visits_weekly_adj+raw_country+season", width=12, height=height)
   
   ggplot(dd, aes(x=monday_of_week(yw), y=prop_adj, color=variable)) + 
     geom_line() +
@@ -232,9 +236,8 @@ for(syndrome in syndromes) {
       subtitle="Adjusted proportions with confidence interval"
     ) +
     guides(color=guide_legend("Variable"), fill=FALSE)
-  g_save(syndrome, "_visits_weekly_adj+ci_country+season.pdf", width=12, height=8)
-  
-  
+  g_save(syndrome, "_visits_weekly_adj+ci_country+season.pdf", width=12, height=height)
+
   ggplot(dd, aes(x=monday_of_week(yw), color=variable)) + 
     geom_line(aes(y=cum_prop_adj, linetype="adj")) +
     geom_line(aes(y=cum_prop_raw, linetype="raw")) +
@@ -246,7 +249,7 @@ for(syndrome in syndromes) {
         subtitle="Adjusted and non adjusted proportions"
     ) +
     guides(color=guide_legend("Variable"))
-  g_save(syndrome, "_visits_weekly_cumulated_adj+raw_country+season.pdf", width=12, height=8)
+  g_save(syndrome, "_visits_weekly_cumulated_adj+raw_country+season.pdf", width=12, height=height)
 
   ggplot(dd, aes(x=monday_of_week(yw), y=cum_prop_adj, color=variable)) + 
     geom_ribbon(aes(ymin=cum_prop_adj_low, ymax=cum_prop_adj_up, fill=variable), alpha=.30, color="transparent") +
@@ -258,5 +261,5 @@ for(syndrome in syndromes) {
       subtitle="Adjusted proportions with confidence interval"
     ) +
     guides(color=guide_legend("Variable"), fill=FALSE)
-  g_save(syndrome, "_visits_weekly_cumulated_adj+ci_country+season.pdf", width=12, height=8)
+  g_save(syndrome, "_visits_weekly_cumulated_adj+ci_country+season.pdf", width=12, height=height)
 }
