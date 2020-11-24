@@ -32,6 +32,7 @@ inc.censored = inc.censored %>% mutate(upper=ifelse(upper > ymax * 2, NA, upper)
 methods = unique(inc$method)
 syndromes = unique(inc$syndrome)
 seasons = as.integer(unique(inc$season))
+countries = unique(inc$country)
 
 context = ResultContext$new()
 
@@ -62,9 +63,11 @@ last.season = max(seasons)
 
 spans = list(
   list(name="all", season=NA, title="All seasons"),
-  list(name="2_seasons", season=short.season, title="last 2 seasons"),
-  list(name="last_season", season=last.season, title="last season")
+  list(name="2_seasons", season=short.season, title="last 2 seasons", width=8),
+  list(name="last_season", season=last.season, title="last season", width=6)
 )
+
+height = length(countries) + 2
 
 rate_unit   = "Incidence rate (per 1000)"
 rate_factor = 1000
@@ -87,6 +90,9 @@ for(syndrome in syndromes) {
     } else {
       d = ii
     }
+    
+    width = if(hasName(span, "width")) span$width else 12
+    
     ss = unique(d$season)
     suffix = if(is.na(span$season)) "" else paste0("_", span$name)
     ggplot(d, aes(x=monday_of_week(yw), y=rate_factor * incidence, group=method, color=method)) + 
@@ -95,7 +101,7 @@ for(syndrome in syndromes) {
       facet_grid(rows=vars(country), cols=vars(season), scales = "free") +
       theme_with("legend_top") +
       g_labs(x="Week", y=rate_unit, title="Weekly incidence rate by country and season", subtitle=paste0(subtitle,", ", span$title))
-    g_save(syndrome,"_incidence_allmethods_country+season", suffix, width=12, height=8, desc=list(span=span$name))
+    g_save(syndrome,"_incidence_allmethods_country+season", suffix, width=width, height=height, desc=list(span=span$name))
   
     ggplot(d, aes(x=monday_of_week(yw), y=count, group=method, color=method)) + 
       geom_vline(data=inc %>% filter(censored & season %in% !!ss), aes(xintercept=monday_of_week(yw)), color="grey90") +
@@ -103,7 +109,7 @@ for(syndrome in syndromes) {
       facet_grid(rows=vars(country), cols=vars(season), scales = "free") +
       theme_with("legend_top") +
       g_labs(x="Week", y="Number of cases", title="Weekly incidence count by country and season", subtitle=paste0(subtitle,", ", span$title))
-    g_save(syndrome,"_count_allmethods_country+season", suffix, width=12, height=8, desc=list(span=span$name, what="count"))
+    g_save(syndrome,"_count_allmethods_country+season", suffix, width=width, height=height, desc=list(span=span$name, what="count"))
 
   }
   
@@ -134,7 +140,7 @@ for(syndrome in syndromes) {
       scale_linetype_manual(values=c('range'="dotted","median"="solid", "current"="solid", "quantile"="dashed"), labels=labels)  +
       facet_grid(rows=vars(country), cols=vars(method)) +
       g_labs(x="Season week index (1=Week of last 1st september)", y=rate_unit, subtitle=subtitle)
-    g_save(syndrome,"_incidence_distrib_country+season", width=10, height=12)
+    g_save(syndrome,"_incidence_distrib_country+season", width=width, height=height)
   }
   context$pop()
   
@@ -150,6 +156,7 @@ for(span in spans) {
   } else {
     d = active
   }
+  width = if(hasName(span, "width")) span$width else 12
   ss = unique(d$season)
   suffix = if(is.na(span$season)) "" else paste0("_", span$name)
 
@@ -158,7 +165,7 @@ for(span in spans) {
     facet_grid(rows=vars(country), cols=vars(season), scales="free") +
     theme_with("legend_top") +
     g_labs(x="Week", y="Number of participans", title="Weekly active participants count by country and season for all methods", subtitle=span$title)
-  g_save("active_country+season_distrib", suffix, width=12, height=10, desc=list(span=span$name))
+  g_save("active_country+season_distrib", suffix, width=width, height=height, desc=list(span=span$name))
 }
 
 context$pop()
@@ -183,6 +190,7 @@ for(method in methods) {
       d = ii
     }
     ss = unique(d$season)
+    width = if(hasName(span, "width")) span$width else 12
     suffix = if(is.na(span$season)) "" else paste0("_", span$name)
   
     context$set("syndrome"="all")
@@ -192,7 +200,7 @@ for(method in methods) {
       facet_grid(rows=vars(country), cols=vars(season), scales = "free") +
       theme_with("legend_top") +
       g_labs(x="Week", y=rate_unit, title="Weekly incidence rate by country and season", subtitle=paste0(method,",", span$title))
-    g_save(method,"_incidence_allsyndromes_country+season", suffix, width=12, height=8)
+    g_save(method,"_incidence_allsyndromes_country+season", suffix, width=width, height=height)
 
     ggplot(d, aes(x=monday_of_week(yw), y=count, group=syndrome, color=syndrome)) + 
       geom_vline(data=inc %>% filter(censored & season %in% ss), aes(xintercept=monday_of_week(yw)), color="grey90") +
@@ -200,7 +208,7 @@ for(method in methods) {
       facet_grid(rows=vars(country), cols=vars(season), scales = "free") +
       theme_with("legend_top") +
       g_labs(x="Week", y="Number of participants", title="Weekly incidence count by country and season", subtitle=paste0(method,",", span$title))
-    g_save(method,"_count_allsyndromes_country+season", suffix, width=12, height=8, desc=list(what="count"))
+    g_save(method,"_count_allsyndromes_country+season", suffix, width=width, height=height, desc=list(what="count"))
     
     context$set("syndrome"="all_ecdc")
     dd = d %>% filter(syndrome %in% ecdc_syndromes)
@@ -211,7 +219,7 @@ for(method in methods) {
       facet_grid(rows=vars(country), cols=vars(season), scales = "free") +
       theme_with("legend_top", "x_vertical") +
       g_labs(x="Week", y=rate_unit, title="Weekly incidence rate by country and season", subtitle=paste0(method,",", span$title))
-    g_save(method,"_incidence_ecdc-syndromes_country+season", suffix, width=12, height=8)
+    g_save(method,"_incidence_ecdc-syndromes_country+season", suffix, width=width, height=height)
 
     ggplot(dd) +
       aes(x=monday_of_week(yw), y=count, group=syndrome, color=syndrome) +
@@ -220,7 +228,7 @@ for(method in methods) {
       facet_grid(rows=vars(country), cols=vars(season), scales = "free") +
       theme_with("legend_top", "x_vertical") +
       g_labs(x="Week", y="Number of participants", title="Weekly incidence count by country and season", subtitle=paste0(method,",", span$title))
-    g_save(method,"_count_ecdc-syndromes_country+season", suffix, width=12, height=8, desc=list(what="count"))
+    g_save(method,"_count_ecdc-syndromes_country+season", suffix, width=width, height=height, desc=list(what="count"))
     context$pop()
   }   
 }
