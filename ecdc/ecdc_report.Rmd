@@ -63,7 +63,7 @@ ggplot(inc, aes(x=monday_of_week(yw), y=part, color=syndrome)) +
 
 Incidences values are expressed per 1000 participants
 
-```{r, echo=FALSE}
+```{r, echo=FALSE, out.width=10, out.height=12}
 
 knitr::include_graphics(plot_inc_file('ili.ecdc'))
 
@@ -75,12 +75,12 @@ knitr::include_graphics(plot_inc_file('ili.ecdc'))
 
 ```{r echo=FALSE, out.width=6, out.height=6}
 
-  incidence_table('covid.ecdc')
+   knitr::kable(incidence_table('covid.ecdc'), align="c")
 
 ```
 
 
-```{r, echo=FALSE}
+```{r, echo=FALSE, out.width=10, out.height=12}
 
 knitr::include_graphics(plot_inc_file('covid.ecdc'))
 
