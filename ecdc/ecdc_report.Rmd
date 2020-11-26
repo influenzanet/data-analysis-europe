@@ -1,7 +1,6 @@
 ---
-title: "ECDC Report"
-author: "Clément Turbelin"
-date: r`Sys.Date()`
+title: "`r paste('Influenzanet ECDC Report for week ', format_week(last_week, sep = '-W'))`"
+date: "`r format(Sys.time(), '%Y-%m-%d %H:%M:%S')`"
 output: 
   pdf_document: default
   html_document: default
@@ -38,11 +37,16 @@ plot_inc_file = function(syndrome) {
 
 ```
 
+```{r, echo=FALSE}
+cat("Report for the week", format_week(last_week, sep = "-W"))
+```
+
+
 # Incidence
 
 ## Active participants
 
-```{r, echo=FALSE, out.width=10, out.height=12}
+```{r, echo=FALSE, out.width='100%'}
 inc = outputs$incidence %>% filter(yw <= last_week)
 ggplot(inc, aes(x=monday_of_week(yw), y=part, color=syndrome)) +
          geom_point(size=.5) + geom_line() +
@@ -63,7 +67,7 @@ ggplot(inc, aes(x=monday_of_week(yw), y=part, color=syndrome)) +
 
 Incidences values are expressed per 1000 participants
 
-```{r, echo=FALSE, out.width=10, out.height=12}
+```{r, echo=FALSE, out.width='100%'}
 
 knitr::include_graphics(plot_inc_file('ili.ecdc'))
 
@@ -73,14 +77,16 @@ knitr::include_graphics(plot_inc_file('ili.ecdc'))
 ## Covid-19
 
 
-```{r echo=FALSE, out.width=6, out.height=6}
+```{r echo=FALSE, out.width='100%'}
 
    knitr::kable(incidence_table('covid.ecdc'), align="c")
 
 ```
 
+Incidences values are expressed per 1000 participants
 
-```{r, echo=FALSE, out.width=10, out.height=12}
+
+```{r, echo=FALSE, out.width='100%'}
 
 knitr::include_graphics(plot_inc_file('covid.ecdc'))
 
