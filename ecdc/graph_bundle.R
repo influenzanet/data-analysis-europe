@@ -81,7 +81,7 @@ for(syndrome in syndromes) {
     rlang::abort("Several methods are provided for an indicator : problem")
   }
   
-  subtitle = paste("Incidence parameters", method)
+  subtitle = paste(syndrome, ", incidence parameters", method)
  
   context$set("what"="incidence")
   
@@ -128,7 +128,7 @@ for(syndrome in syndromes) {
     geom_line() +
     geom_line(data=cur, size=1.2) +
     geom_ribbon(data=cur, aes(ymin=lower * rate_factor, ymax=upper * rate_factor, fill=factor(season.year)), alpha=.4, color=NA) +
-    facet_grid(rows=vars(country), cols=vars(syndrome), scales = "free") +
+    facet_wrap(~country, scales = "free") +
     theme_with("legend_top") +
     g_labs(
       x="Season week index (1=Week of last 1st september)", 
@@ -136,7 +136,7 @@ for(syndrome in syndromes) {
       title="Weekly incidence rate by country and season", 
       subtitle=subtitle) +
     guides(color=guide_legend("Season"), fill=FALSE )
-  g_save(syndrome,"_incidence_country+season_superpose", width=4, height=height)
+  g_save(syndrome,"_incidence_country+season_superpose", width=12, height=12)
 
   d = ii %>% 
     filter(season < max(seasons)) %>%
@@ -163,9 +163,9 @@ for(syndrome in syndromes) {
     scale_fill_manual(values=colors.metric, labels=labels)  +
     scale_linetype_manual(values=c('range'="dotted","median"="solid", "current"="solid", "quantile"="dashed"), labels=labels)  +
     guides(fill=FALSE) +
-    facet_grid(rows=vars(country), cols=vars(syndrome)) +
-    g_labs(x="Season week index (1=Week of last 1st september)", y=rate_unit, subtitle=subtitle)
-  g_save(syndrome,"_incidence_country+season_distrib", width=4, height=height)
+    facet_wrap(~country, scales="free") +
+    g_labs(x="Season week index (1=Week of last 1st september)", y=rate_unit, subtitle=subtitle, title=paste0(syndrome))
+  g_save(syndrome,"_incidence_country+season_distrib", width=12, height=12)
   
   context$set(what="active")
   
@@ -185,13 +185,21 @@ for(syndrome in syndromes) {
     geom_line(aes(y= inc.r)) +
     geom_point(data=~filter(., censored),aes(y= inc.r), color="red", size=1) +
     facet_grid(rows=vars(country), cols=vars(season), scales = "free") +
-    g_labs(x="Week", y="Active participant", title="Active participants by country and season (incidence superposed)")
+    g_labs(
+      x="Week", y="Active participant", 
+      title="Active participants by country and season (incidence superposed)",
+      subtitle=subtitle
+    )
   g_save(syndrome,"_active+inc_country+season", width=12, height=height)
   
   ggplot(d, aes(x=monday_of_week(yw), y=active)) + 
     geom_bar(stat="identity", fill="steelblue") +
     facet_grid(rows=vars(country), cols=vars(season), scales = "free") +
-    g_labs(y="Active participants", x="Week", title="Active participants by ")
+    g_labs(
+      y="Active participants", x="Week", 
+      title="Active participants",
+      subtitle=subtitle
+    )
   g_save(syndrome,"_active_country+season.pdf", width=12, height=height)
   
   context$pop()
@@ -268,14 +276,4 @@ for(syndrome in syndromes) {
     guides(color=guide_legend("Variable"), fill=FALSE)
   g_save(syndrome, "_visits_weekly_cumulated_adj+ci_country+season.pdf", width=12, height=height)
 }
-
-library(rmarkdown)
-
-current_week = iso_yearweek(Sys.Date())
-last_week = iso_yearweek(Sys.Date() - 7)
-
-output_dir = my.path()
-
-outputs = bundles
-rmarkdown::render("ecdc_report.Rmd", output_dir =output_dir , output_format =rmarkdown::html_document() )
 
