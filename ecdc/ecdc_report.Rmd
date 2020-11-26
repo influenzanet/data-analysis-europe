@@ -1,0 +1,87 @@
+---
+title: "ECDC Report"
+author: "Clément Turbelin"
+date: r`Sys.Date()`
+output: 
+  pdf_document: default
+  html_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE)
+library(dplyr)
+library(ggplot2)
+
+incidence = outputs$incidence %>% filter(yw ==  last_week) %>% ungroup()
+
+rate_factor = 1000
+
+incidence_table = function(syndrome) {
+  incidence %>% filter(syndrome == !!syndrome) %>%
+        mutate(
+          incidence= incidence * rate_factor,
+          upper=upper * rate_factor,
+          lower=lower * rate_factor,
+        ) %>%
+        select(yw, incidence, lower, upper, count, part) %>%
+        rename(
+          "Active participant"=part,
+          "Syndrome count"=count
+        )
+
+}
+
+plot_inc_file = function(syndrome) {
+  paste0(output_dir,'/', syndrome, '_incidence_country+season_distrib.pdf')
+}
+
+
+```
+
+# Incidence
+
+## Active participants
+
+```{r, echo=FALSE, out.width=10, out.height=12}
+inc = outputs$incidence %>% filter(yw <= last_week)
+ggplot(inc, aes(x=monday_of_week(yw), y=part, color=syndrome)) +
+         geom_point(size=.5) + geom_line() +
+         facet_grid(cols=vars(season), rows=vars(country), scales="free") +
+         theme_with("x_vertical") +
+         g_labs(y="Participants", x="Week", title="Active participants")
+
+```
+
+
+## ILI
+
+
+```{r echo=FALSE}
+  knitr::kable(incidence_table('ili.ecdc'), align = "c")
+
+```
+
+Incidences values are expressed per 1000 participants
+
+```{r, echo=FALSE}
+
+knitr::include_graphics(plot_inc_file('ili.ecdc'))
+
+```
+
+
+## Covid-19
+
+
+```{r echo=FALSE, out.width=6, out.height=6}
+
+  incidence_table('covid.ecdc')
+
+```
+
+
+```{r, echo=FALSE}
+
+knitr::include_graphics(plot_inc_file('covid.ecdc'))
+
+```

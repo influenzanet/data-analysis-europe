@@ -268,3 +268,14 @@ for(syndrome in syndromes) {
     guides(color=guide_legend("Variable"), fill=FALSE)
   g_save(syndrome, "_visits_weekly_cumulated_adj+ci_country+season.pdf", width=12, height=height)
 }
+
+library(rmarkdown)
+
+current_week = iso_yearweek(Sys.Date())
+last_week = iso_yearweek(Sys.Date() - 7)
+
+output_dir = my.path()
+
+outputs = bundles
+rmarkdown::render("ecdc_report.Rmd", output_dir =output_dir , output_format =rmarkdown::html_document() )
+
