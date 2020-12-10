@@ -51,10 +51,27 @@ year.pop = season.def$year.pop
 # Can be age.cat and gender (need reference population data in each strata)
 strata = c('age.cat')
 
-visits.columns = survey_variable_available(survey_labels('weekly', 'visit'), survey="weekly", season=season)
-medic.columns =  survey_variable_available(survey_labels('weekly', 'medic'), survey="weekly", season=season)
+visits.columns = survey_labels('weekly', 'visit')
+medic.columns =  survey_labels('weekly', 'medic')
+analysis.columns = survey_labels('weekly', 'analysis.sympt.covid')
 
+# Download columns
 cols = c(visits.columns, medic.columns)
+
+# Columns on which compute the frequencies (can be computed after)
+frequency.vars = c(visits.columns, medic.columns) 
+
+# Syndromes to compute the frequency on
+syndromes = c("ili.ecdc", "covid.ecdc")
+
+if(season > 2019) {
+  cols = c(cols, analysis.columns) # Only Qcov16 in db 
+  #  "analysis.sympt.result.pcr","analysis.sympt.result.sero","analysis.sympt.flu","analysis.sympt.flu.result"
+  
+  frequency.vars = c(frequency.vars, analysis.columns)
+}
+
+cols = survey_variable_available(cols, survey="weekly", season=season)
 
 r = load_results_for_incidence(
   season=season, 
@@ -117,9 +134,7 @@ collect = function(name, data, syndrome) {
   }
 }
 
-
 #syndromes = env$syndromes
-syndromes = c("ili.ecdc", "covid.ecdc")
 
 for(syndrome.column in syndromes) {
   
@@ -185,7 +200,7 @@ for(syndrome.column in syndromes) {
   rm(w.sd)
   
   # Variable on which to compute the frequency on
-  vars = c(visits.columns, medic.columns) 
+  vars = frequency.vars
 
   ff = freq_bool_by(weekly.fusion, vars = vars, by = "yw", design = d.weighted)
   ff$type = "episode"

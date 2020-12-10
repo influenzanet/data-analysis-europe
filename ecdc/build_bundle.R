@@ -207,9 +207,11 @@ filter_base = function(data) {
   
 }
 
-filter_visits = function(data) {
+#' Extract Boolean variable results in vars dataset (frequency by variables/levels/country)
+#' "episode" method is used
+filter_vars_bool = function(data) {
   data = data %>% 
-          filter(estimator == "episode" & grepl("^visit", variable) & level == "TRUE") %>% 
+          filter(estimator == "episode" & level == "TRUE") %>% 
           select(-level, -estimator)
   dd = data %>% filter(!cumulated) %>% select(-cumulated)
   cum = data %>% filter(cumulated) %>% 
@@ -224,14 +226,24 @@ filter_visits = function(data) {
    
 }
 
-filter_visits_cumulated = function(data) {
+filter_visits = function(data) {
+  data = data %>% filter(grepl("^visit", variable) ) %>% filter_vars_bool()
+}
+
+
+filter_tests = function(data) {
+  data = data %>% filter(grepl("^analysis\\.sympt\\.covid", variable) ) %>% filter_vars_bool()
+}
+
+
+# Only keep last week for all country
+filter_extract_last_week = function(data) {
   
   data = data %>% group_by(season, country) %>% 
             mutate(max_yw=max(yw)) %>%
             ungroup() %>%
             filter(yw ==  max_yw) %>%
             select(-max_yw)
- 
   data 
 }
 
@@ -268,12 +280,22 @@ bundles = list(
     )
   ),
   list(
+    name="tests_weekly",
+    sorting="yw",
+    dataset="vars",
+    filters= list(
+      filter_base,
+      filter_season_weeks,
+      filter_tests
+    )
+  ),
+  list(
     name="visits_cumulated",
     sorting="yw",
     source="bundle",
     dataset="visits_weekly",
     filters= list(
-      filter_visits_cumulated
+      filter_extract_last_week
     )
   )
   
