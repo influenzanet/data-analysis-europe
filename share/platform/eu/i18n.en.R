@@ -12,3 +12,9 @@ country_ES = 'Spain'
 country_CH = 'Switzerland'
 country_BE = 'Belgium'
 country_NL = 'Netherlands'
+
+analysis.sympt.covid.pcr = "PCR test"
+analysis.sympt.covid.sero = "Serology"
+analysis.sympt.covid.not.but.plan = "Not yet"
+analysis.sympt.covid.not.plan = "Prescribed Wont do"
+analysis.sympt.covid.no = "No"

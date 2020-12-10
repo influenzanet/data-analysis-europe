@@ -17,6 +17,16 @@ platform_define_survey(
 # 
 recode.y1_n0_dkn2 = list("Yes" = 1, "No" = 0, "DNK" = 2)
 
+labels_pcr_delay = list(
+  "1d"=1,
+  "2to4d"=2,
+  "5to7d"=3,
+  "8to14d"=4,
+  "15to28d"=5,
+  "over4w"=6,
+  "DNK"=99
+)
+
 platform_define_survey(
  "weekly",
   single.table=T,
@@ -99,15 +109,34 @@ platform_define_survey(
     
     "confinstop.work.outside.ndays"=variable_available("Qcov14b", rlang::quo(season >= 2019)),
     
-    "confinextend.follow.reco"=variable_available("Qcov15", rlang::quo(season >= 2019))
-
+    "confinextend.follow.reco"=variable_available("Qcov15", rlang::quo(season >= 2019)),
+    
+    "analysis.sympt.covid.pcr"=variable_available("Qcov16_1", rlang::quo(season >= 2019)),
+    "analysis.sympt.covid.sero"=variable_available("Qcov16_2", rlang::quo(season >= 2019)),
+    "analysis.sympt.covid.not.but.plan"=variable_available("Qcov16_3", rlang::quo(season >= 2019)),
+    "analysis.sympt.covid.not.plan"=variable_available("Qcov16_4", rlang::quo(season >= 2019)),
+    "analysis.sympt.covid.no"=variable_available("Qcov16_0", rlang::quo(season >= 2019))
+  
+    # Not yet available
+    # "analysis.sympt.result.pcr"=variable_available("Qcov16b", rlang::quo(season >= 2019)),
+    # "analysis.sympt.result.sero"=variable_available("Qcov16c", rlang::quo(season >= 2019)),
+    # 
+    # "analysis.sympt.pcr.search.delay"=variable_available("Qcov16d", rlang::quo(season >= 2020)),
+    # "analysis.sympt.pcr.sample.delay"=variable_available("Qcov16e", rlang::quo(season >= 2020)),
+    # "analysis.sympt.flu"=variable_available("Qcov19", rlang::quo(season >= 2020)),
+    # "analysis.sympt.flu.result"=variable_available("Qcov19b", rlang::quo(season >= 2020)),
+    # 
+    # "visit.no.reason"=variable_available("Qcov18", rlang::quo(season >= 2020)),
+    # "visit.no.reason.fear"=variable_available("Qcov18b", rlang::quo(season >= 2020))
+  
   ),
   labels=list(
     "symptoms.extra"=c('loss.smell', 'loss.taste', 'nose.bleed'),
     measures="measure.*",
     reason.covid="reason.covid.*",
     confin.work=c('confin.work.home','confin.work.outside','confin.work.absence.child','confin.work.absence.sick','confin.work.other'),
-    confinstop.work=c('confinstop.work.home','confinstop.work.outside','confinstop.work.absence.child','confinstop.work.absence.sick','confinstop.work.other','confinstop.work.DNK')
+    confinstop.work=c('confinstop.work.home','confinstop.work.outside','confinstop.work.absence.child','confinstop.work.absence.sick','confinstop.work.other','confinstop.work.DNK'),
+    analysis.sympt.covid="analysis.sympt.covid.*"
   ),
   recodes=list(
     
@@ -177,7 +206,54 @@ platform_define_survey(
     ),
     "sympt.cause"=list(
       cause.covid="9"
+    ),
+    "analysis.sympt.result.pcr"=list(
+      "positive" = 1,
+      "negative" = 2,
+      "not.interpretable"=3,
+      "not.yet"=4
+    ),
+    "analysis.sympt.result.sero"=list(
+      "positive" = 1,
+      "negative" = 2,
+      "not.interpretable"=3,
+      "not.yet"=4
+    ),
+    "analysis.sympt.flu"=list(
+      "pcr"=1,
+      "not.yet"=2,
+      "not.planned"=3,
+      "no"=0
+    ),
+    "analysis.sympt.flu.result"=list(
+      "positive" = 1,
+      "negative" = 2,
+      "not.interpretable"=3,
+      "not.yet"=4
+    ),
+    
+    "visit.no.reason"=list(
+      "1"="sympt.recently", # My symptoms appeared very recently
+      "2"="sympt.mild", # Symptoms are mild
+      "3"="sympt.ofen", # I have these symptoms often
+      "4"="self.medic", # I think that I know what I have, and I use self-medication 4
+      "5"="no.eff.treatment", # I think there is no effective treatment for the disease I have
+      "6"="apppointment.delay", # It is too hard to get an appointment quickly
+      "7"="no.time", # I do not have time
+      "8"="financial", # For financial reasons
+      "9"="fear.consequence", #F or fear of consequences if the doctor think I have COVID-19"
+      "10"="other", 
+      "99"="DNK"
+    ),
+    "visit.no.reason.fear"=list(
+      "1"="diagnostic.test", # Have to do a diagnostic test,
+      "2"="isolated", # Have to be isolated",
+      "3"="stop.working", # Have to stop working",
+      "2"="judged", # Be judged by others",
+      "1"="excluded", # Be excluded by others",
+      "2"="other" # Another consequence (open field)"
     )
+    
   ),
   template = "eu:weekly"
 )
