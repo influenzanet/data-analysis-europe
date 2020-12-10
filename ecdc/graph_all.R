@@ -108,8 +108,14 @@ for(syndrome in syndromes) {
       geom_line() +
       facet_grid(rows=vars(country), cols=vars(season), scales = "free") +
       theme_with("legend_top") +
-      g_labs(x="Week", y="Number of cases", title="Weekly incidence count by country and season", subtitle=paste0(subtitle,", ", span$title))
+      g_labs(x="Week", y="Number of cases", title="Weekly incidence count by country and season, methods superposed", subtitle=paste0(subtitle,", ", span$title))
     g_save(syndrome,"_count_allmethods_country+season", suffix, width=width, height=height, desc=list(span=span$name, what="count"))
+
+    ggplot(d, aes(x=monday_of_week(yw), y=rate_factor * incidence, group=country, color=country)) + 
+      geom_line() +
+      facet_grid(rows=vars(method), cols=vars(season), scales = "free") +
+      g_labs(x="Week", y=rate_unit, title="Weekly incidence rate by method and season, countries superposed", subtitle=paste0(subtitle,", ", span$title))
+    g_save(syndrome,"_incidence_allcountries_method+season", suffix, width=width + 1, height=height, desc=list(span=span$name))
 
   }
   
@@ -167,6 +173,47 @@ for(span in spans) {
     g_labs(x="Week", y="Number of participans", title="Weekly active participants count by country and season for all methods", subtitle=span$title)
   g_save("active_country+season_distrib", suffix, width=width, height=height, desc=list(span=span$name))
 }
+
+ref = "w0"
+active_ref = active %>% 
+              filter(method == !!ref) %>% 
+              rename(active_ref=active) %>% 
+              select(-syndrome, -method)
+aa = active %>% 
+        filter(method != !!ref) %>% 
+        left_join(active_ref, by=c('yw','country','season')) %>% 
+        select(-syndrome)
+
+aa = aa %>% mutate(diff=active - active_ref, cv=diff/active_ref)
+
+title = paste0("Difference of active participants from method ", sQuote(ref))
+ggplot(aa, aes(x=monday_of_week(yw), y=diff, color=method)) +
+  geom_line() +
+  facet_grid(rows=vars(country), cols=vars(season), scales="free") +
+  g_labs(
+    x="Week", 
+    y="Number of participants", 
+    title=title
+  )
+g_save("active_country+season_method-diff", width=width, height=height)
+
+title = paste0("% Difference of active participants from method ", sQuote(ref))
+
+ggplot(aa, aes(x=monday_of_week(yw), y=100*cv, color=method)) +
+  geom_line() +
+  geom_rug(data=d %>% filter(cv > 100), color="red", sides="t") +
+  facet_grid(rows=vars(country), cols=vars(season), scales="free") +
+  scale_y_continuous(limits=c(-NA, 200)) +
+  g_labs(x="Week", y="Percentage", title=title)
+g_save("active_country+season_method-cv", width=width, height=height)
+
+ggplot(aa, aes(x=monday_of_week(yw), y=100*cv, color=country)) +
+  geom_line() +
+  geom_rug(data=d %>% filter(cv > 100), color="red", sides="t") +
+  facet_grid(rows=vars(method), cols=vars(season), scales="free") +
+  scale_y_continuous(limits=c(-NA, 200)) +
+  g_labs(x="Week", y="Percentage", title=title)
+g_save("active_method+season_method-cv", width=width, height=height)
 
 context$pop()
 
@@ -230,6 +277,7 @@ for(method in methods) {
       g_labs(x="Week", y="Number of participants", title="Weekly incidence count by country and season", subtitle=paste0(method,",", span$title))
     g_save(method,"_count_ecdc-syndromes_country+season", suffix, width=width, height=height, desc=list(what="count"))
     context$pop()
+    
   }   
 }
 
@@ -304,3 +352,67 @@ for(syndrome in syndromes) {
 }
 
 context$pop()
+
+context$set(what="tests")
+ylab = "Tests rate"
+title = "Test realized for symptoms, rate by country and season, weekly value"
+
+for(syndrome in syndromes) {
+  dd = bundles$vars %>% filter(syndrome == !!syndrome & grepl("^analysis\\.sympt\\.covid", variable))
+  
+  if(nrow(dd) == 0) {
+    next()
+  }
+  
+  context$set(syndrome=syndrome, cumulated="no")
+  
+  
+  d = dd %>% filter(!cumulated)
+  ggplot(d, aes( color=variable, x=monday_of_week(yw))) + 
+    geom_line(aes(y=prop_adj, linetype="adj")) +
+    geom_line(aes(y=prop_raw, linetype="raw")) +
+    facet_grid(country~season, scales = "free") +
+    scale_linetype_adjusted +
+    scale_color_discrete(labels=i18n) +
+    theme_with("legend_top", "x_vertical") +
+    g_labs(x="Week", y=ylab, title=title, subtitle=paste(syndrome,", adjusted and not adjusted"))
+  g_save(syndrome,"_tests_adj+raw_country+season", width=12, height=8, desc=list(adj="both"))
+  
+  ggplot(d, aes(color=variable, x=monday_of_week(yw))) + 
+    geom_line(aes(y=prop_adj)) +
+    facet_grid(country ~ season, scales = "free") +
+    scale_color_discrete(labels=i18n) +
+    theme_with("legend_top", "x_vertical") +
+    g_labs(x="Week", y=ylab, title=title, subtitle=paste(syndrome, ", adjusted"))
+  g_save(syndrome,"_tests_adj+raw__country+season", width=12, height=8, desc=list(adj="adj"))
+  
+  ggplot(d, aes(color=variable, x=monday_of_week(yw))) + 
+    geom_ribbon(aes(ymin=prop_adj_low, ymax=prop_adj_up, fill=variable), alpha=.30, color="transparent") +
+    geom_line(aes(y=prop_adj)) +
+    scale_color_discrete(labels=i18n) +
+    facet_grid(country~season, scales = "free") +
+    theme_with("legend_top", "x_vertical") +
+    g_labs(x="Week", y=ylab, title=title, subtitle=paste(syndrome, ", adjusted with ci"))
+  g_save(syndrome,"_tests_adj+raw__country+season", width=12, height=8, desc=list(adj="adj"))
+
+}
+
+context$set(syndrome="all", cumulated="no")
+
+## Compare between syndromes
+dd = bundles$vars %>% filter(grepl("^analysis\\.sympt\\.covid", variable) & !cumulated)
+if(nrow(dd) > 0) {
+  ggplot(dd, aes( color=variable, x=monday_of_week(yw), linetype=syndrome) ) + 
+    geom_line(aes(y=prop_adj)) +
+    facet_grid(country ~ season, scales = "free") +
+    scale_color_discrete(labels=i18n) +
+    theme_with("x_vertical") +
+    g_labs(x="Week", y=ylab, title=title, subtitle=paste("all syndromes (linetype), adjusted"))
+  g_save("all_tests_adj_country+season", width=12, height=8, desc=list(adj="adj"))
+
+}
+
+context$pop()
+
+
+
