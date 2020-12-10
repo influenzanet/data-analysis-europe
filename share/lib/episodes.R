@@ -10,7 +10,8 @@ get_default_episode_strategies = function() {
                      survey_labels("weekly", "visit"),
                      survey_labels("weekly", "contactmed"),
                      survey_labels("weekly", "antiviro"),
-                     survey_labels("weekly", "antibio")
+                     survey_labels("weekly", "antibio"),
+                     survey_labels('weekly', 'analysis.sympt.covid')
     ),
     episode_strategy("worst",
                      take.temp=c(YES, DONTKNOW, NO), # Q6c
