@@ -80,7 +80,7 @@ for(syndrome in syndromes) {
   
   ii = inc.censored %>% filter(syndrome == !!syndrome & type == "adj")
 
-  context$set("what"="incidence", method="all")
+  context$set("what"="incidence", method="all", adj="adj")
   
   subtitle = i18n(syndrome)
   
@@ -156,6 +156,19 @@ context$push()
 
 context$set(what="active", method="all")
 
+# Build active difference relative to reference method
+ref = "w0"
+active_ref = active %>% 
+  filter(method == !!ref) %>% 
+  rename(active_ref=active) %>% 
+  select(-syndrome, -method)
+aa = active %>% 
+  filter(method != !!ref) %>% 
+  left_join(active_ref, by=c('yw','country','season')) %>% 
+  select(-syndrome)
+
+aa = aa %>% mutate(diff=active - active_ref, cv=diff/active_ref)
+
 for(span in spans) {
   if( !is.na(span$season)) {
     d = active %>% filter(season >= span$season)
@@ -165,55 +178,51 @@ for(span in spans) {
   width = if(hasName(span, "width")) span$width else 12
   ss = unique(d$season)
   suffix = if(is.na(span$season)) "" else paste0("_", span$name)
+  
+  context$set(span=span$name)
 
   ggplot(d, aes(x=monday_of_week(yw), y=active, color=method)) +
     geom_line() +
     facet_grid(rows=vars(country), cols=vars(season), scales="free") +
     theme_with("legend_top") +
     g_labs(x="Week", y="Number of participans", title="Weekly active participants count by country and season for all methods", subtitle=span$title)
-  g_save("active_country+season_distrib", suffix, width=width, height=height, desc=list(span=span$name))
+  g_save("active_country+season_distrib", suffix, width=width, height=height)
+  
+  # Now use relative to w0 method
+  if( !is.na(span$season)) {
+    d = aa %>% filter(season >= span$season)
+  } else {
+    d = aa
+  }
+  
+  title = paste0("Difference of active participants from method ", sQuote(ref))
+  ggplot(d, aes(x=monday_of_week(yw), y=diff, color=method)) +
+    geom_line() +
+    facet_grid(rows=vars(country), cols=vars(season), scales="free") +
+    g_labs(x="Week",  y="Number of participants", title=title, subtitle=span$title)
+  g_save("active_country+season_method-diff", suffix, width=width, height=height)
+  
+  title = paste0("% Difference of active participants from method ", sQuote(ref))
+  
+  ggplot(d, aes(x=monday_of_week(yw), y=100*cv, color=method)) +
+    geom_line() +
+    geom_rug(data=d %>% filter(cv > 100), color="red", sides="t") +
+    facet_grid(rows=vars(country), cols=vars(season), scales="free") +
+    scale_y_continuous(limits=c(-NA, 200)) +
+    g_labs(x="Week",  y="Percentage", title=title, subtitle=span$title)
+  g_save("active_country+season_method-cv", suffix, width=width, height=height)
+  
+  ggplot(d, aes(x=monday_of_week(yw), y=100*cv, color=country)) +
+    geom_line() +
+    geom_rug(data=d %>% filter(cv > 100), color="red", sides="t") +
+    facet_grid(rows=vars(method), cols=vars(season), scales="free") +
+    scale_y_continuous(limits=c(-NA, 200)) +
+    g_labs(x="Week",  y="Percentage", title=title, subtitle=span$title)
+  g_save("active_method+season_method-cv", suffix, width=width, height=height)
+
 }
 
-ref = "w0"
-active_ref = active %>% 
-              filter(method == !!ref) %>% 
-              rename(active_ref=active) %>% 
-              select(-syndrome, -method)
-aa = active %>% 
-        filter(method != !!ref) %>% 
-        left_join(active_ref, by=c('yw','country','season')) %>% 
-        select(-syndrome)
 
-aa = aa %>% mutate(diff=active - active_ref, cv=diff/active_ref)
-
-title = paste0("Difference of active participants from method ", sQuote(ref))
-ggplot(aa, aes(x=monday_of_week(yw), y=diff, color=method)) +
-  geom_line() +
-  facet_grid(rows=vars(country), cols=vars(season), scales="free") +
-  g_labs(
-    x="Week", 
-    y="Number of participants", 
-    title=title
-  )
-g_save("active_country+season_method-diff", width=width, height=height)
-
-title = paste0("% Difference of active participants from method ", sQuote(ref))
-
-ggplot(aa, aes(x=monday_of_week(yw), y=100*cv, color=method)) +
-  geom_line() +
-  geom_rug(data=d %>% filter(cv > 100), color="red", sides="t") +
-  facet_grid(rows=vars(country), cols=vars(season), scales="free") +
-  scale_y_continuous(limits=c(-NA, 200)) +
-  g_labs(x="Week", y="Percentage", title=title)
-g_save("active_country+season_method-cv", width=width, height=height)
-
-ggplot(aa, aes(x=monday_of_week(yw), y=100*cv, color=country)) +
-  geom_line() +
-  geom_rug(data=d %>% filter(cv > 100), color="red", sides="t") +
-  facet_grid(rows=vars(method), cols=vars(season), scales="free") +
-  scale_y_continuous(limits=c(-NA, 200)) +
-  g_labs(x="Week", y="Percentage", title=title)
-g_save("active_method+season_method-cv", width=width, height=height)
 
 context$pop()
 
