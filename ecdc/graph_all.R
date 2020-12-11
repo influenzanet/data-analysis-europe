@@ -399,6 +399,7 @@ for(syndrome in syndromes) {
     geom_ribbon(aes(ymin=prop_adj_low, ymax=prop_adj_up, fill=variable), alpha=.30, color="transparent") +
     geom_line(aes(y=prop_adj)) +
     scale_color_discrete(labels=i18n) +
+    scale_fill_discrete(labels=i18n) +
     facet_grid(country~season, scales = "free") +
     theme_with("legend_top", "x_vertical") +
     g_labs(x="Week", y=ylab, title=title, subtitle=paste(syndrome, ", adjusted with ci"))
