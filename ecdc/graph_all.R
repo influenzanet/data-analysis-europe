@@ -117,6 +117,16 @@ for(syndrome in syndromes) {
       g_labs(x="Week", y=rate_unit, title="Weekly incidence rate by method and season, countries superposed", subtitle=paste0(subtitle,", ", span$title))
     g_save(syndrome,"_incidence_allcountries_method+season", suffix, width=width + 1, height=height, desc=list(span=span$name))
 
+    for(country in unique(d$country)) {
+      ggplot(d, aes(x=monday_of_week(yw), y=rate_factor * incidence, group=country)) + 
+        geom_line(data=~filter(., country != .env$country), color="grey",alpha=.30) +
+        geom_line(data=~filter(., country == .env$country), color="red", size=2) +
+        facet_grid(rows=vars(method), cols=vars(season), scales = "free") +
+        g_labs(x="Week", y=rate_unit, title="Weekly incidence rate by method and season, countries superposed", subtitle=paste0(subtitle,", ", span$title))
+      g_save(syndrome,"_incidence_country-",country,"_method+season", suffix, width=width + 1, height=height, desc=list(span=span$name))
+    }  
+    
+    
   }
   
   ii = calc_season_fixed(ii)
