@@ -118,10 +118,10 @@ as_output_desc = function(context, desc=NULL) {
 #' @param desc graph specific extra desc
 #' @param verbose logical if TRUE show the current graph name
 save_graph_with_context = function(path, formats, width, height, context, desc=NULL, verbose=TRUE, dpi=300) {
-  if(is.null(desc)) {
-    desc = result_desc_plot(ggplot2::last_plot())
-  }
   desc = as_output_desc(context, desc)
+  if(!hasName(desc, "desc")) {
+    desc$desc = result_desc_plot(ggplot2::last_plot())
+  }
   if(verbose) {
     message(path)
   }
