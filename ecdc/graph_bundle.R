@@ -277,3 +277,69 @@ for(syndrome in syndromes) {
   g_save(syndrome, "_visits_weekly_cumulated_adj+ci_country+season.pdf", width=12, height=height)
 }
 
+
+
+context$set(what="tests")
+ylab = "Tests rate"
+title = "Test realized for symptoms, rate by country and season, weekly value"
+
+for(syndrome in syndromes) {
+  dd = bundles$tests_weekly %>% filter(syndrome == !!syndrome)
+  
+  if(nrow(dd) == 0) {
+    next()
+  }
+  
+  # Not all countries provide tests data, adjust height
+  height = length(unique(dd$country)) + 2
+  
+  d = dd
+  
+  context$set(syndrome=syndrome, cumulated="no")
+  
+  ggplot(d, aes(color=variable, x=monday_of_week(yw))) + 
+    geom_line(aes(y=prop_adj, linetype="adj")) +
+    geom_line(aes(y=prop_raw, linetype="raw")) +
+    facet_grid(country~season, scales = "free") +
+    scale_linetype_adjusted +
+    scale_color_discrete(labels=i18n) +
+    theme_with("legend_top", "x_vertical") +
+    g_labs(x="Week", y=ylab, title=title, subtitle=paste(syndrome,", adjusted and not adjusted"))
+  g_save(syndrome,"_tests_adj+raw_country+season", width=12, height=height, desc=list(adj="both"))
+  
+  ggplot(d, aes(color=variable, x=monday_of_week(yw))) + 
+    geom_line(aes(y=prop_adj)) +
+    facet_grid(country ~ season, scales = "free") +
+    scale_color_discrete(labels=i18n) +
+    theme_with("legend_top", "x_vertical") +
+    g_labs(x="Week", y=ylab, title=title, subtitle=paste(syndrome, ", adjusted"))
+  g_save(syndrome,"_tests_adj+raw__country+season", width=12, height=8, desc=list(adj="adj"))
+  
+  ggplot(d, aes(color=variable, x=monday_of_week(yw))) + 
+    geom_ribbon(aes(ymin=prop_adj_low, ymax=prop_adj_up, fill=variable), alpha=.30, color="transparent") +
+    geom_line(aes(y=prop_adj)) +
+    scale_color_discrete(labels=i18n) +
+    scale_fill_discrete(labels=i18n) +
+    facet_grid(country~season, scales = "free") +
+    theme_with("legend_top", "x_vertical") +
+    g_labs(x="Week", y=ylab, title=title, subtitle=paste(syndrome, ", adjusted with ci"))
+  g_save(syndrome,"_tests_adj+raw__country+season", width=12, height=8, desc=list(adj="adj"))
+  
+}
+
+context$set(syndrome="all", cumulated="no")
+
+## Compare between syndromes
+dd = bundles$tests_weekly
+if(nrow(dd) > 0) {
+  ggplot(dd, aes( color=variable, x=monday_of_week(yw), linetype=syndrome) ) + 
+    geom_line(aes(y=prop_adj)) +
+    facet_grid(country ~ season, scales = "free") +
+    scale_color_discrete(labels=i18n) +
+    theme_with("x_vertical") +
+    g_labs(x="Week", y=ylab, title=title, subtitle=paste("all syndromes (linetype), adjusted"))
+  g_save("all_tests_adj_country+season", width=12, height=8, desc=list(adj="adj"))
+  
+}
+
+context$pop()
