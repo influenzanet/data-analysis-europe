@@ -210,6 +210,8 @@ context$push()
 
 visits = bundles$visits_weekly
 
+perc_factor = 100
+ylab = "% of participants with syndrome"
 scale_linetype_adjusted = scale_linetype_manual(values=c('adj'='solid','raw'="dashed"), labels=c('adj'="Adjusted","raw"="Non adjusted"))
   
 for(syndrome in syndromes) {
@@ -218,33 +220,33 @@ for(syndrome in syndromes) {
   
   dd = visits %>% filter(syndrome == !!syndrome)
   
-  ggplot(dd, aes(x=monday_of_week(yw), y=prop_adj, color=variable)) + 
+  ggplot(dd, aes(x=monday_of_week(yw), y=prop_adj * perc_factor, color=variable)) + 
     geom_line(aes(y=prop_adj, linetype="adj")) +
     geom_line(aes(y=prop_raw, linetype="raw")) +
     facet_grid(rows=vars(country), cols=vars(season), scales="free", labeller=labeller(variable=i18n)) +
     scale_linetype_adjusted +
     guides(color=guide_legend("Variable")) +
     g_labs(
-      y="% of participants with syndrome", x="Week", 
+      y=ylab, x="Week", 
       title=paste("Health care seeking with ", syndrome),
       subtitle="Adjusted and not adjusted values"
     ) 
     
   g_save(syndrome, "_visits_weekly_adj+raw_country+season", width=12, height=height)
   
-  ggplot(dd, aes(x=monday_of_week(yw), y=prop_adj, color=variable)) + 
+  ggplot(dd, aes(x=monday_of_week(yw), y=prop_adj * perc_factor, color=variable)) + 
     geom_line() +
     facet_grid(rows=vars(country), cols=vars(season), scales="free", labeller=labeller(variable=i18n)) +
-    g_labs(y="% of participants with syndrome", x="Week", title=paste("Health care seeking with ", syndrome), subtitle="Adjusted proportions") +
+    g_labs(y=ylab, x="Week", title=paste("Health care seeking with ", syndrome), subtitle="Adjusted proportions") +
     guides(color=guide_legend("Variable"))
   g_save(syndrome, "_visits_weekly_adj_country+season", width=12, height=8)
   
-  ggplot(dd, aes(x=monday_of_week(yw), y=prop_adj, color=variable)) + 
+  ggplot(dd, aes(x=monday_of_week(yw), y=prop_adj* perc_factor, color=variable)) + 
     geom_ribbon(aes(ymin=prop_adj_low, ymax=prop_adj_up, fill=variable), alpha=.30, color="transparent") +
     geom_line() +
     facet_grid(rows=vars(country), cols=vars(season), scales="free", labeller=labeller(variable=i18n)) +
     g_labs(
-      y="% of participants with syndrome", x="Week", 
+      y=ylab, x="Week", 
       title=paste0("Health care seeking with ",syndrome,", weekly % cumulated over the season"),
       subtitle="Adjusted proportions with confidence interval"
     ) +
@@ -252,24 +254,24 @@ for(syndrome in syndromes) {
   g_save(syndrome, "_visits_weekly_adj+ci_country+season.pdf", width=12, height=height)
 
   ggplot(dd, aes(x=monday_of_week(yw), color=variable)) + 
-    geom_line(aes(y=cum_prop_adj, linetype="adj")) +
-    geom_line(aes(y=cum_prop_raw, linetype="raw")) +
+    geom_line(aes(y=cum_prop_adj * perc_factor, linetype="adj")) +
+    geom_line(aes(y=cum_prop_raw * perc_factor, linetype="raw")) +
     facet_grid(rows=vars(country), cols=vars(season), scales="free", labeller=labeller(variable=i18n)) +
     scale_linetype_adjusted +
     g_labs(
-        y="% of participants with syndrome", x="Week", 
+        y=ylab, x="Week", 
         title=paste0("Health care seeking with ",syndrome,", weekly % cumulated over the season"),
         subtitle="Adjusted and non adjusted proportions"
     ) +
     guides(color=guide_legend("Variable"))
   g_save(syndrome, "_visits_weekly_cumulated_adj+raw_country+season.pdf", width=12, height=height)
 
-  ggplot(dd, aes(x=monday_of_week(yw), y=cum_prop_adj, color=variable)) + 
-    geom_ribbon(aes(ymin=cum_prop_adj_low, ymax=cum_prop_adj_up, fill=variable), alpha=.30, color="transparent") +
+  ggplot(dd, aes(x=monday_of_week(yw), y=cum_prop_adj* perc_factor, color=variable)) + 
+    geom_ribbon(aes(ymin=cum_prop_adj_low* perc_factor, ymax=cum_prop_adj_up* perc_factor, fill=variable), alpha=.30, color="transparent") +
     geom_line() +
     facet_grid(rows=vars(country), cols=vars(season), scales="free", labeller=labeller(variable=i18n)) +
     g_labs(
-      y="% of participants with syndrome", x="Week", 
+      y=ylab, x="Week", 
       title=paste0("Health care seeking with ",syndrome,", weekly % cumulated over the season"),
       subtitle="Adjusted proportions with confidence interval"
     ) +
@@ -277,10 +279,8 @@ for(syndrome in syndromes) {
   g_save(syndrome, "_visits_weekly_cumulated_adj+ci_country+season.pdf", width=12, height=height)
 }
 
-
-
 context$set(what="tests")
-ylab = "Tests rate"
+ylab = "Tests rate (%)"
 title = "Test realized for symptoms, rate by country and season, weekly value"
 
 for(syndrome in syndromes) {
@@ -298,8 +298,8 @@ for(syndrome in syndromes) {
   context$set(syndrome=syndrome, cumulated="no")
   
   ggplot(d, aes(color=variable, x=monday_of_week(yw))) + 
-    geom_line(aes(y=prop_adj, linetype="adj")) +
-    geom_line(aes(y=prop_raw, linetype="raw")) +
+    geom_line(aes(y=prop_adj * perc_factor, linetype="adj")) +
+    geom_line(aes(y=prop_raw * perc_factor, linetype="raw")) +
     facet_grid(country~season, scales = "free") +
     scale_linetype_adjusted +
     scale_color_discrete(labels=i18n) +
@@ -308,7 +308,7 @@ for(syndrome in syndromes) {
   g_save(syndrome,"_tests_adj+raw_country+season", width=12, height=height, desc=list(adj="both"))
   
   ggplot(d, aes(color=variable, x=monday_of_week(yw))) + 
-    geom_line(aes(y=prop_adj)) +
+    geom_line(aes(y=prop_adj* perc_factor)) +
     facet_grid(country ~ season, scales = "free") +
     scale_color_discrete(labels=i18n) +
     theme_with("legend_top", "x_vertical") +
@@ -316,8 +316,8 @@ for(syndrome in syndromes) {
   g_save(syndrome,"_tests_adj+raw__country+season", width=12, height=8, desc=list(adj="adj"))
   
   ggplot(d, aes(color=variable, x=monday_of_week(yw))) + 
-    geom_ribbon(aes(ymin=prop_adj_low, ymax=prop_adj_up, fill=variable), alpha=.30, color="transparent") +
-    geom_line(aes(y=prop_adj)) +
+    geom_ribbon(aes(ymin=prop_adj_low* perc_factor, ymax=prop_adj_up* perc_factor, fill=variable), alpha=.30, color="transparent") +
+    geom_line(aes(y=prop_adj* perc_factor)) +
     scale_color_discrete(labels=i18n) +
     scale_fill_discrete(labels=i18n) +
     facet_grid(country~season, scales = "free") +
@@ -333,7 +333,7 @@ context$set(syndrome="all", cumulated="no")
 dd = bundles$tests_weekly
 if(nrow(dd) > 0) {
   ggplot(dd, aes( color=variable, x=monday_of_week(yw), linetype=syndrome) ) + 
-    geom_line(aes(y=prop_adj)) +
+    geom_line(aes(y=prop_adj* perc_factor)) +
     facet_grid(country ~ season, scales = "free") +
     scale_color_discrete(labels=i18n) +
     theme_with("x_vertical") +
