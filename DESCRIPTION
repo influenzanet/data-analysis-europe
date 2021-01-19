@@ -1,0 +1,32 @@
+Package: RGrippeNet
+Type: Project
+Title: GrippeNet analysis Projet
+Version: 1.0
+Imports:
+  rlang (>= 0.4.7),
+  swMisc (>= 0.1.0),
+  ifnBase (>= 0.5.3),
+  forcats (>= 0.5.0),
+  dplyr (>= 0.8.3),
+  swResults (>= 0.2),
+  ggplot2 (>= 3.0.0),
+  epitools,
+  survey (>= 4.0),
+  cowplot,
+  gridExtra,
+  tidyr (>= 1.0),
+  svglite
+Depends:
+  R (>= 3.5.0)
+Suggests:
+URL: https://www.influenzanet.info
+Additional_repositories: https://cran.sentiweb.fr/
+Remotes: github::sentiweb/swResults, github::sentiweb/swMisc, github::cturbelin/ifnBase
+BugReports: https://github.com/cturbelin/ifnBase/issues
+Authors@R: c(
+    person("Clément", "Turbelin", email="clement.turbelin@sorbonne-universite.fr", role=c("aut", "cre"))
+  )
+Description: INfluenzanet at european level analysis
+License: Proprietary
+Encoding: UTF-8
+NeedsCompilation: no
