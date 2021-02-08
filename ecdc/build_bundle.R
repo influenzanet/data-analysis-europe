@@ -207,6 +207,10 @@ filter_base = function(data) {
   
 }
 
+filter_active = function(data) {
+  data %>% filter(method == "w0")
+}
+
 #' Extract Boolean variable results in vars dataset (frequency by variables/levels/country)
 #' "episode" method is used
 filter_vars_bool = function(data) {
@@ -265,6 +269,7 @@ bundles = list(
     sorting="yw",
     dataset="active",
     filters= list(
+      filter_active,
       filter_base,
       filter_season_weeks
     )
