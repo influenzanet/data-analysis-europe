@@ -22,10 +22,13 @@ caption = ifn.copyright
 active = bundles$active
 inc = bundles$incidence
 
+# Compute max active count for each country/season
+# Used to filter to low estimations (not interpretable or noisy)
 max.active = inc %>% group_by(country, season) %>% summarize(max_active=max(part))
 inc = left_join(inc, max.active, by=c("country","season"))
 inc = inc %>% mutate(active_limit=.35 * max_active, censored=part < active_limit)
 
+# Censor some results based on the size of the population (too noisy to be interpretable)
 inc.censored = inc %>% filter(!censored)
 inc.censored = inc.censored %>% group_by(country, season) %>% mutate(ymax=max(incidence, na.rm=TRUE))
 inc.censored = inc.censored %>% mutate(upper=ifelse(upper > ymax * 2, NA, upper))
@@ -105,7 +108,7 @@ for(syndrome in syndromes) {
     ggplot(d, aes(x=monday_of_week(yw), y=incidence * rate_factor, group=syndrome, color=syndrome)) + 
       geom_vline(data=inc %>% filter(censored & season %in% ss), aes(xintercept=monday_of_week(yw)), color="grey90") +
       geom_line() +
-      geom_ribbon(aes(ymin=lower* rate_factor, ymax=upper* rate_factor, fill=syndrome), color="transparent", alpha=.40) +
+      geom_ribbon(aes(ymin=lower * rate_factor, ymax=upper * rate_factor, fill=syndrome), color="transparent", alpha=.40) +
       facet_grid(rows=vars(country), cols=vars(season), scales = "free") +
       theme_with("legend_top") +
       g_labs(x="Week", y=rate_unit, title="Weekly incidence rate by country and season", subtitle=paste0(subtitle, ", ", span$title))
@@ -122,6 +125,8 @@ for(syndrome in syndromes) {
     context$pop()
     
   }
+  
+  # Graph with fixed start date (index 0 is starting week for all seasons) to superpose graph on same timeline
   ii = calc_season_fixed(ii)
   cur = ii[ ii$season == max(seasons), ]
   ggplot(ii, aes(x=season.index, y=incidence * rate_factor, group=season.year, color=factor(season.year))) + 
@@ -171,8 +176,9 @@ for(syndrome in syndromes) {
   
   active$syndrome = NULL
   
-  d = left_join(active, inc[, c('country','season','yw','incidence','censored','syndrome') ], by=c('country','season','yw'))
+  d = left_join(active %>% filter(method == !!method), inc[, c('country','season','yw','incidence','censored','syndrome') ], by=c('country','season','yw'))
   d = d %>%
+        filter(syndrome == !!syndrome) %>%
         group_by(season, country, syndrome) %>% 
         mutate(
           max_inc=max(incidence, na.rm=TRUE), 
