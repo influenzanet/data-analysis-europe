@@ -1,3 +1,7 @@
+##
+# Builld graphs for indicators using full data (used or not for ecdc report)
+# Includes complementary analyses
+##
 source("conf.R")
 
 library(dplyr)
@@ -21,6 +25,8 @@ caption = ifn.copyright
 active = bundles$active
 inc = bundles$incidence
 
+# Compute max active count for each country/season
+# Used to filter to low estimations (not interpretable or noisy)
 max.active = inc %>% group_by(country, season) %>% summarize(max_active=max(part))
 inc = left_join(inc, max.active, by=c("country","season"))
 inc = inc %>% mutate(active_limit=.35 * max_active, censored=part < active_limit)
