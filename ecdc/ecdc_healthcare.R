@@ -106,7 +106,7 @@ env$weekly = mutate_at(env$weekly, env$syndromes, ~ . > 0L)
 design.episode = episode_design(delay_episode = 15L, strategies = get_default_episode_strategies())
 
 # to get population
-design.pop = design_incidence(age.categories = age.categories, year.pop = year.pop, geo="country", geo_area = toupper(country))
+#design.pop = design_incidence(age.categories = age.categories, year.pop = year.pop, geo="country", geo_area = toupper(country))
 
 # Prepare data to compute episode
 episode_prepare_data(design.episode, env = env)
@@ -114,7 +114,7 @@ episode_prepare_data(design.episode, env = env)
 env$weekly$yw  = iso_yearweek(env$weekly$onset)
 env$weekly = survey_recode_all(env$weekly, "weekly")
 
-# Create stratification weights
+# Create stratification weights for participants
 part.weight = create_participant_weight(age.categories, year.pop, groups="yw", strata=strata, weekly=env$weekly, intake=env$intake)
 
 # Put participants weight in the main weekly
@@ -134,7 +134,7 @@ collect = function(name, data, syndrome) {
   }
 }
 
-#syndromes = env$syndromes
+meta = list(episode.params=list(), time = Sys.time(), country=country, season=season)
 
 for(syndrome.column in syndromes) {
   
@@ -145,9 +145,14 @@ for(syndrome.column in syndromes) {
 
   message(syndrome.column)
   env$weekly$episode = NULL # Be sure we dont have episode column
+  
+  # Update the episode design with specific info for syndrome, keeping other params
+  syndrome.episode = episode_design_syndrome(syndrome.column, design.episode)
 
+  meta$episode.params[[syndrome.column]] = syndrome.episode
+  
   # Compute episode for the current syndrome
-  episode_compute(env, design=design.episode, syndrome.column = syndrome.column)
+  episode_compute(env, design=syndrome.episode, syndrome.column = syndrome.column)
   
   # Weekly after all episode data merge (keep only one survey response by *episode*)
   # So we keep only ONE survey response by episode, each variable is an aggregated value of responses
@@ -244,11 +249,7 @@ results = lapply(results, function(data) {
   data %>% mutate_if(is.character, factor)
 })
 
-attr(results,"meta") <- list(
-  time=Sys.time(),
-  country=country,
-  season=season
-)
+attr(results,"meta") <- meta
 
 saveRDS(results, file=results.file)
 write(results.file, file=last.file)

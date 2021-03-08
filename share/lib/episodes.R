@@ -31,6 +31,36 @@ get_default_episode_strategies = function() {
   
 }
 
+episode_design_defaults = list(
+  "ili.ecdc"=list(delay_episode = 11, max_episode_duration = 11, median_episode_duration = 7),
+  "covid.ecdc"=list(delay_episode = 17, max_episode_duration = 17, median_episode_duration=11)
+)
+
+update_episode_design = function(design, delay_episode, max_episode_duration, median_episode_duration) {
+  if(!is(design, "episode_design")) {
+    rlang::abort("Not an episode_design object, did you used episode_design() ?")
+  }
+  design$max_episode_duration = max_episode_duration
+  design$delay_episode_max = delay_episode
+  design$median_episode_duration = median_episode_duration
+  design
+}
+
+episode_design_syndrome = function(syndrome, design=NULL) {
+  p = episode_design_defaults[[syndrome]]
+  if(is.null(p)) {
+    rlang::abort(paste("Unable to find episode design defaults for syndrome", syndrome))
+  }
+  if(!is.null(design)) {
+    p$design = design
+    design = do.call(update_episode_design, p) 
+  } else {
+    do.call(episode_design, p)
+  }
+  design
+}
+
+
 #' Compute Frequency for a variable on survey data
 #' @param data survey data
 #' @param vars list of variables to compute the frequency on
