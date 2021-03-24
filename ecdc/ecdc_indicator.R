@@ -88,8 +88,7 @@ for(eu.params in eu.params.sets) {
   
   design = design_incidence(age.categories = age.categories, year.pop = h$year.pop, geo="country", geo_area = toupper(country))
   
-  
-  estimator = IncidenceRS2014$new(weekly=r$weekly, intake=r$intake, params=params, syndromes = r$syndromes, design=design, output=c("inc", "participant"))
+  estimator = IncidenceRS2014$new(weekly=r$weekly, intake=r$intake, params=params, syndromes = r$syndromes, design=design, output=c("inc", "participant", "age"))
   
   weeks = sort(unique(iso_yearweek(r$weekly$date)))
   
