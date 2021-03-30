@@ -116,6 +116,32 @@ hh = lapply(countries, load_healthcare_country)
 
 gc()
 
+## Load NL data
+nl.active = read.csv2(paste0(nl_import_path, "NL_active.csv"))
+nl.active = nl.active %>% select(-X)
+nl.active$country = "NL"
+if(!all(table(nl.active[, c('yw','season','method')]) <= 1)) {
+  warning("Problem with keys for NL.active")
+} 
+datasets$active = bind_rows(datasets$active, nl.active)
+
+
+nl.inc = read.csv2(paste0(nl_import_path, "NL_incidence.csv"))
+nl.inc[["X"]] = NULL
+nl.inc[["count"]] = NULL
+nl.inc$country = "NL"
+nl.inc = left_join(nl.inc, nl.active[, c('yw','season','method','active')], by=c('yw','season','method'))
+if(!all(table(nl.inc[, c('yw','season','method','syndrome','type')])<= 1)) {
+  warning("Problem with keys for NL.incidence")
+}
+nl.inc = rename(nl.inc, count=active)
+
+datasets$incidence = bind_rows(datasets$incidence, nl.inc)
+
+#nl.inc$season = calc_season(nl.inc$yw) # Recompute season
+datasets$incidence = bind_rows(datasets$incidence, nl.inc)
+
+
 message("Building datasets")
 datasets$active %<>% 
     mutate_at(c("syndrome", "country", "method"), factor) %>% 
