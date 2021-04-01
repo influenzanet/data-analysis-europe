@@ -25,6 +25,10 @@ datasets = rlang::new_environment()
 load_incidence_country = function(country) {
   path = my.path(country, "/")
   ff = list.files(path, pattern="^incidence-.*\\.last$", full.names = TRUE)
+  if(length(ff) == 0) {
+    message(paste0("No files for country", country))
+    return(invisible(list(country=country, count=0)))
+  }
   last = basename(unlist(lapply(ff, readLines)))
   message(paste(country, " found", length(last) ))
   for(last.file in last) {
@@ -63,8 +67,7 @@ load_healthcare_country = function(country) {
   path = my.path(country, "/")
   ff = list.files(path, pattern="^healthcare-.*\\.last$", full.names = TRUE)
   last = NULL
-  if(length(ff)) {
-    
+  if(length(ff) > 0) {
     last = basename(unlist(lapply(ff, readLines)))
     message(paste(country, " found", length(last) ))
     for(last.file in last) {
