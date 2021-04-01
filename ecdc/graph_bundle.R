@@ -24,7 +24,7 @@ inc = bundles$incidence
 
 # Compute max active count for each country/season
 # Used to filter to low estimations (not interpretable or noisy)
-max.active = inc %>% group_by(country, season) %>% summarize(max_active=max(part))
+max.active = inc %>% group_by(country, season) %>% summarize(max_active=max(part), .groups="drop")
 inc = left_join(inc, max.active, by=c("country","season"))
 inc = inc %>% mutate(active_limit=.35 * max_active, censored=part < active_limit)
 
