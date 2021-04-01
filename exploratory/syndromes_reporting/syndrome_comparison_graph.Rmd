@@ -1,7 +1,7 @@
 ---
 title: "InfluenzaNet, Syndromes & reported symptom exploration"
 author: "Clément Turbelin, GrippeNet.fr team (Iplesp, Inserm/Sorbonne Université, France)."
-date: '2020-11-26'
+date: "`r format(Sys.time(), '%Y-%m-%d %H:%M:%S')`"
 output:
   pdf_document: 
     keep_tex: no
@@ -119,6 +119,8 @@ survey_data = function(cols=NULL, pop="all") {
   d
 }
 
+
+
 do_plot = function(set_name, plot_name, selection=NULL, season=TRUE, pop="all") {
   sd = sd.sets[[set_name]]
 
@@ -155,6 +157,9 @@ do_plot = function(set_name, plot_name, selection=NULL, season=TRUE, pop="all") 
       guides(linetype=guide_legend("Type of participants"))
     g$labels$subtitle = paste0(g$labels$subtitle, if(!is.null(g$labels$subtitle)) ", ", "by type of participants" )
   }
+  g = g +
+        scale_x_date(date_breaks = "1 month", date_labels = "%d/%m/%Y") +
+        theme(axis.text.x = element_text(angle = 90))
   g
 }
 

@@ -141,10 +141,10 @@ for(season in 2017:2020) {
     # Syndrome by week & person
     ww_person = ww %>% 
       group_by(yw, person_id) %>% 
-      summarize_at(syndromes, sum) %>%
+      summarize_at(all_of(syndromes), sum) %>%
       ungroup() %>%
       mutate(n=1L) %>%
-      mutate_at(syndromes, ~ . > 0)
+      mutate_at(all_of(syndromes), ~ . > 0)
     
     ww_person$previous = ww_person$person_id %in% previous
     
