@@ -177,36 +177,38 @@ for(syndrome in syndromes) {
   active$syndrome = NULL
   
   d = left_join(active %>% filter(method == !!method), inc[, c('country','season','yw','incidence','censored','syndrome') ], by=c('country','season','yw'))
-  d = d %>%
-        filter(syndrome == !!syndrome) %>%
-        group_by(season, country, syndrome) %>% 
-        mutate(
-          max_inc=max(incidence, na.rm=TRUE), 
-          max_active=max(active),
-          inc.r=max_active * incidence / max_inc
-        )
-  
-  ggplot(d, aes(x=monday_of_week(yw), y=active)) + 
-    geom_bar(stat="identity", fill="steelblue") +
-    geom_line(aes(y= inc.r)) +
-    geom_point(data=~filter(., censored),aes(y= inc.r), color="red", size=1) +
-    facet_grid(rows=vars(country), cols=vars(season), scales = "free") +
-    g_labs(
-      x="Week", y="Active participant", 
-      title="Active participants by country and season (incidence superposed)",
-      subtitle=subtitle
-    )
-  g_save(syndrome,"_active+inc_country+season", width=12, height=height)
-  
-  ggplot(d, aes(x=monday_of_week(yw), y=active)) + 
-    geom_bar(stat="identity", fill="steelblue") +
-    facet_grid(rows=vars(country), cols=vars(season), scales = "free") +
-    g_labs(
-      y="Active participants", x="Week", 
-      title="Active participants",
-      subtitle=subtitle
-    )
-  g_save(syndrome,"_active_country+season.pdf", width=12, height=height)
+  if(nrow(d) > 0) {
+    d = d %>%
+          filter(syndrome == !!syndrome) %>%
+          group_by(season, country, syndrome) %>% 
+          mutate(
+            max_inc=max(incidence, na.rm=TRUE), 
+            max_active=max(active),
+            inc.r=max_active * incidence / max_inc
+          )
+    
+    ggplot(d, aes(x=monday_of_week(yw), y=active)) + 
+      geom_bar(stat="identity", fill="steelblue") +
+      geom_line(aes(y= inc.r)) +
+      geom_point(data=~filter(., censored),aes(y= inc.r), color="red", size=1) +
+      facet_grid(rows=vars(country), cols=vars(season), scales = "free") +
+      g_labs(
+        x="Week", y="Active participant", 
+        title="Active participants by country and season (incidence superposed)",
+        subtitle=subtitle
+      )
+    g_save(syndrome,"_active+inc_country+season", width=12, height=height)
+    
+    ggplot(d, aes(x=monday_of_week(yw), y=active)) + 
+      geom_bar(stat="identity", fill="steelblue") +
+      facet_grid(rows=vars(country), cols=vars(season), scales = "free") +
+      g_labs(
+        y="Active participants", x="Week", 
+        title="Active participants",
+        subtitle=subtitle
+      )
+    g_save(syndrome,"_active_country+season.pdf", width=12, height=height)
+  }
   
   context$pop()
   
