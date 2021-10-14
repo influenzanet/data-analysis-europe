@@ -2,6 +2,7 @@ import imaplib
 import email
 import datetime
 from email.header import decode_header
+import re
 import os
 
 from settings import ACCOUNT, OUTPUT_PATH
@@ -63,6 +64,18 @@ def parse_message(msg_raw):
 
     return rr
 
+def check_address(address, valides:list) -> bool:
+    if isinstance(address, str):
+        address = [address]
+    for a in address:
+        email = a.lower().replace('<','').replace('>','').replace(' ', '')
+        # We only need to check if it looks like a email not if it's a valid address
+        if not re.match(r"[^@]+@[^@]+\.[^@]+", email):
+            continue
+        if email in valides:
+            return True
+    return False
+
 def handle_message(msg: dict):
     """
         Handle a parsed message
@@ -71,14 +84,18 @@ def handle_message(msg: dict):
     if not 'attachements' in msg:
         print("No attachment, skip")
         return
+    if not check_address(msg['from'], ACCOUNT['from']):
+        print("No in expected from")
+        next
+
     for a in msg['attachements']:
-        path = OUTPUT_PATH + a['filename']
+        name = a['filename']
+        path = OUTPUT_PATH + '/' + name
         if not os.path.isfile(path):
+            print("Writing '%s'" % name, )
             open(path, "wb").write(a['contents']) 
         else:
             print("File '%s' already exists" % (path))
-
-
 
 date_since = imap_date(since)
 query = 'SUBJECT "ECDC indicator files" SINCE "'+ date_since  +'"'
@@ -89,7 +106,7 @@ status, ids = imap.search(None, query)
 if status != "OK":
     raise Exception("Error during fetch", status, ids)
     
-print(ids)
+print("Found email ", ids)
 for id in ids:
     # fetch the email message by ID
     print("loading ", int(id))
@@ -101,6 +118,4 @@ for id in ids:
         if isinstance(response, tuple):
             m = parse_message(response)
             handle_message(m)
-        else:
-            print("Problem reading %s", id)
-            #print(m)
+    
