@@ -1,0 +1,6 @@
+DROP VIEW IF EXISTS epidb_vaccination; 
+CREATE VIEW epidb_vaccination as
+  SELECT  "country", "global_id", "timestamp", "Q9", "Q10", "Q10b", "Q10b_1_open", "Q10c_0", "Q10c_1", "Q10c_2", "Q10c_3", "Q10c_4", "Q10c_5", "Q10c_6", "Q10c_7", "Q10c_8", "Q10c_9", NULL as "Q10c_12", "Q10d_0", "Q10d_1", "Q10d_2", "Q10d_3", "Q10d_4", "Q10d_5", "Q10d_6", "Q10d_7", "Q10d_8", "Q10d_9", "Q10d_10", "Q10d_11", "Q10d_12", "Q10d_13", "Q10d_14", "Q35" , "Q35b" , "Q35c" , "Q35d" , "Q35d_1_open", "Q35e" , "Q35e_1_open", "Q35f_0", "Q35f_1", "Q35f_2", "Q35f_20", "Q35f_21", "Q35f_3", "Q35f_4", "Q35f_5", "Q35f_6", "Q35f_7", "Q35f_8", "Q35f_9", "Q35f_9_open" "Q35g" FROM epidb_results_intake
+  UNION
+  SELECT "country", "global_id", "timestamp", "Q9", "Q10", "Q10b", "Q10b_1_open", "Q10c_0", "Q10c_1", "Q10c_2", "Q10c_3", "Q10c_4", "Q10c_5", "Q10c_6", "Q10c_7", "Q10c_8", "Q10c_9", NULL as "Q10c_12", "Q10d_0", "Q10d_1", "Q10d_2", "Q10d_3", "Q10d_4", "Q10d_5", "Q10d_6", "Q10d_7", "Q10d_8", "Q10d_9", "Q10d_10", "Q10d_11", "Q10d_12", "Q10d_13", "Q10d_14", "Q35" , "Q35b" , "Q35c" , "Q35d" , "Q35d_1_open", "Q35e" , "Q35e_1_open", "Q35f_0", "Q35f_1", "Q35f_2", "Q35f_20", "Q35f_21", "Q35f_3", "Q35f_4", "Q35f_5", "Q35f_6", "Q35f_7", "Q35f_8", "Q35f_9", "Q35f_9_open" "Q35g" FROM epidb_results_vaccination
+;

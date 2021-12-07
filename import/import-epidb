@@ -9,6 +9,7 @@ DUMPFILE=$1
 
 if [ "$DUMPFILE" == "" ]; then
  echo "import-epidb [dumpfile]"
+ exit 1
 fi
 
 cd $DIR
@@ -41,9 +42,6 @@ echo "Running post import scripts"
 echo " > Creating id primary key"
 $PGSQL <  $SQL_DIR/import/add_epidb_key.sql
 
-echo " > Creating survey_surveyuser table"
-$PGSQL <  $SQL_DIR/import/create_surveyuser.sql
-
 echo " > Updating Health status Views"
 
 $PGSQL <  $SQL_DIR/import/health_status.sql
@@ -52,9 +50,20 @@ echo " > Cleaning up data"
 
 $PGSQL <  $SQL_DIR/import/cleanup_data.sql
 
+# Survey user needs country columns to be fixed
+
+echo " > Creating survey_surveyuser table"
+$PGSQL <  $SQL_DIR/import/create_surveyuser.sql
+
+echo " > Creating indexes"
+$PGSQL <  $SQL_DIR/import/create_indexes.sql
+
+echo " > Creating vaccination view"
+$PGSQL <  $SQL_DIR/import/vaccination_view.sql
+
 if [ -f  $LOCAL_DIR/post-import ]; then
  echo " > running post-install local hooks"
  . $LOCAL_DIR/post-import
 fi
 
-echo "Import done."
+        echo "Import done."

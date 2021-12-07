@@ -11,6 +11,8 @@ UPDATE epidb_results_intake set "country_from"=RIGHT(country, 2) where "country"
 UPDATE epidb_results_intake set "country"='CH' where "country" like 'CH_%';
 UPDATE epidb_results_weekly set "country_from"=RIGHT(country, 2) where "country" like 'CH_%';
 UPDATE epidb_results_weekly set "country"='CH' where "country" like 'CH_%';
+UPDATE epidb_results_vaccination set "country_from"=RIGHT(country, 2) where "country" like 'CH_%';
+UPDATE epidb_results_vaccination set "country"='CH' where "country" like 'CH_%';
 
 -- Cleanup geographical code
 UPDATE epidb_results_intake SET "Q3"=btrim("Q3");
@@ -69,4 +71,3 @@ UPDATE epidb_results_intake SET "Q3"='IE024' WHERE "Q3"='WATERFORD' AND "country
 UPDATE epidb_results_intake SET "Q3"='IE024' WHERE "Q3"='WEXFORD' AND "country"='IE';
 UPDATE epidb_results_intake SET "Q3"='IE022' WHERE "Q3"='WICKLOW' AND "country"='IE';
 
-CREATE INDEX idx_intake_q3_country ON epidb_results_intake USING btree (country, "Q3");
