@@ -5,7 +5,7 @@ Data Analysis of Influenzanet at european level
 
 This repository follows the workspace organization described in [ifnBase package](https://github.com/cturbelin/ifnBase/blob/master/vignettes/workspace.Rmd)
 
-This repository is organized with a set of projects, each in subdirectory. A *project* is just a way to group scripts with a common purpose. They share a common init script ("conf.R") and can share project specific scripts in a subfolder lib/ and a output directory.
+This repository is organized with a set of projects, each in one subdirectory. A *project* is just a way to group scripts with a common purpose/topic. They share a common init script ("conf.R") and can share project specific scripts in a subfolder lib/ and a output directory.
 
 A project must be independent from others and the only scripts known outside it must be "system.R" in its upper level.
 
@@ -37,4 +37,4 @@ source("share/install.R")
 
 ## Run scripts
 
-To run a script, the working directory **MUST** be it's project directory (not the repository root directory but the subfolder).
+To run a script, the working directory **MUST** be it's own project directory (not the repository root directory but the subfolder) because all include path are relative to the main running scripts.       
