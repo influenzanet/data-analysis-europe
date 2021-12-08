@@ -14,6 +14,18 @@ platform_define_survey(
  geo.column="Q3"
 )
 
+platform_define_survey(
+  "vaccination",
+  survey_id=NULL,
+  single.table=T,
+  create_id=TRUE,
+  table = "epidb_vaccination",
+  template="eu:vaccination",
+  mapping=list(
+    country="country"  
+  )
+)
+
 # 
 recode.y1_n0_dkn2 = list("Yes" = 1, "No" = 0, "DNK" = 2)
 
