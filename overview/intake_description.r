@@ -151,7 +151,7 @@ freq_country = function(.data, name, trans=NULL) {
   if(length(name) > 1) {
     freq = .data %>% 
               group_by(country) %>%
-              summarise_at(name, sum)
+              summarise_at(all_of(name), sum)
     freq = tidyr::pivot_longer(freq, name)
     freq = rename(freq, var=name, count=value)
   } else {
