@@ -1,6 +1,11 @@
 
 colors.web = list('green'="#7AB800","blue"="#007AB8")
 
+# Helper quosures
+until_2020 = quo(season <= 2020)
+from_2019 = quo(season >= 2019)
+in_2019_20 = quo(season %in% c(2019,2020))
+
 # Survey using the european template
 platform_define_survey(
   "intake",
@@ -23,6 +28,11 @@ platform_define_survey(
   template="eu:vaccination",
   mapping=list(
     country="country"  
+  ),
+  labels=list(
+    # Override labels because some are not available
+    "covid.vacc.reason"=var_labels("covid.vacc.reason.*", exclude=c("covid.vacc.reason.other.txt","covid.vacc.reason.mandatory","covid.vacc.reason.pass")),
+    "covid.nvac.reason"=var_labels("covid.nvac.reason.*", exclude="covid.nvac.reason.other.txt")
   )
 )
 
@@ -127,16 +137,25 @@ platform_define_survey(
     "analysis.sympt.covid.sero"=variable_available("Qcov16_2", rlang::quo(season >= 2019)),
     "analysis.sympt.covid.not.but.plan"=variable_available("Qcov16_3", rlang::quo(season >= 2019)),
     "analysis.sympt.covid.not.plan"=variable_available("Qcov16_4", rlang::quo(season >= 2019)),
-    "analysis.sympt.covid.no"=variable_available("Qcov16_0", rlang::quo(season >= 2019))
-  
-    # Not yet available
-    # "analysis.sympt.result.pcr"=variable_available("Qcov16b", rlang::quo(season >= 2019)),
-    # "analysis.sympt.result.sero"=variable_available("Qcov16c", rlang::quo(season >= 2019)),
+    "analysis.sympt.covid.no"=variable_available("Qcov16_0", rlang::quo(season >= 2019)),
+    "analysis.sympt.covid.antigenic"=variable_available("Qcov16_5", in_2019_20),
+    
+    "analysis.sympt.covid.v2.test"=variable_available("Qcov16h", quo(season >= 2021)),
+    "analysis.sympt.covid.v2.pcr"=variable_available("Qcov16i_1", quo(season >= 2021)),
+    "analysis.sympt.covid.v2.sero"=variable_available("Qcov16i_2", quo(season >= 2021)),
+    "analysis.sympt.covid.v2.antigenic.pharynx"=variable_available("Qcov16i_3", quo(season >= 2021)),
+    "analysis.sympt.covid.v2.antigenic.nasal"=variable_available("Qcov16i_4", quo(season >= 2021)),
+    
+     "analysis.sympt.result.pcr"=variable_available("Qcov16b", rlang::quo(season >= 2019)),
+     "analysis.sympt.result.sero"=variable_available("Qcov16c", rlang::quo(season >= 2019)),
+     "analysis.sympt.result.antigenic"=variable_available("Qcov16f", from_2019), # Only for pharyngeal antigenic test
+     "analysis.sympt.result.antigenic.nasal"=variable_available("Qcov16k", from_2019),
+    
     # 
-    # "analysis.sympt.pcr.search.delay"=variable_available("Qcov16d", rlang::quo(season >= 2020)),
-    # "analysis.sympt.pcr.sample.delay"=variable_available("Qcov16e", rlang::quo(season >= 2020)),
-    # "analysis.sympt.flu"=variable_available("Qcov19", rlang::quo(season >= 2020)),
-    # "analysis.sympt.flu.result"=variable_available("Qcov19b", rlang::quo(season >= 2020)),
+     "analysis.sympt.pcr.search.delay"=variable_available("Qcov16d", rlang::quo(season >= 2020)),
+     "analysis.sympt.pcr.sample.delay"=variable_available("Qcov16e", rlang::quo(season >= 2020)),
+     "analysis.sympt.flu"=variable_available("Qcov19", rlang::quo(season >= 2020)),
+     "analysis.sympt.flu.result"=variable_available("Qcov19b", rlang::quo(season >= 2020))
     # 
     # "visit.no.reason"=variable_available("Qcov18", rlang::quo(season >= 2020)),
     # "visit.no.reason.fear"=variable_available("Qcov18b", rlang::quo(season >= 2020))
@@ -148,7 +167,8 @@ platform_define_survey(
     reason.covid="reason.covid.*",
     confin.work=c('confin.work.home','confin.work.outside','confin.work.absence.child','confin.work.absence.sick','confin.work.other'),
     confinstop.work=c('confinstop.work.home','confinstop.work.outside','confinstop.work.absence.child','confinstop.work.absence.sick','confinstop.work.other','confinstop.work.DNK'),
-    analysis.sympt.covid="analysis.sympt.covid.*"
+    analysis.sympt.covid="analysis.sympt.covid.*",
+    analysis.sympt.result="analysis.sympt.result.*"
   ),
   recodes=list(
     
