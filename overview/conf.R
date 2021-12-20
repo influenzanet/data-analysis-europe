@@ -1,7 +1,9 @@
 # All scripts in a workspace's project know only one file in the upper directory
 source('../system.R')
 
-add_path_prefix("project","overview")
+project.prefix = "overview" # Convention, each project inside repo defines it project.prefix
+
+add_path_prefix("project", project.prefix)
 
 # need the db for all scripts of this project
 dbConnect()
