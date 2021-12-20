@@ -2,10 +2,11 @@ import imaplib
 import email
 import datetime
 from email.header import decode_header
+from typing import Dict,List,Union
 import re
 import os
 
-from settings import ACCOUNT, OUTPUT_PATH
+from settings import ACCOUNT, OUTPUT_PATH,SOURCES
 
 # account credentials
 imap = imaplib.IMAP4_SSL(ACCOUNT['hostname'])
@@ -64,7 +65,7 @@ def parse_message(msg_raw):
 
     return rr
 
-def check_address(address, valides:list) -> bool:
+def check_address(address, valides:Union[str, List[str]]) -> bool:
     if isinstance(address, str):
         address = [address]
     for a in address:
@@ -76,7 +77,7 @@ def check_address(address, valides:list) -> bool:
             return True
     return False
 
-def handle_message(msg: dict):
+def handle_message(msg: dict, source: dict):
     """
         Handle a parsed message
         Here place for the influenzanet specific works
@@ -86,11 +87,17 @@ def handle_message(msg: dict):
         return
     if not check_address(msg['from'], ACCOUNT['from']):
         print("No in expected from")
-        next
+        return
+
+    out_path = OUTPUT_PATH + '/' + source['dir']
+
+    if not os.path.exists(out_path):
+        os.mkdir(out_path)
 
     for a in msg['attachements']:
         name = a['filename']
-        path = OUTPUT_PATH + '/' + name
+
+        path = out_path + '/' + name
         if not os.path.isfile(path):
             print("Writing '%s'" % name, )
             open(path, "wb").write(a['contents']) 
@@ -98,24 +105,26 @@ def handle_message(msg: dict):
             print("File '%s' already exists" % (path))
 
 date_since = imap_date(since)
-query = 'SUBJECT "ECDC indicator files" SINCE "'+ date_since  +'"'
 
-print(query)
-status, ids = imap.search(None, query)
+for source in SOURCES:
 
-if status != "OK":
-    raise Exception("Error during fetch", status, ids)
-    
-print("Found email ", ids)
-for id in ids:
-    # fetch the email message by ID
-    print("loading ", int(id))
-    res, msgs = imap.fetch(str(int(id)), "(RFC822)")
-    if not res == "OK":
-        print("Unable to fetch %d" % (id,), res, msgs)
-        continue
-    for response in msgs:
-        if isinstance(response, tuple):
-            m = parse_message(response)
-            handle_message(m)
+    query = 'SUBJECT "' +  source['subject'] + '" SINCE "'+ date_since  +'"'
+
+    status, ids = imap.search(None, query)
+
+    if status != "OK":
+        raise Exception("Error during fetch", status, ids)
+        
+    print("Found email ", ids)
+    for id in ids:
+        # fetch the email message by ID
+        print("loading ", int(id))
+        res, msgs = imap.fetch(str(int(id)), "(RFC822)")
+        if not res == "OK":
+            print("Unable to fetch %d" % (id,), res, msgs)
+            continue
+        for response in msgs:
+            if isinstance(response, tuple):
+                m = parse_message(response)
+                handle_message(m, source)
     
