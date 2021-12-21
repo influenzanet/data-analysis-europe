@@ -2,6 +2,7 @@ import imaplib
 import email
 import datetime
 from email.header import decode_header
+from email.utils import parseaddr
 from typing import Dict,List,Union
 import re
 import os
@@ -69,7 +70,8 @@ def check_address(address, valides:Union[str, List[str]]) -> bool:
     if isinstance(address, str):
         address = [address]
     for a in address:
-        email = a.lower().replace('<','').replace('>','').replace(' ', '')
+        _,email = parseaddr(a)
+        email = email.lower()
         # We only need to check if it looks like a email not if it's a valid address
         if not re.match(r"[^@]+@[^@]+\.[^@]+", email):
             continue
@@ -85,8 +87,8 @@ def handle_message(msg: dict, source: dict):
     if not 'attachements' in msg:
         print("No attachment, skip")
         return
-    if not check_address(msg['from'], ACCOUNT['from']):
-        print("No in expected from")
+    if not check_address(msg['from'], source['from']):
+        print("From '%s' is not in expected from" % msg['from'])
         return
 
     out_path = OUTPUT_PATH + '/' + source['dir']
@@ -110,12 +112,22 @@ for source in SOURCES:
 
     query = 'SUBJECT "' +  source['subject'] + '" SINCE "'+ date_since  +'"'
 
-    status, ids = imap.search(None, query)
+    status, data = imap.search(None, query)
 
     if status != "OK":
-        raise Exception("Error during fetch", status, ids)
+        raise Exception("Error during fetch", status, data)
         
-    print("Found email ", ids)
+    print("Found email ", data)
+    if(len(data) == 0):
+        print("Empty data")
+        continue
+
+    ids = data[0].split()
+
+    if(len(ids) == 0):
+        print("No ids found")
+        continue
+
     for id in ids:
         # fetch the email message by ID
         print("loading ", int(id))
