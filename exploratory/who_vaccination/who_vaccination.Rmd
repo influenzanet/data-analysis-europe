@@ -1,0 +1,281 @@
+---
+title: "Who Covid19 Vaccination & Influenzanet"
+author: "Clément Turbelin"
+date: "16/12/2021"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+library(dplyr)
+library(ggplot2)
+
+source("conf.R")
+
+theme_set(theme_minimal())
+
+init.path("who")
+
+r = readRDS(my.path("who_vacc.rds"))
+
+collect = r$data
+
+extract_syndrome = function(data, syndrome, active.column) {
+  act = sym(active.column)
+  ii = data %>% filter(syndrome == !!syndrome) 
+  ii = ii %>% group_by(country, season) %>% 
+        mutate(
+          max_active=max(!!act),
+          censor=!!act >= .35 * max_active
+        ) %>% ungroup()
+  ii
+}
+
+
+labels.status = c('FALSE'='Unvaccinated', 'TRUE'='Vaccinated')
+
+gg_week = function(data) {
+  ggplot(data, aes(x=monday_of_week(yw)) ) +
+    labs(x="Week (monday)",  caption=ifn.copyright())
+}
+
+plot_count_weekly = function(ii, syndrome, active.column=NULL) {
+  g = gg_week(ii) + aes(color=status)
+  
+  if(!is.null(active.column)) {
+    g = g +   geom_bar(aes(y=!!sym(active.column), fill="lightgray", stat="identity")) 
+  }
+  
+  g = g + geom_line(aes(y=count, linetype="count") ) 
+    
+  
+  g = g +
+    facet_grid(rows=vars(status.type), cols=vars(country,season), scales="free_x") +
+    scale_linetype_discrete(c('count'='solid','active'='dashed'), labels=c('count'='Syndrome count','active'='Active participant')) +
+    theme_with("x_vertical") +
+    guides(linetype=guide_legend("Counts"), color=guide_legend("Covid Vaccine status"))
+  g
+}
+
+plot_prop_weekly = function(ii, syndrome, active.column) {
+  gg_week(ii) + 
+    geom_line(aes(y=1000 * count / !!sym(active.column), color=status, linetype=status.type) ) + 
+    facet_grid(cols=vars(season), rows=vars(country), scales="free_x") +
+    labs(
+      subtitle = paste0("Syndrome ", syndrome, ", Active = w0"), 
+      y="Incidence rate / 1000 participants"
+    ) +
+    scale_color_discrete(labels=c('FALSE'='Uncomplete', 'TRUE'='Complete')) +
+    theme_with("x_vertical") +
+    guides( color=guide_legend("Covid Vaccine status"), linetype=guide_legend("Vaccine state Type"))
+}
+
+
+```
+
+# Cohort approach
+
+```{r echo=FALSE}
+inc.cohort = collect$inc %>% filter(status.type == "status.cohort" & !is.na(status))
+```
+
+- Vaccinated = If reported as fully vaccinated until an endpoint date (Sept of IT, UK, CH), 15 Nov for FR
+- Non vaccinated = If reported as non vaccinated until now (biais ?)
+
+```{r echo=FALSE, fig.width=10}
+
+ss = collect$cohort %>%
+      mutate(
+        time=if_else(status.cohort, vaccinated.time, unvaccinated.time),
+        date=as.Date(trunc(time, "days"))
+      ) %>%
+      group_by(date, status.cohort, country) %>%
+      summarise(
+        count=n(),
+        .groups = "drop"
+      ) %>%
+      arrange(date) %>%
+      group_by(status.cohort, country) %>%
+      mutate(cum_count=cumsum(count)) %>%
+      ungroup()
+    
+ggplot(ss, aes(x=date, y=cum_count, color=status.cohort)) + 
+  geom_line() +
+  facet_grid(rows=vars(country), scales="free_y") +
+  ylim(0, NA) +
+  scale_color_discrete(labels=labels.status) +
+    
+  labs(
+    title="Count for vaccinated & Non Vaccinated populations"
+  )
+
+```
+
+## Participants by week
+
+Count of reported participants considered as active (denominator for incidence) for syndrome and PCR
+For PCR, participants with reported PCR test done (regardless result availability) is counted as active (Note that in the platforms only participants with symptoms are asked to report if a PCR test is done). This infers that a non reported result is considered as negative.
+
+```{r echo=FALSE, fig.width=10}
+
+gg_week(inc.cohort) + 
+  geom_line(aes(y=active.pcr.positive, color="active.pcr")) +
+  geom_line(aes(y=active, color="active")) +
+  facet_grid(rows=vars(country), cols=vars(status), scales="free_y", labeller = labeller(status=labels.status)) +
+  scale_linetype_discrete(labels=labels.status) +
+  scale_color_discrete(labels=c('active'='Accounting symptoms', 'active.pcr'='Accounting PCR test')) +
+  guides(linetype=guide_legend("Syndrome"), color=guide_legend("Population type")) +
+  labs(title="Count of weekly active participants by type & vaccination status")
+
+```
+
+## Syndromes 
+
+Count of reported syndrome (color) by population (line type). Count of participants with at least one report matching the given syndrome definition.
+If participant reported several times the syndrome during the considered week, he is only counted once.
+"pcr.positive" is the non clinical syndrome definition defined as "reported a positive PCR test and any symptom" (since only participant with symptom can report a test result).
+
+```{r echo=FALSE, fig.width=10}
+
+gg_week(inc.cohort) + 
+  geom_line(aes(y=count, color=syndrome, linetype=status)) +
+  facet_grid(rows=vars(country), scales="free_y") +
+  scale_linetype_discrete(labels=labels.status) +
+  guides(linetype=guide_legend("Covid Vaccine status"), color=guide_legend("Syndrome")) +
+  labs(title="Count of reported syndrome by population (by vaccinated status) ")
+
+```
+
+## Participant with PCR positive test
+
+Count of participants (gray bars give the count of participants having a test for the same population), line the count of positive reported tests.
+
+```{r echo=FALSE, fig.width=10, height=6}
+
+ii = extract_syndrome(inc.cohort, "pcr.positive", "active.pcr.positive")
+
+gg_week(ii) +
+  geom_bar(aes(y=active.pcr.positive), fill="lightgrey", stat="identity") +
+  geom_line(aes(y=count)) +
+   labs(
+    title="Weekly counts of pcr.positive by vaccination status (cohort)"
+  ) +
+  scale_color_discrete(labels=labels.status) +
+  facet_grid(rows=vars(country), cols=vars(status), scales="free_y", labeller=labeller(status=labels.status))
+
+```
+
+Weekly proportion of positive test by population
+
+```{r echo=FALSE, fig.width=10, height=6}
+
+gg_week(ii) +
+  geom_line(aes(y=1000 * count / active.pcr.positive, color=status)) +
+   labs(
+    title="Weekly proportion of `pcr.positive` by vaccination status (cohort approach)"
+  ) +
+  scale_color_discrete(labels=labels.status) +
+  facet_grid(rows=vars(country))
+
+```
+
+# Using syndrome *covid.ecdc*
+
+Count of participaants with syndrome (line) and count of active participant for each week (gray bars) - Active is using w0 method (=having a report on the considered week)
+
+```{r echo=FALSE, fig.width=10}
+
+ii = extract_syndrome(inc.cohort, "covid.ecdc", "active")
+
+gg_week(ii) +
+  geom_bar(aes(y=active), fill="lightgrey", stat="identity") +
+  geom_line(aes(y=count)) +
+   labs(
+    title="Weekly counts of covid.ecdc by vaccination status (cohort)"
+  ) +
+  facet_grid(rows=vars(country), cols=vars(status), scales="free_y", labeller=labeller(status=labels.status))
+
+```
+
+Weekly proportion for each population vaccinated/unvaccinated (vaccinated status by cohort approach)
+
+```{r echo=FALSE, fig.width=10, height=6}
+
+gg_week(ii) +
+  geom_line(aes(y=1000 * count / active, color=status)) +
+   labs(
+    title="Weekly counts of pcr.positive by vaccination status (cohort)"
+  ) +
+  scale_color_discrete(labels=labels.status) +
+  facet_grid(rows=vars(country))
+
+```
+
+# Comparing other vaccination status approaches
+
+- status.cohort = Vaccination status defined by cohort (with report date endpoint)
+- status.last = Vaccination status is fixed with the last vaccination report available (regardless date, even in future from the computed week)
+- status.timely = Vaccination status is computed using the last vaccination report available at each time point (even in future)
+
+The ".5m" version include a limite of the vaccination state, not considered as vaccinated after 5 month after the last shot
+
+## Clinical Syndrome covid.ecdc
+
+Weekly count of participant with a report for "covid.ecdc" by vaccination status 
+
+````{r, echo=FALSE, fig.width=10}
+
+ii = collect$inc %>% filter(syndrome == "covid.ecdc")
+
+gg_week(ii) +
+  geom_line(aes(y=count, color=status)) +
+  facet_grid(rows=vars(country), cols=vars(status.type), scales="free_y") +
+  scale_color_discrete(labels=labels.status)
+
+```
+
+Counts for active (solid line), and report with syndrome  (dashed)
+
+````{r, echo=FALSE, fig.width=10}
+
+gg_week(ii) +
+  geom_line(aes(y=count, color=status, linetype="count")) +
+  geom_line(aes(y=active.pcr.positive, color=status, linetype="active")) +
+  facet_grid(rows=vars(country), cols=vars(status.type), scales="free_y") +
+  scale_linetype_manual(labels=c('active'='Active (PCR Done)', 'count'='PCR+'), values=c('active'='solid','count'='dashed')) +
+  scale_color_discrete(labels=labels.status)
+
+```
+
+## Using PCR test 
+
+Weekly count of participant with a report for "pcr.positive" by vaccination status   
+
+````{r, echo=FALSE, fig.width=10}
+
+ii = collect$inc %>% filter(syndrome == "pcr.positive")
+
+gg_week(ii) +
+  geom_line(aes(y=count, color=status)) +
+  facet_grid(rows=vars(country), cols=vars(status.type), scales="free_y") +
+  scale_color_discrete(labels=labels.status)
+
+
+```
+
+Counts for active (solid line), and with positive test report (dashed)
+
+
+````{r, echo=FALSE, fig.width=10}
+
+gg_week(ii) +
+  geom_line(aes(y=count, color=status, linetype="count")) +
+  geom_line(aes(y=active.pcr.positive, color=status, linetype="active")) +
+  facet_grid(rows=vars(country), cols=vars(status.type), scales="free_y") +
+  scale_linetype_manual(labels=c('active'='Active (PCR Done)', 'count'='PCR+'), values=c('active'='solid','count'='dashed')) +
+  scale_color_discrete(labels=labels.status)
+
+```
+
+
