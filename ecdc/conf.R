@@ -3,7 +3,9 @@
 # Paths are relative to this directory
 source("../system.R")
 
-add_path_prefix("project", "ecdc")
+project.prefix = "ecdc" # Convention, each project inside repo defines it project.prefix
+
+add_path_prefix("project", project.prefix)
 
 need_update = function(results.file, last.file) {
   ok = file.exists(results.file) 
@@ -22,3 +24,4 @@ need_update = function(results.file, last.file) {
     rlang::abort("Already computed", class="error_already_done")
   }
 }
+

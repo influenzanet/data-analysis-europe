@@ -49,10 +49,11 @@ default.age.categories = c(0, 21, 65, 200)
 #' \describe{
 #'   \item{default}{Default parameter set}
 #'   \item{all}{All parameters sets}
+#'   \item{syndrome}{Syndrome specific parameter, second parameter is required}
 #' }
 #' 
 #' @return list
-get_eu_incidence_parameters = function(which="default") {
+get_eu_incidence_parameters = function(which="default", syndrome=NULL) {
   sets = .eu_parameters_sets
   
   # Add name entry according to list value
@@ -64,6 +65,21 @@ get_eu_incidence_parameters = function(which="default") {
   if(which == "default") {
     which = "w1_s2_if2_ex"
   }
+  
+  if(which =="syndrome") {
+    if(is.null(syndrome)) {
+      rlang::abort("Missing syndrome parameter")
+    }
+    if(!hasName(ecdc_default_methods, syndrome)) {
+      rlang::abort(paste0("Unknow syndrome",sQuote(syndrome)," in ecdc_default_methods"))
+    }
+    which = ecdc_default_methods[[syndrome]]
+  }
+  
+  if(!hasName(sets, which)) {
+    rlang::abort(paste0("Unknown parameters set ",sQuote(which), " in knowns parameters (.eu_parameters_sets in share/lib/incidence)"))
+  }
+  
   sets[[which]]
 }
 
@@ -89,3 +105,8 @@ ecdc_syndrome_from = list(
 )
 
 ecdc_syndromes = c('ili.ecdc', 'covid.ecdc')
+
+ecdc_default_methods = list(
+  'ili.ecdc'='w1_s2_if2_ex',
+  'covid.ecdc'='w0'
+)

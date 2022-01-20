@@ -12,6 +12,8 @@ library(rlang)
 library(swMisc)
 library(magrittr)
 
+share.lib("incidence") # Default method name fro syndrome
+
 countries = platform_env("COUNTRY_CODES")
 seasons = get_historical_seasons()
 
@@ -111,41 +113,21 @@ ii = lapply(countries, load_incidence_country)
 gc()
 
 message("Loading Healthcare indicators")
-datasets$vars=NULL
-datasets$freq_syndrome=NULL
-datasets$vars_cumulated=NULL
+datasets$vars = NULL
+datasets$freq_syndrome = NULL
+datasets$vars_cumulated = NULL
 
 hh = lapply(countries, load_healthcare_country)
 
 gc()
 
-## Load NL data
-nl.active = read.csv2(paste0(nl_import_path, "NL_active.csv"))
-nl.active = nl.active %>% select(-X)
-nl.active$country = "NL"
-nl.active$syndrome = "active"
-if(!all(table(nl.active[, c('yw','season','method')]) <= 1)) {
-  warning("Problem with keys for NL.active")
-} 
-datasets$active = bind_rows(datasets$active, nl.active)
+externals = readRDS(my.path('externals.rds'))
 
+datasets$active = bind_rows(datasets$active, externals$active)
 
-nl.inc = read.csv2(paste0(nl_import_path, "NL_incidence.csv"))
-nl.inc[["X"]] = NULL
-nl.inc[["part"]] = NULL
-nl.inc$country = "NL"
+datasets$incidence = bind_rows(datasets$incidence, externals$incidence)
 
-nl.inc = left_join(nl.inc, nl.active[, c('yw','season','method','active')], by=c('yw','season','method'))
-if(!all(table(nl.inc[, c('yw','season','method','syndrome','type')])<= 1)) {
-  warning("Problem with keys for NL.incidence")
-}
-nl.inc = rename(nl.inc, part=active)
-
-datasets$incidence = bind_rows(datasets$incidence, nl.inc)
-
-#nl.inc$season = calc_season(nl.inc$yw) # Recompute season
-datasets$incidence = bind_rows(datasets$incidence, nl.inc)
-
+countries = unique(datasets$active$country)
 
 message("Building datasets")
 datasets$active %<>% 
