@@ -106,12 +106,26 @@ def handle_message(msg: dict, source: dict):
         else:
             print("File '%s' already exists" % (path))
 
+def check_conf(conf: Dict):
+    if not isinstance(conf['from'], list):
+        raise Exception("from is not a list")
+    v = conf['from']
+    v = [x.lower() for x in  v]
+    conf['from'] = v
+    
+    return conf
+
+
 date_since = imap_date(since)
 
-for source in SOURCES:
+for idx, source in enumerate(SOURCES):
 
+    print("Processing source #", idx)
+    source = check_conf(source)
+    
     query = 'SUBJECT "' +  source['subject'] + '" SINCE "'+ date_since  +'"'
 
+    
     status, data = imap.search(None, query)
 
     if status != "OK":
