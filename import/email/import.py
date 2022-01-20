@@ -1,8 +1,9 @@
 import imaplib
 import email
 import datetime
+import time
 from email.header import decode_header
-from email.utils import parseaddr
+from email.utils import parseaddr, parsedate
 from typing import Dict,List,Union
 import re
 import os
@@ -63,6 +64,9 @@ def parse_message(msg_raw):
                 attachements.append({"filename": filename, "contents": part.get_payload(decode=True), "type": content_type})
 
         rr['attachements'] = attachements
+    
+    if 'date' in rr:
+        rr['time'] = parsedate(rr['date'])
 
     return rr
 
@@ -79,6 +83,11 @@ def check_address(address, valides:Union[str, List[str]]) -> bool:
             return True
     return False
 
+def add_file_timestamp(name, time):
+    p = os.path.splitext(name)
+    n = p[0] + '_' + time
+    return n + p[1]
+
 def handle_message(msg: dict, source: dict):
     """
         Handle a parsed message
@@ -91,6 +100,11 @@ def handle_message(msg: dict, source: dict):
         print("From '%s' is not in expected from" % msg['from'])
         return
 
+    if not 'time' in msg and source['add_time']:
+        print("Unable to parse date and its required")
+        print(msg['date'])
+        return
+    
     out_path = OUTPUT_PATH + '/' + source['dir']
 
     if not os.path.exists(out_path):
@@ -98,7 +112,8 @@ def handle_message(msg: dict, source: dict):
 
     for a in msg['attachements']:
         name = a['filename']
-
+        if source['add_time']:
+            name = add_file_timestamp(name, time.strftime('%Y%m%d%H%M%S', msg['time']))
         path = out_path + '/' + name
         if not os.path.isfile(path):
             print("Writing '%s'" % name, )
@@ -112,7 +127,9 @@ def check_conf(conf: Dict):
     v = conf['from']
     v = [x.lower() for x in  v]
     conf['from'] = v
-    
+
+    if not 'add_time' in conf:
+        conf['add_time'] = False
     return conf
 
 
