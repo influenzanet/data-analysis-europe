@@ -273,9 +273,15 @@ for(question in questions) {
   
   context$set(subject=name)
   
-  if(is.null(data)) {
-    cat("No data for", question$name,"\n")
+  if(!is.null(data)) {
+    data = data %>% filter(total > 0)
   }
+  
+  if(is.null(data) || nrow(data) == 0) {
+    cat("No data for", question$name,"\n")
+    next()
+  }
+
   ggplot(data, aes(x=monday_of_week(yw), y=round(count/total * 100, 2))) +
     geom_bar(stat = "identity", fill = colors$primary) +
     g_labs(y=i18n('percentage'), x=i18n('week'), title=i18n(name)) +
@@ -289,7 +295,6 @@ for(question in questions) {
   g_save(paste0(name, "_value"), width=14, height=6) 
 
 }
-
 
 ## Symptoms and Symptom causes
 data = data.all$symptom_causes
@@ -318,7 +323,7 @@ if(nrow(data) > 0) {
     }
     
     ww$sympt.cause = factor(ww$sympt.cause)
-    ww = tidyr::pivot_longer(ww, columns)
+    ww = tidyr::pivot_longer(ww, all_of(columns))
     ww = data.frame(ww)
   
     g = ggplot(ww, aes(x=monday_of_week(yw), y=value, color=sympt.cause, group=sympt.cause)) + 
