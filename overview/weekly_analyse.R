@@ -62,7 +62,6 @@ if(season == 2019) {
   weekly.columns = c(weekly.columns, measure.covid,  confin.work)
 }
 
-
 for(country in countries) {
   
   dataset = load_results_for_incidence(season=season, age.categories=age.categories, country=country, syndrome.from = syndrome.from, onset=onset, columns=list(keep.all=TRUE, weekly=weekly.columns))
@@ -86,8 +85,8 @@ for(country in countries) {
   weekly = rename(weekly, !!!nn)
   syndromes = names(nn)
   
-  sd = SyndromeProviderRS2019$new()
-  ww = sd$compute(weekly = weekly, intake=dataset$intake, use.sudden = FALSE)
+  sd = SyndromeProviderRS2019$new(use.sudden = FALSE)
+  ww = sd$compute(weekly = weekly, intake=dataset$intake)
   n = names(ww)
   i = n != "id"
   n[i] = paste0(n[i], ".covid")
@@ -97,7 +96,8 @@ for(country in countries) {
   
   syndromes.covid = n[ n != "id"]
   
-  ww = sd$compute(weekly = weekly, intake=dataset$intake, use.sudden = TRUE)
+  sd = SyndromeProviderRS2019$new(use.sudden = TRUE)
+  ww = sd$compute(weekly = weekly, intake=dataset$intake,)
   n = names(ww)
   weekly = left_join(weekly, data.frame(ww), by="id")
   
@@ -167,7 +167,7 @@ for(country in countries) {
   ww$person = 1L
   ww$person_with_sympt = as.integer(apply( ww[, symptoms], 1, sum, na.rm=TRUE) > 0)
   ww = ww %>% group_by(yw) %>% summarise_at(c('person', 'person_with_sympt', symptoms), sum)
-  ww = tidyr::pivot_longer(ww, symptoms)
+  ww = tidyr::pivot_longer(ww, all_of(symptoms))
   ww$name = factor(ww$name)
   
   ww$country = factor(country, countries)
@@ -180,7 +180,7 @@ for(country in countries) {
   ww[, syndromes] = ww[, syndromes] > 0
   ww$person = 1
   ww = ww %>% group_by(yw) %>% summarise_at(c('person', syndromes), sum)
-  ww = tidyr::pivot_longer(ww, syndromes)
+  ww = tidyr::pivot_longer(ww, all_of(syndromes))
   ww$name = factor(ww$name)
   
   ww$country = factor(country, countries)
@@ -193,7 +193,7 @@ for(country in countries) {
   ww[, ss] = ww[, ss] > 0
   ww$person = 1
   ww = ww %>% group_by(yw) %>% summarise_at(c('person', ss), sum)
-  ww = tidyr::pivot_longer(ww, ss)
+  ww = tidyr::pivot_longer(ww, all_of(ss))
   ww$name = factor(ww$name)
   
   ww$country = factor(country, countries)
@@ -206,7 +206,7 @@ for(country in countries) {
   ww[, ss] = ww[, ss] > 0
   ww$person = 1
   ww = ww %>% group_by(yw) %>% summarise_at(c('person', ss), sum)
-  ww = tidyr::pivot_longer(ww, ss)
+  ww = tidyr::pivot_longer(ww, all_of(ss))
   ww$name = factor(ww$name)
   
   ww$country = factor(country, countries)
