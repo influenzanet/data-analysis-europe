@@ -140,8 +140,12 @@ for idx, source in enumerate(SOURCES):
     print("Processing source #", idx)
     source = check_conf(source)
     
-    query = 'SUBJECT "' +  source['subject'] + '" SINCE "'+ date_since  +'"'
+    use_since = source.get('use_since', True)
 
+    query = 'SUBJECT "' +  source['subject'] + '"'
+
+    if use_since:
+        query += 'SINCE "'+ date_since  +'"'
     
     status, data = imap.search(None, query)
 

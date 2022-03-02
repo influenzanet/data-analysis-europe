@@ -97,6 +97,8 @@ platform_define_survey(
     "measure.avoid.friend.family"=variable_available("Qcov7_14", rlang::quo(season == 2019)),
     "measure.avoid.elderly.risk"=variable_available("Qcov7_15", rlang::quo(season == 2019)),
     "measure.avoid.children"=variable_available("Qcov7_16", rlang::quo(season == 2019)),
+    "measure.wear.mask.inside"=variable_available("Qcov7_17", rlang::quo(season >= 2021)),
+    "measure.isolate.home"=variable_available("Qcov7_18", quo(season >= 2021)),
     
     "reason.covid.doctor"=variable_available("Qcov9_1", rlang::quo(season >= 2019)),
     "reason.covid.confirm"=variable_available("Qcov9_2", rlang::quo(season >= 2019)),
