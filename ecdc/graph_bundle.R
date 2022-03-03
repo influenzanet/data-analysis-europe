@@ -75,7 +75,11 @@ for(syndrome in syndromes) {
   
   context$set(syndrome=syndrome)
   
-  ii = inc.censored %>% filter(syndrome == !!syndrome & type == "adj")
+  ii = inc.censored %>% filter(syndrome == !!syndrome)
+  
+  if(nrow(ii) == 0) {
+    message(paste("No data for", syndrome, " with type=adj"))
+  }
 
   check =  ii %>% group_by(country, method) %>% summarize(n=n_distinct(method)) %>% filter(n>1)
   if(nrow(check) > 0) {
@@ -228,6 +232,10 @@ for(syndrome in syndromes) {
   context$set(what="healthcare", syndrome=syndrome)
   
   dd = visits %>% filter(syndrome == !!syndrome)
+  
+  if(nrow(dd) == 0) {
+    next()
+  }
   
   ggplot(dd, aes(x=monday_of_week(yw), y=prop_adj * perc_factor, color=variable)) + 
     geom_line(aes(y=prop_adj, linetype="adj")) +
