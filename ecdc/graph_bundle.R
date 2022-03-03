@@ -79,6 +79,7 @@ for(syndrome in syndromes) {
   
   if(nrow(ii) == 0) {
     message(paste("No data for", syndrome, " with type=adj"))
+    next()
   }
 
   check =  ii %>% group_by(country, method) %>% summarize(n=n_distinct(method)) %>% filter(n>1)
