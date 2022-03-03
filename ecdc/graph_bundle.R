@@ -8,8 +8,6 @@ library(dplyr)
 library(rlang)
 library(ggplot2)
 
-countries = platform_env("COUNTRY_CODES")
-
 init.path('indicator')
 
 bundles = readRDS(my.path('bundles.rds'))
@@ -79,10 +77,13 @@ for(syndrome in syndromes) {
   
   ii = inc.censored %>% filter(syndrome == !!syndrome & type == "adj")
 
-  method = unique(ii$method)
-  if(length(method) > 1) {
-    rlang::abort("Several methods are provided for an indicator : problem")
+  check =  ii %>% group_by(country, method) %>% summarize(n=n_distinct(method)) %>% filter(n>1)
+  if(nrow(check) > 0) {
+    rlang::abort("Several methods are provided for an indicator/country : problem")
   }
+  
+  method = as.character(unique(ii$method))
+  method = method[ method != "unknown" ]
   
   subtitle = paste(syndrome, ", incidence parameters", method)
  
@@ -176,7 +177,7 @@ for(syndrome in syndromes) {
   
   active$syndrome = NULL
   
-  d = left_join(active %>% filter(method == !!method), inc[, c('country','season','yw','incidence','censored','syndrome') ], by=c('country','season','yw'))
+  d = left_join(active %>% filter(method %in% c(!!method, "unknown")), inc[, c('country','season','yw','incidence','censored','syndrome') ], by=c('country','season','yw'))
   if(nrow(d) > 0) {
     d = d %>%
           filter(syndrome == !!syndrome) %>%

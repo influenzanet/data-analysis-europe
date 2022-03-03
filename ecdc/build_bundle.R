@@ -28,7 +28,7 @@ load_incidence_country = function(country) {
   path = my.path(country, "/")
   ff = list.files(path, pattern="^incidence-.*\\.last$", full.names = TRUE)
   if(length(ff) == 0) {
-    message(paste0("No files for country", country))
+    message(paste0("No files for country ", country))
     return(invisible(list(country=country, count=0)))
   }
   last = basename(unlist(lapply(ff, readLines)))
@@ -121,9 +121,21 @@ hh = lapply(countries, load_healthcare_country)
 
 gc()
 
+is_exported_method = function(syndrome, method) {
+  (syndrome == "ili.ecdc" & method == "w1_s2_if2_ex") | (syndrome == "covid.ecdc" & method == "w0")
+}
+
+# Create export flag
+datasets$active %<>% mutate(export=method == "w0")
+datasets$incidence %<>% mutate(export=is_exported_method(syndrome, method) & type == "adj")
+
 externals = readRDS(my.path('externals.rds'))
 
-datasets$active = bind_rows(datasets$active, externals$active)
+# Externals datasources are exported
+externals$active$export = TRUE
+externals$incidence$export = TRUE
+
+datasets$active = bind_rows(datasets$active, )
 
 datasets$incidence = bind_rows(datasets$incidence, externals$incidence)
 
@@ -207,8 +219,7 @@ filter_incidence = function(data) {
   
   data %>% 
     mutate(across(c(upper, lower), na_to_zero )) %>%
-    filter(type == "adj") %>%
-    filter( (syndrome == "ili.ecdc" & method == "w1_s2_if2_ex") | (syndrome == "covid.ecdc" & method == "w0") )
+    filter(export)
 }
 
 #' Remove non constistent data
@@ -221,7 +232,7 @@ filter_base = function(data) {
 }
 
 filter_active = function(data) {
-  data %>% filter(method == "w0")
+  data %>% filter(export)
 }
 
 #' Extract Boolean variable results in vars dataset (frequency by variables/levels/country)

@@ -27,7 +27,6 @@ find_season = function(yw) {
   as.integer(as.character(cut(yw, breaks=c(seasons, Inf), labels=names(seasons), include.lowest = TRUE, right=FALSE)))
 }
 
-
 datasets = new_environment()
 
 ## Load NL data
@@ -79,13 +78,11 @@ de.inc = NULL
 
 for(column in syndromes) {
   syndrome = switch(column, "ili"="ili.ecdc", rlang::abort(paste0("Unknown syndrome", sQuote(column))))
-  method = get_eu_incidence_parameters("syndrome", syndrome)$name
   
   inc = d[, c('yw','season', 'active', column)]
-  inc$method = method
   inc = rename(inc, part=active, incidence=all_of(column))
   inc$syndrome = syndrome
-  
+  inc$method = "unknown"
   de.inc = bind_rows(de.inc, inc)
 
 }
@@ -93,12 +90,41 @@ for(column in syndromes) {
 de.inc$country = "DE"
 de.inc$type = "adj"
 
-
 de.active = de.inc %>% group_by(season, yw, method, country) %>% summarize(active=max(part))
 de.active$syndrome ="active"
 
 datasets$active = bind_rows(datasets$active, de.active)
 datasets$incidence = bind_rows(datasets$incidence, de.inc)
+
+init.path('externals/dkcovid')
+
+ff = list.files(my.path(), "Denmark_week_.*\\.csv$")
+inc = NULL
+for(file in ff) {
+   r = read.csv2(my.path(file), header = TRUE)
+   r = rename(r, week="Week.Number", active="Active.participants", "inc1000"="Incidence")
+   r$X = NULL
+   r$yw = gsub("(\\d+)-W(\\d+)", "\\1\\2", r$week)
+   r$time = as.numeric(gsub(".*_(\\d+)\\.csv$","\\1", file))
+   r$incidence = as.numeric(as.character(r$inc1000)) / 1000 
+   r$count = r$incidence * r$active
+   r = r %>% select(yw, incidence, count, active, time)
+   inc = bind_rows(inc, r)
+}
+
+inc$country = "DKC"
+inc$syndrome = "covid"
+inc$yw = as.integer(inc$yw)
+inc$season = find_season(inc$yw)
+inc$type = "raw"
+inc$method = "unknown"
+inc = inc %>% select(-time)
+
+active = inc %>% select(yw, season, method, active, country)
+active$syndrome ="active"
+
+datasets$active = bind_rows(datasets$active, active)
+datasets$incidence = bind_rows(datasets$incidence, inc)
 
 init.path('indicator')
 
