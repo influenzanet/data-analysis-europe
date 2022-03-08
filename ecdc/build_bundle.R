@@ -219,7 +219,8 @@ filter_incidence = function(data) {
   
   data %>% 
     mutate(across(c(upper, lower), na_to_zero )) %>%
-    filter(export)
+    filter(export) %>%
+    select(-export)
 }
 
 #' Remove non constistent data
@@ -232,7 +233,7 @@ filter_base = function(data) {
 }
 
 filter_active = function(data) {
-  data %>% filter(export)
+  data %>% filter(export) %>% select(-export)
 }
 
 #' Extract Boolean variable results in vars dataset (frequency by variables/levels/country)
