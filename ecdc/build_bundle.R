@@ -135,7 +135,7 @@ externals = readRDS(my.path('externals.rds'))
 externals$active$export = TRUE
 externals$incidence$export = TRUE
 
-datasets$active = bind_rows(datasets$active, )
+datasets$active = bind_rows(datasets$active, externals$active )
 
 datasets$incidence = bind_rows(datasets$incidence, externals$incidence)
 
