@@ -10,7 +10,6 @@ library(ggplot2)
 
 share.lib('incidence')
 
-countries = platform_env("COUNTRY_CODES")
 seasons = get_historical_seasons()
 
 init.path('indicator')
@@ -35,7 +34,7 @@ inc.censored = inc %>% filter(!censored)
 inc.censored = inc.censored %>% group_by(country, season) %>% mutate(ymax=max(incidence, na.rm=TRUE))
 inc.censored = inc.censored %>% mutate(upper=ifelse(upper > ymax * 2, NA, upper))
 
-methods = unique(inc$method)
+methods = na.omit(unique(inc$method))
 syndromes = unique(inc$syndrome)
 seasons = as.integer(unique(inc$season))
 countries = unique(inc$country)
@@ -97,10 +96,17 @@ for(syndrome in syndromes) {
       d = ii
     }
     
+    mm = d %>% filter(!is.na(method)) %>% pull(method)
+    if(length(mm) == 0) {
+      # Cannot compute if no method (in case of a syndrome kind only provided by external)
+      next()
+    }
+    
     width = if(hasName(span, "width")) span$width else 12
     
     ss = unique(d$season)
     suffix = if(is.na(span$season)) "" else paste0("_", span$name)
+    
     ggplot(d, aes(x=monday_of_week(yw), y=rate_factor * incidence, group=method, color=method)) + 
       geom_vline(data=inc %>% filter(censored & season %in% !!ss), aes(xintercept=monday_of_week(yw)), color="grey90") +
       geom_line() +
@@ -160,7 +166,7 @@ for(syndrome in syndromes) {
       geom_line(data=ii[ ii$season == max(seasons), ], aes(y=incidence * rate_factor, color="current", linetype="current"), size=1.2) +
       scale_color_manual(values=c('range'="darkblue","median"="blue", "current"="red", "quantile"="steelblue"), labels=labels)  +
       scale_linetype_manual(values=c('range'="dotted","median"="solid", "current"="solid", "quantile"="dashed"), labels=labels)  +
-      facet_grid(rows=vars(country), cols=vars(method)) +
+      facet_grid(rows=vars(country)) +
       g_labs(x="Season week index (1=Week of last 1st september)", y=rate_unit, subtitle=subtitle)
     g_save(syndrome,"_incidence_distrib_country+season", width=width, height=height)
   }

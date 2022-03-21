@@ -14,7 +14,7 @@ library(magrittr)
 
 share.lib("incidence") # Default method name fro syndrome
 
-countries = platform_env("COUNTRY_CODES")
+countries = platform_env("ECDC_EXPORT_COUNTRIES")
 seasons = get_historical_seasons()
 
 init.path('indicator')

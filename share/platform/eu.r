@@ -325,7 +325,11 @@ platform_geographic_tables(
   )
 )
 
+# Known platforms
 COUNTRY_CODES = c('IE','UK','ES','DK','BE','IT','FR','PT','NL','SE','CH')
+
+# Countries to build ECDC indicator from
+ECDC_EXPORT_COUNTRIES = c('UK','DK','IT','FR','CH') 
 
 #' Determine if a code is in a "type" of a geographic level
 #' Can check if a given geographic area has a given feature
