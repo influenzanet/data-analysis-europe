@@ -2,9 +2,9 @@ source("conf.R")
 options(warn=1) # Show warnings as they occur
 
 library(dplyr)
+library(magrittr)
 library(rlang)
 library(swMisc)
-library(magrittr)
 
 share.lib("incidence") # Default method name fro syndrome
 
@@ -83,6 +83,7 @@ for(column in syndromes) {
   inc = rename(inc, part=active, incidence=all_of(column))
   inc$syndrome = syndrome
   inc$method = "unknown"
+  inc$incidence = inc$incidence / 100 # Provided as percentage
   de.inc = bind_rows(de.inc, inc)
 
 }
@@ -113,7 +114,7 @@ for(file in ff) {
 }
 
 inc$country = "DKC"
-inc$syndrome = "covid"
+inc$syndrome = "covid.ecdc"
 inc$yw = as.integer(inc$yw)
 inc$season = find_season(inc$yw)
 inc$type = "raw"
