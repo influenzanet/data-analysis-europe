@@ -351,7 +351,8 @@ seasons = list(
   list(2018, pop=2018),
   list(2019, pop=2018, end='2020-08-31'),
   list(2020, pop=2018, start='2020-09-01', end="2021-08-31"),
-  list(2021, pop=2018, start='2021-09-01', end="2022-08-31")
+  list(2021, pop=2018, start='2021-09-01', end="2022-08-31"),
+  list(2022, pop=2018, start='2022-09-01', end="2023-08-31")
 )
 
 for(season in seasons) {
