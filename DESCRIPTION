@@ -3,13 +3,13 @@ Type: Project
 Title: GrippeNet analysis Projet
 Version: 1.0
 Imports:
-  rlang (>= 0.4.7),
+  rlang (>= 0.4.9),
   swMisc (>= 0.1.0),
-  ifnBase (>= 0.5.3),
-  forcats (>= 0.5.0),
-  dplyr (>= 0.8.3),
-  swResults (>= 0.2),
-  ggplot2 (>= 3.0.0),
+  ifnBase (>= 0.6.4),
+  forcats (>= 1.0.0),
+  dplyr (>= 1.0.2),
+  swResults (>= 0.3),
+  ggplot2 (>= 3.3.2),
   epitools,
   survey (>= 4.0),
   cowplot,
