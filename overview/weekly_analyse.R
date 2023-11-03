@@ -49,18 +49,22 @@ reason.covid = survey_labels('weekly', "reason.covid")
 confin.work = survey_labels('weekly', "confin.work")
 confinstop.work = survey_labels('weekly', "confinstop.work")
 
-weekly.columns = c(symptoms,  reason.covid, confinstop.work)
+weekly.columns = c(symptoms)
 
 other.questions <- list(
-  list(name="reason",  vars=reason.covid, type="bool", min.week=202011), 
-  list(name="confinstop",  vars=confinstop.work, type="bool", min.week=202011)
+  list(name="reason",  vars=reason.covid, type="bool", min.week=202011, seasons=2020:2021), 
+  list(name="confinstop",  vars=confinstop.work, type="bool", min.week=202011, seasons=2020:2021),
+  list(name="measure",  vars= measure.covid, type="bool", min.week=202011, seasons=2019),
+  list(name="confin",  vars=confin.work, type="bool", min.week=202011, seasons=2019)
 )
 
-if(season == 2019) {
-  other.questions[[length(other.questions) + 1]] = list(name="measure",  vars= measure.covid, type="bool", min.week=202011)
-  other.questions[[length(other.questions) + 1]] = list(name="confin",  vars=confin.work, type="bool", min.week=202011)
-  weekly.columns = c(weekly.columns, measure.covid,  confin.work)
+other.questions = Filter(function(q) { season %in% q$seasons }, other.questions)
+
+cols = c()
+for(o in other.questions) {
+  cols = c(cols, o$vars) 
 }
+weekly.columns = c(weekly.columns, unique(cols))
 
 for(country in countries) {
   

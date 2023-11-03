@@ -237,6 +237,8 @@ g_save("syndrome-covid-ecdc_prop", plot=TRUE, width=14, height = 12)
 
 ## Symptoms and Symptom causes
 
+init.path(paste0(season,'/weekly/causes'))
+
 context$set(subject="cause")
 
 data = data.all$symptom_causes
@@ -342,6 +344,8 @@ for(i in seq_along(sets)) {
 
 context$pop()
 
+init.path(paste0(season,'/weekly/participants'))
+
 ## Day of week of provided data
 
 data = data.all$participants_date
@@ -368,6 +372,7 @@ if(nrow(data) > 0) {
 }
 
 ## Symptoms association
+init.path(paste0(season,'/weekly/symptoms'))
 
 context$push()
 
@@ -402,50 +407,54 @@ context$pop()
 
 questions = attr(data.all, "questions")
 
-for(question in questions) {
+if(length(questions) > 0) {
+  init.path(paste0(season,'/weekly/questions'))
   
-  data = data.all[[question$name]]
-  name = question$name
-
-  if(is.null(data)) {
-    cat("No data for", question$name,"\n")
+  for(question in questions) {
+    
+    data = data.all[[question$name]]
+    name = question$name
+  
+    if(is.null(data)) {
+      cat("No data for", question$name,"\n")
+    }
+    
+    context$set(subject=name)
+    
+    data = left_join(data, weights, by=c('yw','country'))
+    
+    wg = data %>% 
+          select(-country) %>% 
+          group_by(yw, variable) %>% 
+          summarize(
+              count=sum(count), 
+              total=sum(total), 
+              weighted=sum(count*weight), 
+              total_weight=min(total_weight)
+          ) %>%
+          mutate(weighted=weighted/total_weight)
+   
+    title = i18n(question$name)
+    
+    ggplot(wg, aes(x=monday_of_week(yw), y=round(count/total * 100, 2))) +
+      geom_bar(stat = "identity", fill = colors$primary) +
+      g_labs(y=i18n('percentage'), x=i18n('week'), title=question$name) +
+      facet_wrap(. ~ variable, labeller=labeller(variable=i18n))
+    g_save(paste0(name, "-europe-percent"), width=10, height=10, desc=list(level="europe", title=paste0(title, ", percent, european level"))) 
+  
+    ggplot(wg, aes(x=monday_of_week(yw))) +
+      geom_line(aes(y=100 * count/total, linetype="value") ) +
+      geom_line(aes(y=100 * weighted/total, linetype="weighted") ) +
+      g_labs(y=i18n('percentage'), x=i18n('week'), title=question$name) +
+      scale_linetype_manual(values=c('value'='solid',"weighted"="dashed")) +
+      facet_wrap(. ~ variable, labeller=labeller(variable=i18n))
+    g_save(paste0(name, "-europe-weighted-percent"), width=10, height=10, desc=list(level="europe", title=paste0(title, ", percent, european level"))) 
+    
+    ggplot(data, aes(x=monday_of_week(yw), y=round(count/total * 100, 2), color=variable)) +
+      geom_line() +
+      g_labs(y=i18n('percentage'), x=i18n('week'), title=question$name) +
+      facet_grid(rows=vars(country))
+    g_save(paste0(name, "-weekly-percent-By_country"), width=10, height=10) 
+  
   }
-  
-  context$set(subject=name)
-  
-  data = left_join(data, weights, by=c('yw','country'))
-  
-  wg = data %>% 
-        select(-country) %>% 
-        group_by(yw, variable) %>% 
-        summarize(
-            count=sum(count), 
-            total=sum(total), 
-            weighted=sum(count*weight), 
-            total_weight=min(total_weight)
-        ) %>%
-        mutate(weighted=weighted/total_weight)
- 
-  title = i18n(question$name)
-  
-  ggplot(wg, aes(x=monday_of_week(yw), y=round(count/total * 100, 2))) +
-    geom_bar(stat = "identity", fill = colors$primary) +
-    g_labs(y=i18n('percentage'), x=i18n('week'), title=question$name) +
-    facet_wrap(. ~ variable, labeller=labeller(variable=i18n))
-  g_save(paste0(name, "-europe-percent"), width=10, height=10, desc=list(level="europe", title=paste0(title, ", percent, european level"))) 
-
-  ggplot(wg, aes(x=monday_of_week(yw))) +
-    geom_line(aes(y=100 * count/total, linetype="value") ) +
-    geom_line(aes(y=100 * weighted/total, linetype="weighted") ) +
-    g_labs(y=i18n('percentage'), x=i18n('week'), title=question$name) +
-    scale_linetype_manual(values=c('value'='solid',"weighted"="dashed")) +
-    facet_wrap(. ~ variable, labeller=labeller(variable=i18n))
-  g_save(paste0(name, "-europe-weighted-percent"), width=10, height=10, desc=list(level="europe", title=paste0(title, ", percent, european level"))) 
-  
-  ggplot(data, aes(x=monday_of_week(yw), y=round(count/total * 100, 2), color=variable)) +
-    geom_line() +
-    g_labs(y=i18n('percentage'), x=i18n('week'), title=question$name) +
-    facet_grid(rows=vars(country))
-  g_save(paste0(name, "-weekly-percent-By_country"), width=10, height=10) 
-
-}
+} # if questionns
