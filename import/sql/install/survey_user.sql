@@ -12,3 +12,5 @@ CREATE TABLE survey_surveyuser (
   CONSTRAINT survey_surveyuser_pkey PRIMARY KEY(id),
   CONSTRAINT survey_surveyuser_uq UNIQUE(global_id, country)
 );
+
+ALTER TABLE survey_surveyuser ALTER COLUMN global_id TYPE character varying(45);
