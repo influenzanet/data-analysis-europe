@@ -14,10 +14,10 @@ Aggregated data files can be sent to Influenzanet by email (email destination wi
 The email must fulfill some requirements to be processed :
 
 - Data must be sent using CSV format (no Excel file)
-- The a part of the subject of the email must be **fixed** and not change at all
+- A part of the subject of the email must be **fixed** and not change at all (for example the subject can start with a fixed text)
 - The list of possible senders address must be defined 
 
-File names must have a fixed part which will always be the same in each sending.
+File names must have a fixed part which will always be the same in each sending (for example start with a fixed text)
 
 For example, If the file is 'Incidence_Country_202301', it's expected that the the starting of the file name "Incidence_Country" will remain the same) and clearly identify the purpose of the file (what kind of data we expect in it).
 
