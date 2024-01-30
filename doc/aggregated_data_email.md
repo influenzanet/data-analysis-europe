@@ -15,7 +15,7 @@ The email must fulfill some requirements to be processed :
 
 - Data must be sent using CSV format (no Excel file)
 - A part of the subject of the email must be **fixed** and not change at all (for example the subject can start with a fixed text)
-- The list of possible senders address must be defined 
+- The list of possible senders address must be defined (or at least email domain of senders)
 
 File names must have a fixed part which will always be the same in each sending (for example start with a fixed text)
 
