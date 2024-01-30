@@ -70,7 +70,7 @@ def parse_message(msg_raw):
 
     return rr
 
-def check_address(address, valides:Union[str, List[str]]) -> bool:
+def check_address(address, valides:List[str]) -> bool:
     if isinstance(address, str):
         address = [address]
     for a in address:
@@ -79,8 +79,15 @@ def check_address(address, valides:Union[str, List[str]]) -> bool:
         # We only need to check if it looks like a email not if it's a valid address
         if not re.match(r"[^@]+@[^@]+\.[^@]+", email):
             continue
-        if email in valides:
-            return True
+        for valid in valides:
+          if valid.startswith("@"):
+            i = email.rindex("@")
+            domain = email[i:]
+            if domain == valid:
+              return True
+          else:
+            if email == valid:
+              return True
     return False
 
 def add_file_timestamp(name, time):
