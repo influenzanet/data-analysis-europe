@@ -36,6 +36,14 @@ run_script = function(name) {
   r
 }
 
-run_script("ecdc_indicator")
-run_script("ecdc_healthcare")
+has.error = FALSE
+
+r = run_script("ecdc_indicator")
+has.error = has.error || is.error(r)
+r = run_script("ecdc_healthcare")
+has.error = has.error || is.error(r)
+
+if(has.error) {
+  stop("One script has run with error")
+}
 
