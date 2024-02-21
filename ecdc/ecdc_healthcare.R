@@ -193,7 +193,7 @@ for(syndrome.column in syndromes) {
   # Compute weekly frequency by participant. Reduce all surveys to one by week & participant
   # Each var = any(var), TRUE if at least one survey has true
   freq_bool_weekly = function(ww, vars) {
-    ww = ww %>% group_by(person_id, yw) %>% summarize(across(vars, ~sum(.) >0 ), weight=max(weight)) 
+    ww = ww %>% group_by(person_id, yw) %>% summarize(across(all_of(vars), ~sum(.) >0 ), weight=max(weight)) 
     freq_bool_by(design_weight(ww), vars, "yw")
   }
   
@@ -212,7 +212,6 @@ for(syndrome.column in syndromes) {
   
   # Variable on which to compute the frequency on
   vars = frequency.vars
-  if()
 
   ff = freq_bool_by(weekly.fusion, vars = vars, by = "yw", design = d.weighted)
   ff$type = "episode"
