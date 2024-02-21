@@ -73,6 +73,12 @@ if(season > 2019) {
 
 cols = survey_variable_available(cols, survey="weekly", season=season)
 
+if(any(!frequency.vars %in% cols)) {
+  # Be sure vars to compute frequency on are still in data
+  frequency.vars = frequency.vars[frequency.vars %in% cols]
+}
+
+
 r = load_results_for_incidence(
   season=season, 
   age.categories=age.categories, 
@@ -206,6 +212,7 @@ for(syndrome.column in syndromes) {
   
   # Variable on which to compute the frequency on
   vars = frequency.vars
+  if()
 
   ff = freq_bool_by(weekly.fusion, vars = vars, by = "yw", design = d.weighted)
   ff$type = "episode"
