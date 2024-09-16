@@ -73,6 +73,12 @@ if(season > 2019) {
 
 cols = survey_variable_available(cols, survey="weekly", season=season)
 
+if(any(!frequency.vars %in% cols)) {
+  # Be sure vars to compute frequency on are still in data
+  frequency.vars = frequency.vars[frequency.vars %in% cols]
+}
+
+
 r = load_results_for_incidence(
   season=season, 
   age.categories=age.categories, 
@@ -187,7 +193,7 @@ for(syndrome.column in syndromes) {
   # Compute weekly frequency by participant. Reduce all surveys to one by week & participant
   # Each var = any(var), TRUE if at least one survey has true
   freq_bool_weekly = function(ww, vars) {
-    ww = ww %>% group_by(person_id, yw) %>% summarize(across(vars, ~sum(.) >0 ), weight=max(weight)) 
+    ww = ww %>% group_by(person_id, yw) %>% summarize(across(all_of(vars), ~sum(.) >0 ), weight=max(weight)) 
     freq_bool_by(design_weight(ww), vars, "yw")
   }
   

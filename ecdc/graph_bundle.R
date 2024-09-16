@@ -146,7 +146,7 @@ for(syndrome in syndromes) {
       y=rate_unit, 
       title="Weekly incidence rate by country and season", 
       subtitle=subtitle) +
-    guides(color=guide_legend("Season"), fill=FALSE )
+    guides(color=guide_legend("Season"), fill="none" )
   g_save(syndrome,"_incidence_country+season_superpose", width=12, height=12)
 
   d = ii %>% 
@@ -173,7 +173,7 @@ for(syndrome in syndromes) {
     scale_color_manual(values=colors.metric, labels=labels)  +
     scale_fill_manual(values=colors.metric, labels=labels)  +
     scale_linetype_manual(values=c('range'="dotted","median"="solid", "current"="solid", "quantile"="dashed"), labels=labels)  +
-    guides(fill=FALSE) +
+    guides(fill="none") +
     facet_wrap(~country, scales="free") +
     g_labs(x="Season week index (1=Week of last 1st september)", y=rate_unit, subtitle=subtitle, title=paste0(syndrome))
   g_save(syndrome,"_incidence_country+season_distrib", width=12, height=12)
@@ -268,7 +268,7 @@ for(syndrome in syndromes) {
       title=paste0("Health care seeking with ",syndrome,", weekly % cumulated over the season"),
       subtitle="Adjusted proportions with confidence interval"
     ) +
-    guides(color=guide_legend("Variable"), fill=FALSE)
+    guides(color=guide_legend("Variable"), fill="none")
   g_save(syndrome, "_visits_weekly_adj+ci_country+season.pdf", width=12, height=height)
 
   ggplot(dd, aes(x=monday_of_week(yw), color=variable)) + 
@@ -293,7 +293,7 @@ for(syndrome in syndromes) {
       title=paste0("Health care seeking with ",syndrome,", weekly % cumulated over the season"),
       subtitle="Adjusted proportions with confidence interval"
     ) +
-    guides(color=guide_legend("Variable"), fill=FALSE)
+    guides(color=guide_legend("Variable"), fill="none")
   g_save(syndrome, "_visits_weekly_cumulated_adj+ci_country+season.pdf", width=12, height=height)
 }
 

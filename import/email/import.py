@@ -7,8 +7,14 @@ from email.utils import parseaddr, parsedate
 from typing import Dict,List,Union
 import re
 import os
+import settings
 
-from settings import ACCOUNT, OUTPUT_PATH,SOURCES
+ACCOUNT = settings.ACCOUNT
+OUTPUT_PATH = settings.OUTPUT_PATH
+SOURCES = settings.SOURCES
+DELAY_WEEKS = 12
+if hasattr(settings, 'DELAY_WEEKS'):
+    DELAY_WEEKS = settings.DELAY_WEEKS
 
 # account credentials
 imap = imaplib.IMAP4_SSL(ACCOUNT['hostname'])
@@ -19,7 +25,7 @@ status, messages = imap.select(ACCOUNT['folder'])
 
 print("Connecting..", status, messages)
 
-since = datetime.datetime.now() - datetime.timedelta(weeks=2)
+since = datetime.datetime.now() - datetime.timedelta(weeks=DELAY_WEEKS)
 
 def imap_date(time: datetime) -> str:
     d = time.date()
@@ -152,7 +158,7 @@ for idx, source in enumerate(SOURCES):
     query = 'SUBJECT "' +  source['subject'] + '"'
 
     if use_since:
-        query += 'SINCE "'+ date_since  +'"'
+        query += ' SINCE "'+ date_since  +'"'
     
     status, data = imap.search(None, query)
 

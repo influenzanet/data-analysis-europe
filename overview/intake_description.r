@@ -152,7 +152,7 @@ freq_country = function(.data, name, trans=NULL) {
     freq = .data %>% 
               group_by(country) %>%
               summarise_at(all_of(name), sum)
-    freq = tidyr::pivot_longer(freq, name)
+    freq = tidyr::pivot_longer(freq, all_of(name))
     freq = rename(freq, var=name, count=value)
   } else {
     freq = .data %>% 
@@ -288,7 +288,10 @@ intake.age = intake %>%
 
 ages = bind_rows(intake.age, pop.age)
 
-ages = ages %>% group_by(pop, country) %>% mutate(prop=count / sum(count))
+ages = ages %>% 
+          filter(gender %in% c('male','female')) %>%
+          group_by(pop, country) %>% 
+          mutate(prop=count / sum(count))
 
 # Expression to select female rows
 q_female = quo(gender == "female")

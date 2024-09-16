@@ -92,12 +92,11 @@ for(eu.params in eu.params.sets) {
   
   weeks = sort(unique(iso_yearweek(r$weekly$date)))
   
-  inc.data = rlang::with_abort(estimator$compute(weeks = unique(r$weekly$yw), verticalize = TRUE, verbose=FALSE))
-  
-  if(is.error(inc.data)) {
-    rlang::abort("Error during computation", parent=inc.data)
-  }
-  
+  inc.data = rlang::try_fetch(
+                estimator$compute(weeks = unique(r$weekly$yw), verticalize = TRUE, verbose=FALSE),
+                error=function(cnd) rlang::abort("Error during computation", parent=cnd)
+             )
+
   if(is.null(inc.data$inc)) {
     rlang::abort("No incidence data", class = "error_no_data")
   }

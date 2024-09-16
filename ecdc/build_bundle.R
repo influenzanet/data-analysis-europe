@@ -13,11 +13,14 @@ library(swMisc)
 library(magrittr)
 
 share.lib("incidence") # Default method name fro syndrome
+source("externals/db.R")
 
 countries = platform_env("ECDC_EXPORT_COUNTRIES")
 seasons = get_historical_seasons()
 
 init.path('indicator')
+
+externalDb = ExternalDB$new(my.path('externals.db'))
 
 ## Incidence datasets
 # Collect all incidence files in their last version
@@ -129,7 +132,7 @@ is_exported_method = function(syndrome, method) {
 datasets$active %<>% mutate(export=method == "w0")
 datasets$incidence %<>% mutate(export=is_exported_method(syndrome, method) & type == "adj")
 
-externals = readRDS(my.path('externals.rds'))
+externals = load_externals(externalDb)
 
 # Externals datasources are exported
 externals$active$export = TRUE
