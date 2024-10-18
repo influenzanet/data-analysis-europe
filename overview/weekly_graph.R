@@ -8,7 +8,13 @@ library(rlang)
 
 share.lib('upset')
 
-season = get_current_season()
+if(!exists("cli.args")) {
+  cli.args = parseArgs(list(
+    season=list(type="int", min=2011, max=calc_season(Sys.Date()), default=get_current_season() )
+  ))
+}
+
+season = cli.args$season
 
 # Population by country
 pop = load_population("country", 2018)

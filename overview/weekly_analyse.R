@@ -9,12 +9,20 @@ library(dplyr)
 library(gridExtra)
 library(ggplot2)
 
+
+if(!exists("cli.args")) {
+  cli.args = parseArgs(list(
+    season=list(type="int", min=2011, max=calc_season(Sys.Date()), default=get_current_season() )
+  ))
+}
+
+season = cli.args$season
+
+
 suppressPackageStartupMessages(library(cowplot))
 
 share.lib("incidence")
 share.lib('upset')
-
-season = get_current_season()
 
 eu.params = get_eu_incidence_parameters("default")
 
@@ -67,7 +75,7 @@ for(o in other.questions) {
 weekly.columns = c(weekly.columns, unique(cols))
 
 for(country in countries) {
-  
+  message("Loading ", country)
   dataset = load_results_for_incidence(season=season, age.categories=age.categories, country=country, syndrome.from = syndrome.from, onset=onset, columns=list(keep.all=TRUE, weekly=weekly.columns))
   
   if(is.null(dataset$weekly) || is.null(dataset$intake) || nrow(dataset$weekly) == 0 || nrow(dataset$intake) == 0) {

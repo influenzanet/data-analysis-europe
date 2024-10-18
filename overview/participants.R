@@ -8,7 +8,13 @@ source('conf.R')
 library(dplyr)
 library(ggplot2)
 
-season = get_current_season()
+if(!exists("cli.args")) {
+  cli.args = parseArgs(list(
+    season=list(type="int", min=2011, max=calc_season(Sys.Date()), default=get_current_season() )
+  ))
+}
+
+season = cli.args$season
 
 countries = platform_env("COUNTRY_CODES")
 
@@ -30,7 +36,7 @@ collect_data = function(name, data, country) {
 
 init.path(season)
 
-  result_desc_filters(auto=TRUE, filter=list())
+result_desc_filters(auto=TRUE, filter=list())
 
 for(country in countries) {
 
@@ -107,14 +113,12 @@ for(country in countries) {
   
 }
 
-
 context = ResultContext$new()
 
 #' Save helper with default parameters
 g_save=function(..., width, height, desc=NULL) {
   save_graph_with_context(paste0(...), formats=c('pdf','svg'), width=width, height=height, context=context, desc=desc)
 }
-
 
 data = data.all$intake
 
