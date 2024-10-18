@@ -189,3 +189,4 @@ ggplot(data, aes(x=monday_of_week(yw), y=cum, fill=country)) +
   ifn_labs(title="Cumulative count of participants with weekly by date", y="Count", x="Week") 
 g_save("weekly_cumulated_week_country",width=8, height=12)
 
+saveRDS(data.all, my.path("participants.rds"))
