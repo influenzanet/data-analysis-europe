@@ -13,11 +13,14 @@ library(htmlwidgets)
 library(htmltools)
 library(markdown)
 library(shinyWidgets)
+
 datasets = list(
   "bundles"=list(file="bundles.rds", title="Data prepared for public website (external + shared db)"),
   "externals"=list(file="externals.rds", title="Data from external sources (email), aggregated data are provided by each platform"),
   "all"=list(file="datasets.rds")
 )
+
+incidence_types = c("Raw"="raw", "Adjusted"="adj")
 
 # Define UI for application that draws a histogram
 ui <- page_sidebar(
@@ -45,6 +48,8 @@ ui <- page_sidebar(
               tabPanel("Incidence", 
                 fluidRow(
                   checkboxGroupInput("syndromes", "Syndromes", choices = NULL),
+                  checkboxGroupInput("types", "Types", choices = incidence_types, selected = incidence_types),
+                  checkboxInput("confint", "Show Confidence interval", value = TRUE),
                   plotOutput("incidencePlot"),
                   plotOutput("countPlot")
                 )
@@ -124,7 +129,7 @@ server <- function(input, output, session) {
       updatePickerInput(session, "methods", choices=makeChoices(mm), selected=mm)
       ss = available_seasons()
       
-      updatePickerInput(session, "seasons", choices=makeChoices(ss), selected=ss)
+      updatePickerInput(session, "seasons", choices=makeChoices(ss), selected=tail(sort(ss), n=2))
 
       sd = available_syndromes()
       updateCheckboxGroupInput(session, "syndromes", choices=makeChoices(sd), selected=sd)
@@ -174,7 +179,18 @@ server <- function(input, output, session) {
       
       dd = incidence_data()
       
+      confint = input$confint
+      
+      dd = dd %>% filter(type %in% input$types)
+      
+      if(confint) {
+        g = geom_ribbon(aes(ymin=lower, ymax=upper, fill=syndrome), color=NA, alpha=.40)
+      } else {
+        g = NULL
+      }
+      
       ggplot(dd, aes(x=monday_of_week(yw), y=incidence, color=syndrome, linetype=type)) +
+        g +
         geom_line() +
         facet_grid(cols=vars(season), rows=vars(country), scales="free")
       
