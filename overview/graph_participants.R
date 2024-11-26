@@ -1,4 +1,4 @@
-source('conf.r')
+source('conf.R')
 
 library(dplyr)
 

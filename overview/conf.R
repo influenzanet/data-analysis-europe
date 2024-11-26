@@ -1,6 +1,8 @@
 # All scripts in a workspace's project know only one file in the upper directory
 source('../system.R')
 
+library(swMisc)
+
 project.prefix = "overview" # Convention, each project inside repo defines it project.prefix
 
 add_path_prefix("project", project.prefix)
