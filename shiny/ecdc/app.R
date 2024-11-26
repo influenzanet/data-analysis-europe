@@ -5,29 +5,29 @@ init.path('ecdc/indicator')
 
 library(shiny)
 library(dplyr)
+library(cowplot)
 library(ggplot2)
 library(forcats)
 library(bslib)
 library(htmlwidgets)
 library(htmltools)
 library(markdown)
-
+library(shinyWidgets)
 datasets = list(
-  "externals"=list(file="externals.rds", title="Data from external sources (email), aggregated data are provided by each platform"),
   "bundles"=list(file="bundles.rds", title="Data prepared for public website (external + shared db)"),
+  "externals"=list(file="externals.rds", title="Data from external sources (email), aggregated data are provided by each platform"),
   "all"=list(file="datasets.rds")
 )
-
-
 
 # Define UI for application that draws a histogram
 ui <- page_sidebar(
 
     # Sidebar with a slider input for number of bins 
     sidebar = sidebar(
-            selectInput("dataset", "Dataset",  c('Externals'='externals', 'Public data'='bundles', "All"='all')),
-            checkboxGroupInput("countries","Platform codes", choices=NULL),
-            checkboxGroupInput("methods", "Computation Methods", choices = NULL)
+            selectInput("dataset", "Dataset",  c('Public data'='bundles', "All"='all', 'Externals'='externals')),
+            pickerInput("countries","Platform codes", choices=NULL, multiple = TRUE, options = pickerOptions(actionsBox = TRUE)),
+            pickerInput("methods", "Computation Methods", choices = NULL, multiple = TRUE, options = pickerOptions(actionsBox = TRUE)),
+            pickerInput("seasons", "Seasons", choices = NULL, multiple = TRUE, options = pickerOptions(actionsBox = TRUE))
         ),
 
         # Show a plot of the generated distribution
@@ -39,14 +39,14 @@ ui <- page_sidebar(
             tabsetPanel(
               tabPanel("Active participants", 
                 fluidRow(
-                  radioButtons("active_seasonal", "By season", choices=c("Yes"=TRUE, "No"=FALSE), inline = TRUE, selected = FALSE),
                   plotOutput("activePlot")
                 )
               ),
               tabPanel("Incidence", 
                 fluidRow(
-                  radioButtons("incidence_seasonal", "By season", choices=c("Yes"=TRUE, "No"=FALSE), inline = TRUE, selected = FALSE),
-                  plotOutput("incidencePlot")
+                  checkboxGroupInput("syndromes", "Syndromes", choices = NULL),
+                  plotOutput("incidencePlot"),
+                  plotOutput("countPlot")
                 )
               ),
               tabPanel("help",
@@ -104,11 +104,30 @@ server <- function(input, output, session) {
       extract_data_field(d, "method")
     })
     
+    available_seasons = reactive({
+      d = data()
+      extract_data_field(d, "season")
+    })
+    
+    available_syndromes = reactive({
+      d = data()
+      extract_data_field(d, "syndrome")
+    })
+    
     observe({
+      
       cc = available_countries()
-      updateCheckboxGroupInput(session, "countries", choices=makeChoices(cc), selected = cc)
+      
+      updatePickerInput(session, "countries", choices=makeChoices(cc), selected = cc)
       mm = available_methods()
-      updateCheckboxGroupInput(session, "methods", choices=makeChoices(mm), selected=mm)
+      
+      updatePickerInput(session, "methods", choices=makeChoices(mm), selected=mm)
+      ss = available_seasons()
+      
+      updatePickerInput(session, "seasons", choices=makeChoices(ss), selected=ss)
+
+      sd = available_syndromes()
+      updateCheckboxGroupInput(session, "syndromes", choices=makeChoices(sd), selected=sd)
     })
     
     output$dataset_title <- renderText({
@@ -128,40 +147,48 @@ server <- function(input, output, session) {
       dd = dd$active
       countries = input$countries
       methods = input$methods
-      d = dd %>% filter(country %in% countries)
-      d = d %>% filter(method %in% methods)
-      scales = "free_y"
-      if(input$active_seasonal) {
-        cols = vars(season)
-        scales="free"
-      } else {
-        cols = NULL
-      }
+      seasons = input$seasons
+      d = dd %>% filter(country %in% countries, method %in% methods, season %in% seasons)
       ggplot(d, aes(x=monday_of_week(yw), y=active, color=method)) +
         geom_line() +
-        facet_grid(rows=vars(country), cols=cols, scales=scales)
+        facet_grid(rows=vars(country), cols=vars(season), scales="free")
     })
     
-    output$incidencePlot <- renderPlot({
+    incidence_data = reactive({
       dd = data()
-      if(!"active" %in% names(dd)) {
+      if(!"incidence" %in% names(dd)) {
         return(NULL)
       }
-      dd = dd$active
+      dd = dd$incidence
       countries = input$countries
       methods = input$methods
-      d = dd %>% filter(country %in% countries)
-      d = d %>% filter(method %in% methods)
-      scales = "free_y"
-      if(input$incidence_seasonal) {
-        cols = vars(season)
-        scales="free"
-      } else {
-        cols = NULL
-      }
-      ggplot(d, aes(x=monday_of_week(yw), y=active, color=method)) +
+      seasons = input$seasons
+      syndromes = input$syndromes
+      
+      dd %>% filter(country %in% countries, method %in% methods, season %in% seasons, syndrome %in% syndromes)
+      
+    })
+    
+    
+    output$incidencePlot <- renderPlot({
+      
+      dd = incidence_data()
+      
+      ggplot(dd, aes(x=monday_of_week(yw), y=incidence, color=syndrome, linetype=type)) +
         geom_line() +
-        facet_grid(rows=vars(country), cols=cols, scales=scales)
+        facet_grid(cols=vars(season), rows=vars(country), scales="free")
+      
+    })
+    
+    output$countPlot <- renderPlot({
+      
+      dd = incidence_data()
+      
+      dd = dd %>% filter(type == "adj") # Only count once (same value regardless adjustment)
+      
+      ggplot(dd, aes(x=monday_of_week(yw), y=count, color=syndrome)) +
+        geom_line() +
+        facet_grid(cols=vars(season), rows=vars(country), scales="free")
     })
     
     output$helpOutput <- renderUI({
