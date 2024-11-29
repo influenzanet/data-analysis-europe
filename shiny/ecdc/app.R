@@ -50,8 +50,7 @@ ui <- page_sidebar(
                   checkboxGroupInput("syndromes", "Syndromes", choices = NULL),
                   checkboxGroupInput("types", "Types", choices = incidence_types, selected = incidence_types),
                   checkboxInput("confint", "Show Confidence interval", value = TRUE),
-                  plotOutput("incidencePlot"),
-                  plotOutput("countPlot")
+                  plotOutput("incidencePlot", fill = FALSE),
                 )
               ),
               tabPanel("help",
@@ -62,8 +61,6 @@ ui <- page_sidebar(
           )
     )
 )
-
-
 
 makeChoices = function(v) {
   setNames(v,v)
@@ -78,6 +75,36 @@ extract_data_field = function(d, field) {
     v = d$incidence[[field]]
   }
   unique(v)
+}
+
+plot_country_incidence = function(d, country.labeller=identity, plot.confint=FALSE) {
+  
+  if(plot.confint) {
+    g_ic = geom_ribbon(aes(ymin=lower, ymax=upper, fill=syndrome), color=NA, alpha=.40)
+  } else {
+    g_ic = NULL
+  }
+  
+  country = country.labeller(as.character(d$country[1]))
+  
+  g1 = ggplot(d, aes(x=monday_of_week(yw), y=incidence, color=syndrome, linetype=type)) +
+    geom_line() +
+    g_ic +
+    facet_grid(cols=vars(season), scales="free") +
+    labs(x="", title=paste("Country ", country), y="Incidence rate") + 
+    theme(
+      axis.text.x = element_blank(), 
+      plot.margin=margin(b=0), 
+      axis.title = element_blank(),
+      title=element_text(size=rel(1.3))
+    ) 
+  
+  g2 =  ggplot(d, aes(x=monday_of_week(yw), y=count, color=syndrome, linetype=type)) +
+    geom_step() +
+    facet_grid(cols=vars(season), scales="free", margins = F) +
+    theme(strip.text=element_blank(), title = element_blank()) +
+    labs(x="Week", y="Count of participants")
+  cowplot::plot_grid(g1, g2, ncol = 1, align = "v")
 }
 
 # Define server logic required to draw a histogram
@@ -135,6 +162,11 @@ server <- function(input, output, session) {
       updateCheckboxGroupInput(session, "syndromes", choices=makeChoices(sd), selected=sd)
     })
     
+    incidence_plot_height = reactive({
+      cc = available_countries()
+      100 * length(cc)
+    })
+    
     output$dataset_title <- renderText({
       dataset = datasets[[input$dataset]]
       if(is.null(dataset)) {
@@ -183,29 +215,10 @@ server <- function(input, output, session) {
       
       dd = dd %>% filter(type %in% input$types)
       
-      if(confint) {
-        g = geom_ribbon(aes(ymin=lower, ymax=upper, fill=syndrome), color=NA, alpha=.40)
-      } else {
-        g = NULL
-      }
-      
-      ggplot(dd, aes(x=monday_of_week(yw), y=incidence, color=syndrome, linetype=type)) +
-        g +
-        geom_line() +
-        facet_grid(cols=vars(season), rows=vars(country), scales="free")
-      
-    })
-    
-    output$countPlot <- renderPlot({
-      
-      dd = incidence_data()
-      
-      dd = dd %>% filter(type == "adj") # Only count once (same value regardless adjustment)
-      
-      ggplot(dd, aes(x=monday_of_week(yw), y=count, color=syndrome)) +
-        geom_line() +
-        facet_grid(cols=vars(season), rows=vars(country), scales="free")
-    })
+      gg = by(dd, dd$country, plot_country_incidence, plot.confint=confint)
+      gg = Filter(function(x) !is.null(x), gg)
+      do.call(grid.arrange, list(grobs=gg, ncol=1))
+    }, height = incidence_plot_height)
     
     output$helpOutput <- renderUI({
       htmltools::includeMarkdown("help.md")
