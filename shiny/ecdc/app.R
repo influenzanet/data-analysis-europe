@@ -13,6 +13,7 @@ library(htmlwidgets)
 library(htmltools)
 library(markdown)
 library(shinyWidgets)
+library(gridExtra)
 
 datasets = list(
   "bundles"=list(file="bundles.rds", title="Data prepared for public website (external + shared db)"),
