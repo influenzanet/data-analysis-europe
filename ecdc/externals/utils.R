@@ -17,6 +17,7 @@ find_files_pattern = function(path, pattern, use.suffix=NULL, decreasing=TRUE) {
   } else {
     ff = sort(ff, decreasing = decreasing)
   }
+  ff
 }
 
 # Create file marker to set the file as done
@@ -38,7 +39,6 @@ yw_from_isoweek = function(week) {
   }
   w
 } 
-
 
 find_last_file = function(path, pattern, use.suffix=NULL) {
   ff = find_files_pattern(path=path, pattern=pattern, use.suffix = use.suffix)
