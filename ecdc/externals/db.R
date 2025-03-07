@@ -12,7 +12,7 @@ ExternalDB <- R6Class(
     db=NULL,
     initialize=function(db.file) {
       need.create = !file.exists(db.file)
-      self$db <- dbConnect(RSQLite::SQLite(), db.file)
+      self$db <- DBI::dbConnect(RSQLite::SQLite(), db.file)
       if(need.create) {
         self$create()
       }
