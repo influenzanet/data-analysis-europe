@@ -1,0 +1,62 @@
+---
+title: "externals"
+format: 
+  html:
+    df-print: kable
+---
+
+```{r include=FALSE, message=FALSE, warning=FALSE}
+knitr::opts_chunk$set(echo=FALSE)
+library(RSQLite)
+library(DBI)
+library(dplyr)
+source("conf.R")
+
+init.path("ecdc")
+
+db = DBI::dbConnect(RSQLite::SQLite(), my.path('indicator/externals.db'))
+
+imports = dbGetQuery(db, "select * from imports")
+
+# Only keeps last 5 imports for each country
+imports = imports |> arrange(desc(imported_at)) %>% group_by(country) %>% slice_head(n=7) 
+
+```
+
+
+# Email receptions
+
+```{r, echo=FALSE, message=FALSE, warning=FALSE}
+
+emails_db_path = paste0(local_data_path, "imports-email.db")
+emails.db = DBI::dbConnect(RSQLite::SQLite(), emails_db_path)
+
+emails = dbGetQuery(emails.db, "select * from email_imports")
+
+
+emails = emails |> arrange(desc(time)) |> group_by(dir) |> slice_head(n=5)
+
+kable_grouped = function(k, data) {
+  gr = group_rows(data)
+  gg = group_data(data)
+  for(g in seq_along(gr)) {
+    rows = gr[[g]]
+    group_label = gg[g, ] |> select(-.rows)
+    group_label = paste(group_label, collapse = " / ")
+    k = k |> kableExtra::pack_rows(group_label=group_label, start_row=min(rows), end_row = max(rows))
+  }
+  k
+}
+
+d = emails |> select(time, from, file, dir)
+kableExtra::kbl(d) |> kable_grouped(d)
+```
+
+# Import from externals sources
+
+Only 5 last imports for each platform is shown
+
+```{r, echo=FALSE, message=FALSE, warning=FALSE}
+imports
+
+```

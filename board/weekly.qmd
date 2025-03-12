@@ -1,0 +1,60 @@
+---
+title: "Weekly Survey responses"
+toc: false
+format: 
+  html:
+    page-layout: full
+    df-print: kable
+---
+
+
+```{r, include=FALSE}
+
+knitr::opts_chunk$set(echo=FALSE)
+
+source("conf.R")
+season = get_current_season()
+#season = 2019
+
+init.path('overview')
+
+include_graph = function(name) {
+  path = my.path(season, "/", name)
+  if(!file.exists(path)) {
+    return(paste0("Unknown ", sQuote(path)))
+  }
+  link_name = gsub("/", "__", name)
+  img = paste0("img/", link_name)
+  if(!file.exists(img)) {
+    file.symlink(path, img)
+  }
+  knitr::include_graphics(img, rel_path = FALSE)
+}
+
+```
+
+
+# Weekly survey responses count 
+
+```{r}
+include_graph("weekly_count_week_country.svg")
+```
+# Symptoms reported by participants
+
+Percentage of reported symptoms
+
+```{r, out.width="100%", out.height="600px"}
+include_graph("weekly/symptom_prop_with_symptom.pdf")
+```
+
+Symptoms associations (3 last weeks)
+
+```{r, out.width="100%", out.height="600px"}
+include_graph("weekly/symptoms/symptom_upset_shortterm.pdf")
+```
+
+# Symptoms grouped into syndromes 
+
+```{r, out.width="100%", out.height="600px"}
+include_graph("weekly/syndrome-ecdc_prop.pdf")
+```

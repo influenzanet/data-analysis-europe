@@ -1,0 +1,160 @@
+---
+title: "intakes"
+toc: false
+format: 
+  html:
+    page-layout: full
+    df-print: kable
+---
+
+```{r, include=FALSE}
+
+knitr::opts_chunk$set(echo=FALSE)
+
+source("conf.R")
+season = get_current_season()
+#season = 2019
+
+init.path('overview')
+
+include_graph = function(name) {
+  path = my.path(season, '/intake/', name)
+  img = paste0("img/", name)
+  if(!file.exists(img)) {
+    file.symlink(path, img)
+  }
+  knitr::include_graphics(img, rel_path = FALSE)
+}
+
+
+```
+
+# Age
+
+::: {.panel-tabset group="age"}
+
+# by country
+
+```{r}
+include_graph("country-age-pyramid.svg")
+```
+
+# Global level
+
+```{r}
+include_graph("europe-age.svg")
+```
+
+:::
+
+# Gender
+
+
+::: {.panel-tabset group="gender"}
+
+# By country
+
+```{r}
+include_graph("country-gender.svg")
+```
+
+# Global level
+
+```{r}
+include_graph("europe-gender.pdf")
+```
+
+:::
+
+
+# Education
+
+::: {.panel-tabset group="education"}
+
+# By country
+
+```{r}
+include_graph("country-education-prop.svg")
+```
+
+# Global level
+
+```{r}
+include_graph("european-education.svg")
+```
+
+:::
+
+# Main Activity
+
+::: {.panel-tabset group="activity"}
+
+
+# By country
+
+```{r}
+include_graph("country-main.activity-prop.svg")
+```
+
+# Global level
+
+```{r}
+include_graph("europe-activity.svg")
+```
+
+:::
+
+
+# Main Transportation
+
+::: {.panel-tabset group="transportation"}
+
+# By country
+
+```{r}
+include_graph("country-transport-prop.svg")
+```
+
+# Global level
+
+```{r}
+include_graph("europe-transport.svg")
+```
+
+:::
+
+# Conditions
+
+::: {.panel-tabset group="condition"}
+
+# By country
+
+```{r}
+include_graph("country-condition-prop.svg")
+```
+
+# Global level
+
+```{r}
+include_graph("european-condition.svg")
+```
+
+:::
+
+# Allergy
+
+::: {.panel-tabset group="allergy"}
+
+# By country
+
+```{r}
+include_graph("country-allergy-prop.svg")
+```
+
+# Global level
+
+```{r}
+include_graph("european-allergy.svg")
+```
+
+:::

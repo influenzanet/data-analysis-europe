@@ -1,0 +1,68 @@
+---
+title: "Influenzanet Data Import"
+format: 
+  html:
+    code-fold: false
+    df-print: kable
+
+---
+
+# Central Database Import 
+
+```{r include=FALSE, message=FALSE, warning=FALSE}
+source("conf.R")
+library(RSQLite)
+library(DBI)
+library(tidyr)
+library(dplyr)
+library(ggplot2)
+
+init.path('db')
+
+db = DBI::dbConnect(RSQLite::SQLite(), my.path('imports.db'))
+#
+imports = dbGetQuery(db, "select * from imports where time > date('now', '-8 days')")
+
+imports = imports |> 
+              mutate(
+                      hour=trunc(as.POSIXct(time), units="hours"), 
+                      label=paste(rows, " (",dir,")")
+              ) |>
+              arrange(desc(hour), country)
+
+stats_file = my.path('stats.json')
+
+stats_time = file.mtime(stats_file)
+stats = jsonlite::read_json(stats_file)
+
+stats = bind_rows(stats)
+
+```
+
+### Imports from Influenzanet uploads (new platform exports)
+
+```{r, echo=FALSE, warning=FALSE}
+ggplot(imports, aes(x=as.POSIXct(hour), y=rows, fill=country)) + 
+  geom_bar(stat="identity") + 
+  facet_grid(rows=vars(table), scales="free_y")
+```
+
+```{r, echo=FALSE, warning=FALSE}
+tidyr::pivot_wider(imports, id_cols=c('country', 'hour'), names_from = "table", values_from = "label")
+```
+
+# Data in tables by season
+
+Data updated `r stats_time`
+
+- 'pollster' = Imported table from the platform (only legacy Influenzanet platform)
+- 'epidb' = Cumulated table from all imports (New platform & old)
+
+```{r, echo=FALSE, warning=FALSE, fig.width=12, fig.height=8}
+ggplot(stats, aes(x=season, y=count, fill=type)) + 
+  facet_grid(rows=vars(table), cols=vars(country), scales="free_y") + 
+  geom_bar(stat="identity") +
+  theme(axis.text.x=element_text(angle=90))
+```
+
+

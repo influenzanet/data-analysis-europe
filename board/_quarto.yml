@@ -1,0 +1,28 @@
+project:
+  type: website
+
+website:
+  title: "Influenzanet Results"
+  navbar:
+    left:
+      - href: index.qmd
+        text: Home
+      - href: intakes.qmd
+        text: Participants profile
+      - href: weekly.qmd
+        text: Weekly data
+      - href: data.qmd
+        text: Data Quality
+      - href: import.qmd
+        text: Import
+      - href: externals.qmd
+        text: Externals
+    footer:
+        - href: about.qmd
+          text: About us
+
+format:
+  html:
+    theme: cosmo
+#    css: styles.css
+    toc: true
