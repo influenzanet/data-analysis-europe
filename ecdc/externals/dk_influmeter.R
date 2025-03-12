@@ -7,20 +7,27 @@ ff = find_last_file(my.path(), "DK_data.*\\.csv$", use.suffix=TRUE)
 inc = NULL
 if(length(ff) > 0) {
   file = ff[1]
-  message("Loading ", file)
-  r = read.csv2(my.path(file), header = TRUE)
-  r = rename(r, week="Yearweek", active="Weekly_Responses", "count"="ILI_cases")
-  r$X = NULL
-  r$yw = yw_from_isoweek(r$week)
-  r$time = as.numeric(gsub(".*_(\\d+)\\.csv$","\\1", file))
-  r$incidence = r$count / r$active 
-  r = r %>% select(yw, incidence, count, active, time)
-  r$file = file
-  inc = bind_rows(inc, r)
-  mark_file_done(my.path(file))
+  
+  already = check_file_imported(db, file, dkc.country)
+  
+  if(nrow(already) == 0) {
+    message("Loading ", file)
+    r = read.csv2(my.path(file), header = TRUE)
+    r = rename(r, week="Yearweek", active="Weekly_Responses", "count"="ILI_cases")
+    r$X = NULL
+    r$yw = yw_from_isoweek(r$week)
+    r$time = as.numeric(gsub(".*_(\\d+)\\.csv$","\\1", file))
+    r$incidence = r$count / r$active 
+    r = r %>% select(yw, incidence, count, active, time)
+    r$file = file
+    inc = bind_rows(inc, r)
+  } else {
+    message("File already imported ", file)
+    print(already)
+  }
 }
 
-if(nrow(inc > 0)) {
+if(!is.null(inc) && nrow(inc) > 0) {
   inc$syndrome = "ili.ecdc"
   inc$yw = as.integer(inc$yw)
   inc$type = "raw"

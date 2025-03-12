@@ -8,19 +8,26 @@ r = NULL
 file = NULL
 if(length(ff) > 0) {
   file = ff[1]
-  message("Loading ", file)
-  r = read.csv2(my.path(file), header = TRUE, na.strings="-")
-  n = names(r)
-  # Normalize names to better names
-  n <- tolower(n)
-  n[ n == "numberparticipants"] = "active"
-  n = gsub("._", "_", n, fixed=TRUE)
-  n = gsub("\\.$", "", n)
-  n = gsub(".", "_", n, fixed=TRUE)
-  names(r) <- n
-  r$yw = as.integer(r$year * 100 + r$week)
   
-  r = r %>% filter(!is.na(active))
+  already = check_file_imported(db, file, se.country)
+  if(nrow(already) == 0) {
+    message("Loading ", file)
+    r = read.csv2(my.path(file), header = TRUE, na.strings="-")
+    n = names(r)
+    # Normalize names to better names
+    n <- tolower(n)
+    n[ n == "numberparticipants"] = "active"
+    n = gsub("._", "_", n, fixed=TRUE)
+    n = gsub("\\.$", "", n)
+    n = gsub(".", "_", n, fixed=TRUE)
+    names(r) <- n
+    r$yw = as.integer(r$year * 100 + r$week)
+    
+    r = r %>% filter(!is.na(active))
+  } else {
+    message("File already imported ", file)
+    print(already)
+  }
 }
 
 indicators = list(
@@ -48,8 +55,11 @@ if(!is.null(r) && nrow(r) > 0) {
 
   weeks = range(inc$yw)
   mark_imported(db, country=se.country, file, weeks)
-  # Last evaluated expression is returned to calling script as result (here number of rows)
-  
-  mark_file_done(my.path(file))
-  
+}
+
+# Last evaluated expression is returned to calling script as result (here number of rows)
+if(!is.null(r)) {
+  nrow(r) 
+} else {
+  0
 }
