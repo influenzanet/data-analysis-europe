@@ -8,9 +8,11 @@ from typing import Dict,List,Union
 import re
 import os
 import settings
+from logger import ImportLogger
 
 ACCOUNT = settings.ACCOUNT
 OUTPUT_PATH = settings.OUTPUT_PATH
+LOG_IMPORT_PATH = settings.LOG_IMPORT_PATH
 SOURCES = settings.SOURCES
 DELAY_WEEKS = 12
 if hasattr(settings, 'DELAY_WEEKS'):
@@ -26,6 +28,8 @@ status, messages = imap.select(ACCOUNT['folder'])
 print("Connecting..", status, messages)
 
 since = datetime.datetime.now() - datetime.timedelta(weeks=DELAY_WEEKS)
+
+importLog = ImportLogger(LOG_IMPORT_PATH)
 
 def imap_date(time: datetime) -> str:
     d = time.date()
@@ -101,7 +105,7 @@ def add_file_timestamp(name, time):
     n = p[0] + '_' + time
     return n + p[1]
 
-def handle_message(msg: dict, source: dict):
+def handle_message(msg: dict, source: dict, message_id):
     """
         Handle a parsed message
         Here place for the influenzanet specific works
@@ -118,6 +122,11 @@ def handle_message(msg: dict, source: dict):
         print(msg['date'])
         return
     
+    if 'time' in msg:
+      msg_time = time.strftime('%Y-%m-%dT%H:%M:%S', msg['time'])
+    else:
+      msg_time = None
+    
     out_path = OUTPUT_PATH + '/' + source['dir']
 
     if not os.path.exists(out_path):
@@ -126,11 +135,12 @@ def handle_message(msg: dict, source: dict):
     for a in msg['attachements']:
         name = a['filename']
         if source['add_time']:
-            name = add_file_timestamp(name, time.strftime('%Y%m%d%H%M%S', msg['time']))
+            name = add_file_timestamp(name, msg_time)
         path = out_path + '/' + name
         if not os.path.isfile(path):
             print("Writing '%s'" % name, )
             open(path, "wb").write(a['contents']) 
+            importLog.log(msg['from'], name, source['dir'], message_id, msg_time)
         else:
             print("File '%s' already exists" % (path))
 
@@ -186,5 +196,5 @@ for idx, source in enumerate(SOURCES):
         for response in msgs:
             if isinstance(response, tuple):
                 m = parse_message(response)
-                handle_message(m, source)
+                handle_message(m, source, id)
     
