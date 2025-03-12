@@ -19,7 +19,8 @@ db = ExternalDB$new(my.path('externals.db'))
 source_scripts = c(
   'nl_rivm',
   'de_grippeweb',
-  'dk_covidmeter',
+  #'dk_covidmeter',
+  'dk_influmeter',
   'sweden'
 )
 
