@@ -135,3 +135,9 @@ load_externals = function(db) {
   )
 }
 
+check_file_imported = function(db, file, country) {
+  query = paste0('select * from imports where country="',country,'" and file="',file,'"  order by imported_at desc limit 1')
+  r = db$fetch(query)
+  r
+} 
+

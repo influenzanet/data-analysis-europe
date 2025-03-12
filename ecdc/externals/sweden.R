@@ -5,6 +5,7 @@ init.path('externals/se')
 se.country = "SE"
 ff = find_last_file(my.path(), "Influenzanet_.*\\.csv$", use.suffix=TRUE)
 r = NULL
+file = NULL
 if(length(ff) > 0) {
   file = ff[1]
   message("Loading ", file)
@@ -27,7 +28,7 @@ indicators = list(
   list(name="ari_per1000", syndrome="ari.ecdc")
 )
 
-if(nrow(r) > 0) {
+if(!is.null(r) && nrow(r) > 0) {
   method = "unknow"
   
   active = r %>% select(yw, active)
@@ -44,11 +45,11 @@ if(nrow(r) > 0) {
     query = insert_incidence_query(inc, country=se.country, file=file, method=method)
     db$exec(query)
   }  
+
+  weeks = range(inc$yw)
+  mark_imported(db, country=se.country, file, weeks)
+  # Last evaluated expression is returned to calling script as result (here number of rows)
+  
+  mark_file_done(my.path(file))
+  
 }
-
-weeks = range(inc$yw)
-mark_imported(db, country=se.country, file, weeks)
-# Last evaluated expression is returned to calling script as result (here number of rows)
-nrow(r)
-
-

@@ -17,7 +17,7 @@ if(length(ff) > 0) {
   r = r %>% select(yw, incidence, count, active, time)
   r$file = file
   inc = bind_rows(inc, r)
-  mark_file_done(file)
+  mark_file_done(my.path(file))
 }
 
 if(nrow(inc > 0)) {

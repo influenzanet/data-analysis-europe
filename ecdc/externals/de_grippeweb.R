@@ -5,6 +5,8 @@ rki.country = "DE"
 
 file = find_last_file(path=my.path(), pattern="ForInfluenzanet_Germany_GrippeWeb_", use.suffix = TRUE)
 
+message("Loading ", file)
+
 d = read.csv2(my.path(file))
 names(d) <- tolower(names(d))
 d = rename(d, active=numberparticipants)
@@ -39,3 +41,6 @@ db$exec(r)
 
 # Last evaluated expression is returned to calling script as result (here number of rows)
 nrow(de.inc)
+
+mark_file_done(my.path(file))
+
