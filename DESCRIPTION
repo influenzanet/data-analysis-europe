@@ -1,6 +1,6 @@
-Package: RGrippeNet
+Package: RInfluenzanet
 Type: Project
-Title: GrippeNet analysis Projet
+Title: Influenzanet european analysis Projet
 Version: 1.0
 Imports:
   rlang (>= 0.4.9),
@@ -15,9 +15,12 @@ Imports:
   cowplot,
   gridExtra,
   tidyr (>= 1.0),
-  svglite
+  svglite,
+  kable,
+  kableExtra,
+  knitr
 Depends:
-  R (>= 3.5.0)
+  R (>= 4)
 Suggests:
 URL: https://www.influenzanet.info
 Additional_repositories: https://cran.sentiweb.fr/
@@ -26,7 +29,7 @@ BugReports: https://github.com/cturbelin/ifnBase/issues
 Authors@R: c(
     person("Clément", "Turbelin", email="clement.turbelin@sorbonne-universite.fr", role=c("aut", "cre"))
   )
-Description: INfluenzanet at european level analysis
+Description: Influenzanet data analysis at european level 
 License: Proprietary
 Encoding: UTF-8
 NeedsCompilation: no
