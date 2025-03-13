@@ -102,6 +102,7 @@ def check_address(address, valides:List[str]) -> bool:
 
 def add_file_timestamp(name, time):
     p = os.path.splitext(name)
+    time = time.replace(':','-')
     n = p[0] + '_' + time
     return n + p[1]
 
