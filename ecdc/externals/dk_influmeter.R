@@ -3,6 +3,38 @@ init.path('externals/dk2')
 
 dkc.country = "DKI"
 
+#' rename columns to a given name, but each rename can be a list
+#' @param .data data.frame()
+#' @param ... list renaming spec name is target column, value can be a list of columns 
+rename_lazy = function(.data, ...) {
+  nn = tolower(names(.data))
+  renames = list(...)
+  for(i in seq_along(renames)) {
+    from = unique(renames[[i]])
+    to = names(renames)[i]
+    i = which(from %in% nn) 
+    if(length(i) == 1) {
+       n = from[i]
+       message("Found ", i, ": ", n, " -> ", to)
+       nn[ nn == n ] = to
+    }
+  }
+  names(.data) <- nn
+  .data
+}
+
+files_catalog = function(path, reader) {
+  files = list.files(path, full.names = TRUE)
+  nn = lapply(files, function(file) {
+    d = try(reader(file))
+    if(inherits(d, "try-error")) {
+      warning(paste("Unable to parse", file))
+      return(c())
+    }
+    names(d)
+  })
+}
+
 ff = find_last_file(my.path(), "DK_data.*\\.csv$", use.suffix=TRUE)
 inc = NULL
 if(length(ff) > 0) {
@@ -13,8 +45,16 @@ if(length(ff) > 0) {
   if(nrow(already) == 0) {
     message("Loading ", file)
     r = read.csv2(my.path(file), header = TRUE)
-    r = rename(r, week="Yearweek", active="Weekly_Responses", "count"="ILI_cases")
-    r$X = NULL
+    
+    r = rename_lazy(r, week=c('yearweek', 'week', 'weekly_yearweek'), active=c('weekly_responses','responses', 'antal_svar'), count='ili_cases')
+    
+    expected.columns = c('week', 'active', 'count')
+    
+    if(!all(expected.columns %in% names(r))) {
+      e = expected.columns[!expected.columns %in% names(r)]
+      stop(paste("Some columns are missing", paste(sQuote(e), collapse = ","), " found", paste(sQuote(names(r)), collapse = ",")))
+    }
+    r = r[, expected.columns]
     r$yw = yw_from_isoweek(r$week)
     r$time = as.numeric(gsub(".*_(\\d+)\\.csv$","\\1", file))
     r$incidence = r$count / r$active 

@@ -48,6 +48,8 @@ if(nrow(already) == 0) {
   nrow(de.inc)
   
 } else {
+  print(already)
+  message("Last file ", file, "has been already handled")
   0
 }
 
