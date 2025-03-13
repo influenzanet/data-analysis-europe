@@ -1,40 +1,40 @@
-# Incidence file format
+# Incidence File Format
 
-This file describe the file format expected when you send incidence data.
+This file describes the file format expected when sending incidence data.
 
-This file format is mandatory. Please do not change the file structure (like field separator)
+This file format is mandatory. Please do not change the file structure (e.g. field separators).
 
-The file format is : **CSV** file using comma separated values. Numerical values must use as dot '.', as fractional separator (e.g. use '0.120' instead of '0,120')
+The file format is : **CSV** file with comma separated values. Numerical values must be separated by a period '.' (e.g. use '0.120' instead of '0.120').
 
 ## Columns:
 
-Column names must be the following ones, lowercase or upper case can be used, but **do not change the name**, only change in case of character is accepted.
+Column names must be as follows, lowercase or uppercase can be used, but **do not change the name**, only case changes are accepted.
 
 Mandatory columns:
-- `yearweek`: year week number as ISO week number, see Yearkweek column section
-- `active_count`: Count of active participants for the given week (incidence denominator)
-- `incidence_rate`: Incidence proportion, if not between [0,1] proportion please provide `factor` column to inform us of the scale used
+- `yearweek`: year week number as ISO week number, see section on yeark week column.
+- `active_count`: Number of active participants for the given week (incidence denominator).
+- `incidence_rate`: Incidence rate, if not between [0,1] rate please provide `factor` column to inform us of the scale used
 
 Optional columns:
-- `incidence_count`: column to provide the count of participant accounted for the incidence for the given week. 
-- `syndrome` : Name of the syndrome use to count participant for incidence, accepted values are
-    - 'ili': ILI using the ECDC definition
-    - 'covid': Covid specific definition (probably not standardized)
-    - Other syndrome : please contact us if you want to provide incidence using another     
-- `factor`: scale factor used to compute the incidence (if per 1000, factor is 1000; per 100,000 factor is 100,000)
-- `incidence_upper_ci` : Upper bound for confidence interval if computed
-- `incidence_lower_ci` : Lower bound for confidence interval if computed
+- `incidence_count`: column to provide the number of participants who are considered as incidence for the given week. 
+- `syndrome`: name of the syndrome used to count the participants for the incidence, accepted values are
+    - ili': ILI according to the ECDC definition
+    - 'covid': Covid specific definition (probably not standardised)
+    - Other syndrome: please contact us if you want to provide incidence using a different definition     
+- `factor`: scaling factor used to calculate incidence (if per 1000, factor is 1000; if per 100,000, factor is 100,000)
+- `incidence_upper_ci`: upper bound for confidence interval, if calculated
+- `incidence_lower_ci` : Lower bound for confidence interval if calculated
 
-## Yearweek column
+## YearWeek column
 
-Week number as ISO 8601 with the year. The year must be the year of the week (%G of strftime). 
-It's also possible to provide the date of the monday of the week.
-The value of the week can be reprensented using the several formats (using the week 01 of year 2024 as example)
+Week number as ISO 8601 with year. The year must be the year of the week (%G of strftime). 
+It's also possible to give the date of the Monday of the week.
+The value of the week can be represented using several formats (using week 01 of the year 2024 as an example)
 - 2024W01
 - 2024-W01
 - 202401 
 
-If monday of the week is provided to represent the week, it must be using `YYYY-MM-DD` format as `2024-01-01`
+If the Monday of the week is provided to represent the week, it must be in the `YYYY-MM-DD` format as `2024-01-01`.
 
 # Examples
 
