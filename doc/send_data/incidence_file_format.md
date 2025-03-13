@@ -8,7 +8,7 @@ The file format is : **CSV** file using comma separated values. Numerical values
 
 ## Columns:
 
-Column names must be the following ones, lowercase or upper case can be used, but **do not change the name** (no space, no separator like `_`)
+Column names must be the following ones, lowercase or upper case can be used, but **do not change the name**, only change in case of character is accepted.
 
 Mandatory columns:
 - `yearweek`: year week number as ISO week number, see Yearkweek column section
