@@ -28,13 +28,13 @@ mark_file_done = function(file) {
 #' Parse week from iso format to numeric yearweek (year * 100 + week)
 #' Can parse {year}W{week}, {year}-W{week}, {year}W{week}-{day}, {year}-W{week}-{day}
 #' @return int[]
-yw_from_isoweek = function(week) {
+yw_from_isoweek = function(week, warn=FALSE) {
   pattern = "(\\d+)-?W(\\d+)(-\\d+)?"
   i = grepl(pattern, week)
   w = rep(NA, length(week))
   w[i] = gsub(pattern, "\\1\\2", week[i])
   j = is.na(w) & !is.na(week)
-  if(any(j)) {
+  if(warn && any(j)) {
     warning("Some week number has not been parsed : ", paste(which(j), collapse = ","))
   }
   w
