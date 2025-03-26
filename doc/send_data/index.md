@@ -2,36 +2,52 @@
 
 ## File Formats
 
-- [Incidence file format](incidence_file_format.md) : For incidence data
+- [Incidence file format](incidence_file_format.md) : File format to use to send incidence data
 
 ## How to send data
 
 Data are processed by automated routines and their adaptation capabilities are limited. Please make sure you use the good file format before sending data to allow to the routines
 to run correctly (it really helps us).
 
+To send data, please contact us (at the influenzanet mailing list for example) so we can prepare the data integration.
+
+We will need to define :
+
+- File format (if you never sent data, please use the File formats defined above we will not handle custom format in the future)
+- Sending method : Email or web request (each will require to define some )
+
 ### By email (works but is not very robust)
 
-The email must fulfill some requirements to be processed :
+The email must respect some requirements to be correctly processed :
 
-- File data must be sent following the corresponding file format to allow integration in the database
-- The subject of the e-mail must be **fixed** and not change at all (e.g. the subject must start with a fixed text)
+- The subject must start with a predetermined text (defined during setup) and must not be changed in the future
 - The list of possible senders addresses must be defined (or at least the sender's email domain), if email is sent with an unknown sender (or sender email domain) it will not be processed
+- The file name of the provided files must start with a predetermined text (defined during setup) and not change.
 
-Data is provided as an attached file in the email, to be identified by the routine. The filename must follow a predetermined pattern :
-Either the exact same name or starting with a common prefix (such as incidence_italy_XXXXX.csv where XXXX may vary in each email) or a fixed name (the same name in every email for the same dataset type)
+The email subject and the attached file name prefixes are determined with the Influenzanet team, please do not change them afterward, the routines would not recognized the file.
 
-The best option is to provide a fixed file name. In this case a timestamp of the email's sending date will be added to the file name stored on the server.
+Actually, the best and simplest option is to use always the same email subject and attached file name, the routine will use the email sending time to differentiate the file versions.
+
+If you want/need to change subject or attached file name, use a fixed prefix (for example incidence_xxxxx.csv for file name, where "xxxx" part can change) and do not change it in the future.
 
 **Note** : If any change occurs in the subject or in the file name, the routine could not recognize the email and the data will not be handled.
+
+As a summary, we must define:
+
+- The subject of the email (at least a fixed prefix)
+- The senders domain
+- The name of the attached file (at least a fixed prefix) 
 
 ### Sending by web request
 
 Sending by web request is more reliable and robust than sending by email, because we can directly acknowledge the good reception of the data and validate the file structure to limit the risk 
 of problems during the data integration.
 
-You can send data using a web request to [https://send.influenzanet.info](https://send.influenzanet.info). 
+You can send data using a web request to [https://send.influenzanet.info](https://send.influenzanet.info). The documentation of how to send data using this method is described
+on the home page of this web service.
 
 An example in R is given there [send_data.R](send_data.R). It's possible to use other tools, a documentation is available at the above address (open it in a browser).
 
-You need to send us a request to obtain an authentication key before to use it.
+To use this method we must define with you:
+- an authentication key before to use it.
 

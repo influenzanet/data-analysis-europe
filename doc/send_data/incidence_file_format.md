@@ -1,17 +1,15 @@
 # Incidence File Format
 
 This file describes the file format expected when sending incidence data.
-
-This file format is mandatory. Please do not change the file structure (e.g. field separators).
-
 The file format is : **CSV** file with comma separated values. Numerical values must be separated by a period '.' (e.g. use '0.120' instead of '0.120').
+Please do not change the file structure (e.g. field separators), it will not be possible to import the data if the file use a different format.
 
 ## Columns:
 
 Column names must be as follows, lowercase or uppercase can be used, but **do not change the name**, only case changes are accepted.
 
 Mandatory columns:
-- `yearweek`: year week number as ISO week number, see section on yeark week column.
+- `yearweek`: year week number as ISO week number, see section on year week column.
 - `active_count`: Number of active participants for the given week (incidence denominator).
 - `incidence_rate`: Incidence rate, if not between [0,1] rate please provide `factor` column to inform us of the scale used
 
