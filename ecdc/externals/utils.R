@@ -53,3 +53,36 @@ seasons = sapply(get_historical_seasons(), function(season) {
 find_season = function(yw) {
   as.integer(as.character(cut(yw, breaks=c(seasons, Inf), labels=names(seasons), include.lowest = TRUE, right=FALSE)))
 }
+
+
+#' rename columns to a given name, but each rename can be a list
+#' @param .data data.frame()
+#' @param ... list renaming spec name is target column, value can be a list of columns 
+rename_lazy = function(.data, ...) {
+  nn = tolower(names(.data))
+  renames = list(...)
+  for(i in seq_along(renames)) {
+    from = unique(renames[[i]])
+    to = names(renames)[i]
+    i = which(from %in% nn) 
+    if(length(i) == 1) {
+      n = from[i]
+      message("Found ", i, ": ", n, " -> ", to)
+      nn[ nn == n ] = to
+    }
+  }
+  names(.data) <- nn
+  .data
+}
+
+files_catalog = function(path, reader) {
+  files = list.files(path, full.names = TRUE)
+  nn = lapply(files, function(file) {
+    d = try(reader(file))
+    if(inherits(d, "try-error")) {
+      warning(paste("Unable to parse", file))
+      return(c())
+    }
+    names(d)
+  })
+}

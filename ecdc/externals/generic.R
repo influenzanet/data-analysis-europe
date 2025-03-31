@@ -1,7 +1,16 @@
-
 incidence_generic_parser = function(file) {
   rows = read.csv(file, header = TRUE, comment.char = "#")
   names(rows) <- tolower(rows)
+  
+  rows = rename_lazy(rows, 
+              yearweek=c('yw'), 
+              active_count=c('active'), 
+              incidence_rate=c('incidence'),
+              incidence_count='count',
+              incidence_upper_ci='upper',
+              incidence_lower_ci='lower'
+         )
+  
   mandatory.columns = c('yearweek','active_count','incidence_rate')
   i = mandatory.columns %in% names(rows)
   if(any(!i)) {
