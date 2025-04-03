@@ -110,6 +110,7 @@ def parse_address_list(aa):
     o = []
     for addr in aa :
         _, email = parseaddr(addr)
+        email = email.strip()
         email = email.lower()
         if not re.match(r"[^@]+@[^@]+\.[^@]+", email):
             continue

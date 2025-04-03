@@ -27,13 +27,15 @@ if hasattr(settings, 'SENDING_ONLY_FROM'):
 
 class SourceDef:
 
-    def __init__(self, conf):
+    def __init__(self, conf:Dict):
         if not isinstance(conf['from'], list):
             raise ValueError("from is not a list")
         v = conf['from']
         v = [x.lower() for x in  v]
         self.senders = conf['from']
         self.dir = conf['dir']
+        self.notify_empty = conf.get('notify_empty', True)
+        self.reply_to = conf.get('reply_to', None)
         self.path = OUTPUT_PATH + '/' + self.dir
         self.files = conf['files']
         if not os.path.exists(self.path):
@@ -88,15 +90,26 @@ class HandledMessage:
         self.files.append({'file': file, 'recognized': recognized, 'type': file_type})
 
     def return_recipients(self):
-        to_addrs = self.msg.get('to', '')
-        to_addrs = parse_address_list(to_addrs)
-        cc_addrs = self.msg.get('cc', '')
-        cc_addrs = parse_address_list(cc_addrs)
-        from_addr = parse_address_list(self.senders)
         addrs = [ ]
-        addrs.extend(from_addr)
-        addrs.extend(to_addrs)
-        addrs.extend(cc_addrs)
+        if self.source is not None and self.source.reply_to is not None:
+            reply_to = self.source.reply_to
+            if isinstance(reply_to, list):
+                addrs.extend(reply_to)
+            if isinstance(reply_to, str):
+                addrs.append(reply_to)    
+        if len(addrs) == 0 and 'reply_to' in self.msg:
+            to_addrs = self.msg.get('reply_to', '')
+            to_addrs = parse_address_list(to_addrs)
+            addrs.extend(to_addrs)
+        if len(addrs) == 0:
+            to_addrs = self.msg.get('to', '')
+            to_addrs = parse_address_list(to_addrs)
+            cc_addrs = self.msg.get('cc', '')
+            cc_addrs = parse_address_list(cc_addrs)
+            from_addr = parse_address_list(self.senders)
+            addrs.extend(from_addr)
+            addrs.extend(to_addrs)
+            addrs.extend(cc_addrs)
         o = []
         for a in addrs:
             if a in IGNORE_RECIPIENTS:
@@ -137,6 +150,48 @@ class HandledMessage:
                 m.append("character '*' stands for any character after this, with the same extension")
                 m.append("Beware that the name of the files are case-sensitive, if you change any character the file might be not recognized.")
         return m
+    
+    def can_notify(self):
+        if self.source is None:
+            return False
+        if len(self.files) == 0:
+            # Only notify for empty files is config is ok
+            return self.source.notify_empty
+        return True
+
+    def send_reply(self, mailer: MailSender):
+        if not self.can_notify():
+            print("Notification skipped by configuration")
+            # No need to notify but everything is ok
+            return True
+        dest = dest = handled.return_recipients()
+        if len(dest) > 0:
+            print("Notifying to ", dest)
+        else:
+            print("No recipients found, skip notification")
+            return False
+        subject = 'Re: ' + self.msg['subject']
+        body = [
+            'Hi,',
+            'Thank you for sending data to Influenzanet',
+            'You receive this email because it has been processed by our automatic routine',
+            '',
+        ]
+        body.extend( self.to_email() )
+        body.extend([
+            '',
+            'If you dont want to receive this email please let us know or define the Reply-To header for your email'
+        ])
+        try:
+            mailer.send(dest, subject, body)
+            return True
+        except Exception as e:
+            print("Error during notification sending of message {}".format(self.message_id))
+            print("Dest", dest)
+            print("Subject:", subject)
+            print("Body: ", body)
+            traceback.print_exception(e)
+        return False
 
 def handle_message(handled: HandledMessage, logger: ImportLogger):
     """
@@ -263,25 +318,6 @@ for id in ids:
                 if handled.message_time < sending_only_from:
                     send = False
         if send:
-            dest = handled.return_recipients()
-            print("Notifying to ", dest)
-            subject = 'Re: ' + handled.msg['subject']
-            body = [
-                'Hi,',
-                'Thank you for sending data to Influenzanet',
-                'You receive this email because it has been processed by our automatic routine',
-                '',
-            ]
-            body.extend( handled.to_email() )
-            body.extend([
-                '',
-                'If you dont want to receive this email please let us know or define the Reply-To header for your email'
-            ])
-            try:
-                email_sender.send(dest, subject, body)
-            except Exception as e:
-                print("Error during notification sending of message {}".format(id))
-                print("Dest", dest)
-                print("Subject:", subject)
-                print("Body: ", body)
-                traceback.print_exception(e)
+            handled.send_reply(email_sender)
+            
+
