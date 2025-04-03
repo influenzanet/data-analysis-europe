@@ -28,11 +28,10 @@ imports = imports |> arrange(desc(imported_at)) %>% group_by(country) %>% slice_
 
 ```{r, echo=FALSE, message=FALSE, warning=FALSE}
 
-emails_db_path = paste0(local_data_path, "imports-email.db")
+emails_db_path = local_data_path("imports-email.db")
 emails.db = DBI::dbConnect(RSQLite::SQLite(), emails_db_path)
 
 emails = dbGetQuery(emails.db, "select * from email_imports")
-
 
 emails = emails |> arrange(desc(time)) |> group_by(dir) |> slice_head(n=5)
 

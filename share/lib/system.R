@@ -133,6 +133,26 @@ save_graph_with_context = function(path, formats, width, height, context, desc=N
   }
 }
 
-external_db_path = function() {
-  paste0(local_data_path, "externals.db")
+check_local_path = function() {
+  if(!exists('LOCAL_DATA_PATH')) {
+      rlang::abort("Variable 'LOCAL_DATA_PATH' is not defined in configuration")
+    }
+    if(!file.exists(LOCAL_DATA_PATH)) {
+      rlang::abort("Variable LOCAL_DATA_PATH point to a non existent directory")
+    }
+}
+
+local_data_path = function(file, check=TRUE, must.exists=TRUE) {
+  if(check) {
+    check_local_path()
+  }
+  p = paste0(LOCAL_DATA_PATH, file)
+  if(must.exists & !file.exists(p)) {
+    rlang::abort(paste("File does not exists ", sQuote(p)))
+  }
+  p
+}
+
+external_db_path = function(...) {
+  local_data_path("externals.db", ...)
 }
