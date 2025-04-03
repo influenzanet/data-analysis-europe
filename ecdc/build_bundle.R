@@ -20,7 +20,7 @@ seasons = get_historical_seasons()
 
 init.path('indicator')
 
-externalDb = ExternalDB$new(my.path('externals.db'))
+externalDb = ExternalDB$new(external_db_path())
 
 ## Incidence datasets
 # Collect all incidence files in their last version

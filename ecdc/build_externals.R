@@ -14,7 +14,7 @@ source("externals/db.R")
 init.path('indicator')
 
 # Initialize local db
-db = ExternalDB$new(my.path('externals.db'))
+db = ExternalDB$new(external_db_path())
 
 source_scripts = c(
   'nl_rivm',

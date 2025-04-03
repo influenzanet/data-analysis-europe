@@ -14,7 +14,7 @@ source("conf.R")
 
 init.path("ecdc")
 
-db = DBI::dbConnect(RSQLite::SQLite(), my.path('indicator/externals.db'))
+db = DBI::dbConnect(RSQLite::SQLite(), external_db_path())
 
 imports = dbGetQuery(db, "select * from imports")
 

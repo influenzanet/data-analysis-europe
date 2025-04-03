@@ -10,7 +10,7 @@ if(!library(ifnBase, logical.return = TRUE)) {
   }
 }
 
-options("swResults"=list("path_provider"=my.path))
+options("swResults"=list("path_provider"=ifnBase::my.path))
 
 library(swResults)
 
@@ -133,4 +133,6 @@ save_graph_with_context = function(path, formats, width, height, context, desc=N
   }
 }
 
-
+external_db_path = function() {
+  paste0(local_db_path, "externals.db")
+}
