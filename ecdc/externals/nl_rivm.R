@@ -21,4 +21,5 @@ r = insert_incidence_query(nl.inc, country=country, file=file)
 db$exec(r)
 
 weeks = range(nl.inc$yw)
+message("Updated incidence ", country, weeks[1], weeks[2])
 mark_imported(db, country=country, file, weeks)

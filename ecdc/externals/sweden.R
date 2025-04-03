@@ -55,6 +55,7 @@ if(!is.null(r) && nrow(r) > 0) {
   }  
 
   weeks = range(inc$yw)
+  message("Updated incidence ", se.country, weeks[1], weeks[2])
   mark_imported(db, country=se.country, file, weeks)
 }
 
