@@ -6,13 +6,35 @@ ACCOUNT={
     'folder': 'INBOX',
 }
 
+SENDING_ACCOUNT = {
+    'hostname':"",
+    'username':"",
+    'password':"",
+    'from':'', # From email adresse when sending response
+    'reply_to': "", # Optional reply to
+    'cc': [] # Add this recipients in CC of notifications
+}
+
+# Restrict notification sending only after this date (ISO date time with TZ)
+SENDING_ONLY_FROM = '2025-03-24 00:00:00+0000'
+
+# List of recipients to ignore when sending a response, usually the email of the mailbox to avoid recursion 
+IGNORE_RECIPIENTS = []
+
 SOURCES = [
     {
-        'from': ['expect@email.address']
-        'subject': 'the subject starting',
-        'dir': 'dir_to_place_files_in_output_path'
+        'from': ['@email.address'] # Email or domain to accept email for this source
+        'dir': 'dir' # Relative directory name to put files of this sources
+        'files': [ # List of accepted file patterns (using glob syntax), case insensitive
+            ('incidence_*.csv', 'incidence'),
+            ('active_*.csv', 'active'),
+        ]
     },
 
 ]
 
+# Path to a file to when to store the sqlite database with log of imports
+LOG_DB_PATH = './tests/imports-email.db'
+
+# Root directory where to place the identified files
 OUTPUT_PATH = 'the/output/path/for/files'
