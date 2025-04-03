@@ -3,7 +3,7 @@ init.path('externals/rki')
 
 rki.country = "DE"
 
-file = find_last_file(path=my.path(), pattern="ForInfluenzanet_Germany_GrippeWeb_", use.suffix = TRUE)
+file = find_last_file(path=my.path(), pattern="incidence", use.suffix = "D_T")
 
 already = check_file_imported(db, file, rki.country)
 if(nrow(already) == 0) {

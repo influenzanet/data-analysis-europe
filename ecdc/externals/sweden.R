@@ -3,7 +3,8 @@
 init.path('externals/se')
 
 se.country = "SE"
-ff = find_last_file(my.path(), "Influenzanet_.*\\.csv$", use.suffix=TRUE)
+#ff = find_last_file(my.path(), "Influenzanet_.*\\.csv$", use.suffix=TRUE)
+ff = find_last_file(path=my.path(), pattern="incidence", use.suffix = "D_T")
 r = NULL
 file = NULL
 if(length(ff) > 0) {

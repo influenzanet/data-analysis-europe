@@ -3,7 +3,10 @@ init.path('externals/dk2')
 
 dkc.country = "DKI"
 
-ff = find_last_file(my.path(), "DK_data.*\\.csv$", use.suffix=TRUE)
+#ff = find_last_file(my.path(), "DK_data.*\\.csv$", use.suffix=TRUE)
+
+ff = find_last_file(path=my.path(), pattern="incidence", use.suffix = "D_T")
+
 inc = NULL
 if(length(ff) > 0) {
   file = ff[1]
