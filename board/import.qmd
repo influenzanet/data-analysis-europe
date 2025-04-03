@@ -7,7 +7,7 @@ format:
 
 ---
 
-# Central Database Import 
+# Central Database Import (individual data)
 
 ```{r include=FALSE, message=FALSE, warning=FALSE}
 source("conf.R")
@@ -21,7 +21,7 @@ init.path('db')
 
 db = DBI::dbConnect(RSQLite::SQLite(), local_data_path('imports.db'))
 #
-imports = dbGetQuery(db, "select * from imports where time > date('now', '-8 days')")
+imports = dbGetQuery(db, "select * from imports where time > date('now', '-8 days') order by time desc")
 
 imports = imports |> 
               mutate(
@@ -39,13 +39,14 @@ stats = bind_rows(stats)
 
 ```
 
-### Imports from Influenzanet uploads (new platform exports)
+### Database imports from Influenzanet uploads (new platform exports)
 
 ```{r, echo=FALSE, warning=FALSE}
 if(nrow(imports) > 0) {
 ggplot(imports, aes(x=as.POSIXct(hour), y=rows, fill=country)) + 
   geom_bar(stat="identity") + 
   facet_grid(rows=vars(table), scales="free_y")
+  + labs(x="Date")
 } else {
   print("No imports data")
 }
