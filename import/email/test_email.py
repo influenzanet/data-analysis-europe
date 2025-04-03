@@ -3,4 +3,9 @@ from settings import SENDING_ACCOUNT
 
 sender = MailSender(SENDING_ACCOUNT)
 
-sender.send(['clement.turbelin@iplesp.upmc.fr'], 'Test from influnenzanet@epipop.fr', 'Test email')
+test = SENDING_ACCOUNT.get('test', None)
+
+if test is None:
+    raise ValueError("Test email must be defined in SENDING_ACCOUNT.test")
+
+sender.send(test, 'Test email', 'Test email')
