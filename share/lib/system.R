@@ -134,5 +134,5 @@ save_graph_with_context = function(path, formats, width, height, context, desc=N
 }
 
 external_db_path = function() {
-  paste0(local_db_path, "externals.db")
+  paste0(local_data_path, "externals.db")
 }
