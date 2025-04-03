@@ -14,8 +14,10 @@ class MailSender:
         self.hostname = conf['hostname']
         self.user = conf.get('username', '')
         self.password = conf.get('password', '')
+        self.debug = conf.get('debug', 0)
         self.from_email = conf['from']
         self.use_ssl = conf.get('ssl', False)
+        self.use_starttls = conf.get('starttls', False)
         self.reply_to = conf.get('reply_to', None)
         self.carbon_copy = conf.get('cc', None)
     
@@ -24,6 +26,10 @@ class MailSender:
             s = smtplib.SMTP_SSL(self.hostname)
         else:
             s = smtplib.SMTP(self.hostname)
+        if self.debug > 0:
+           s.set_debuglevel(self.debug)
+        if self.use_starttls:
+            s.starttls()
         if self.user != '':
             s.login(self.user, self.password)
         msg = EmailMessage()
