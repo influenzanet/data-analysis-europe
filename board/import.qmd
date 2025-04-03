@@ -42,13 +42,21 @@ stats = bind_rows(stats)
 ### Imports from Influenzanet uploads (new platform exports)
 
 ```{r, echo=FALSE, warning=FALSE}
+if(nrow(imports) > 0) {
 ggplot(imports, aes(x=as.POSIXct(hour), y=rows, fill=country)) + 
   geom_bar(stat="identity") + 
   facet_grid(rows=vars(table), scales="free_y")
+} else {
+  print("No imports data")
+}
 ```
 
 ```{r, echo=FALSE, warning=FALSE}
-tidyr::pivot_wider(imports, id_cols=c('country', 'hour'), names_from = "table", values_from = "label")
+if(nrow(imports) > 0) {
+  tidyr::pivot_wider(imports, id_cols=c('country', 'hour'), names_from = "table", values_from = "label")
+} else {
+  print("No imports data")
+}
 ```
 
 # Data in tables by season
