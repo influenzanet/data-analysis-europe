@@ -1,5 +1,5 @@
 ---
-title: "Influenzanet Data Import"
+title: "Influenzanet Central database"
 format: 
   html:
     code-fold: false
@@ -7,15 +7,19 @@ format:
 
 ---
 
-# Central Database Import (individual data)
+# Central Database (individual data)
+
+This page show various inputs about central database with individual data 
 
 ```{r include=FALSE, message=FALSE, warning=FALSE}
-source("conf.R")
+knitr::opts_chunk$set(echo=FALSE)
+library(dplyr)
 library(RSQLite)
 library(DBI)
 library(tidyr)
 library(dplyr)
 library(ggplot2)
+source("conf.R")
 
 init.path('db')
 
@@ -37,6 +41,32 @@ stats = jsonlite::read_json(stats_file)
 
 stats = bind_rows(stats)
 
+start_date = monday_of_date(Sys.Date()) - 3 * 7
+season = get_current_season()
+
+rows = NULL
+
+for(survey in c('intake', 'weekly', 'vaccination')) {
+  r = survey_load_results(survey, cols=c("timestamp", "country"), date = list(min=start_date), season=season)
+  r$id = NULL
+  r = r |> arrange(timestamp) |> mutate(yw=iso_yearweek(timestamp))
+  r$yw = iso_yearweek(r$timestamp)
+  
+  rr = r %>% group_by(yw, country) %>% summarize(n=n(), participants=n_distinct(person_id), .groups = "drop")
+  rr$survey = survey
+  rows = bind_rows(rows, rr)
+}
+
+rows = rows |> arrange(yw, country) |> mutate(label=paste0(n, " (", participants, ")"))
+
+```
+
+```{r}
+
+rr = tidyr::pivot_wider(rows |> select(country, survey, yw, label), id_cols=c('country', 'survey'), names_from = yw, values_from = label)
+
+rr
+
 ```
 
 ### Database imports from Influenzanet uploads (new platform exports)
@@ -45,8 +75,8 @@ stats = bind_rows(stats)
 if(nrow(imports) > 0) {
 ggplot(imports, aes(x=as.POSIXct(hour), y=rows, fill=country)) + 
   geom_bar(stat="identity") + 
-  facet_grid(rows=vars(table), scales="free_y")
-  + labs(x="Date")
+  facet_grid(rows=vars(table), scales="free_y") +
+   labs(x="Date")
 } else {
   print("No imports data")
 }

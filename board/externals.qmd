@@ -19,12 +19,12 @@ db = DBI::dbConnect(RSQLite::SQLite(), external_db_path())
 imports = dbGetQuery(db, "select * from imports")
 
 # Only keeps last 5 imports for each country
-imports = imports |> arrange(desc(imported_at)) %>% group_by(country) %>% slice_head(n=7) 
+imports = imports |> arrange(desc(imported_at)) %>% group_by(country) %>% slice_head(n=5) 
 
 ```
 
 
-# Email receptions
+# Email receptions and file processed
 
 ```{r, echo=FALSE, message=FALSE, warning=FALSE}
 
@@ -47,13 +47,13 @@ kable_grouped = function(k, data) {
   k
 }
 
-d = emails |> select(time, from, file, dir)
+d = emails |> select(time,  file, dir, msg_time, target_file)
 kableExtra::kbl(d) |> kable_grouped(d)
 ```
 
 # Import from externals sources
 
-Only 5 last imports for each platform is shown
+Only 5 last imports for each platform is shown. From April 2025, filenames are renamed to a common pattern.
 
 ```{r, echo=FALSE, message=FALSE, warning=FALSE}
 imports

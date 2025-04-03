@@ -11,10 +11,8 @@ website:
         text: Participants profile
       - href: weekly.qmd
         text: Weekly data
-      - href: data.qmd
-        text: Data Quality
-      - href: import.qmd
-        text: Import
+      - href: central_db.qmd
+        text: Central db (indivual data)
       - href: externals.qmd
         text: Externals
     footer:
