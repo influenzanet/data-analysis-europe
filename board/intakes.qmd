@@ -1,11 +1,13 @@
 ---
-title: "intakes"
+title: "Participants profiles"
 toc: false
 format: 
   html:
     page-layout: full
     df-print: kable
 ---
+
+This page only include data from countries providing individual data
 
 ```{r, include=FALSE}
 
@@ -33,10 +35,10 @@ include_graph = function(name) {
 
 ::: {.panel-tabset group="age"}
 
-# by country
+# By country
 
-```{r}
-include_graph("country-age-pyramid.svg")
+```{r, out.width="100%", out.height="500px"}
+include_graph("country-age-pyramid.pdf")
 ```
 
 # Global level
@@ -60,7 +62,7 @@ include_graph("country-gender.svg")
 
 # Global level
 
-```{r}
+```{r, out.width="100%", out.height="600px"}
 include_graph("europe-gender.pdf")
 ```
 

@@ -1,7 +1,9 @@
 ---
-title: "externals"
+title: "Integration of aggregated data into Influenzanet"
+toc: false
 format: 
   html:
+    page-layout: full
     df-print: kable
 ---
 

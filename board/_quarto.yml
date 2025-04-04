@@ -3,24 +3,33 @@ project:
 
 website:
   title: "Influenzanet Results"
+  repo-url: https://github.com/influenzanet/data-analysis-europe
+  repo-subdir: board
+  page-footer:
+    center: 
+      - text: Influenzanet
+        href: https://influenzanet.info
+      - text: GitHub Code
+        href: https://github.com/influenzanet/data-analysis-europe
+      - text: "Built on {{< meta date >}}"
   navbar:
     left:
-      - href: index.qmd
+      - href: home.qmd
         text: Home
       - href: intakes.qmd
         text: Participants profile
       - href: weekly.qmd
         text: Weekly data
-      - href: central_db.qmd
-        text: Central db (indivual data)
-      - href: externals.qmd
-        text: Externals
-    footer:
-        - href: about.qmd
-          text: About us
+      - href: incidence.qmd
+        text: Incidence data
+      - text: Data integration
+        menu:
+        - href: central_db.qmd
+          text: Central db (indivual data)
+        - href: externals.qmd
+          text: Aggregated data
 
 format:
   html:
     theme: cosmo
-#    css: styles.css
-    toc: true
+    toc: false

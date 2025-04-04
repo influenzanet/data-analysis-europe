@@ -1,7 +1,0 @@
----
-title: "Data Quality"
-format: 
-  html:
-    df-print: kable
----
-

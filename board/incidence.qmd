@@ -1,0 +1,101 @@
+---
+title: "Incidence data"
+toc: true
+format: 
+  html:
+    page-layout: full
+    df-print: kable
+---
+
+```{r, include=FALSE}
+
+knitr::opts_chunk$set(echo=FALSE)
+library(tidyr)
+library(dplyr)
+library(ggplot2)
+
+source("conf.R")
+season = get_current_season()
+#season = 2019
+
+season_title = paste0(season, "-", season + 1)
+
+init.path('ecdc/indicator')
+
+bundles = readRDS(my.path("bundles.rds"))
+
+plot_inc_superpose = function(ii, title, date_breaks="2 weeks") {
+  ggplot(ii, aes(x=monday_of_week(yw), y=incidence * 1000, color=country)) + 
+  geom_line() +
+  scale_x_date(date_breaks = date_breaks) +
+  labs(x="Week (monday date)", y="Incidence rate (/1000 participant)", title=paste("Incidence rate for ", title), caption = ifn.copyright()) +
+  theme(legend.position = "top", axis.text.x = element_text(angle=90)) 
+}
+
+plot_count = function(ii, title) {
+  p = tidyr::pivot_longer(ii %>% select(yw, country, count, part), c('count','part') )
+p$name = factor(p$name, c('part','count'))
+ggplot(p, aes(x=monday_of_week(yw), y=value, fill=name)) + 
+  geom_bar(stat="identity") +
+  facet_grid(rows=vars(country), scales="free_y") +
+  scale_fill_discrete(labels=c("part"="Active participants", "count"="Participant with syndrome")) +
+  labs(x="Week (monday date)", y="Number of participants", title=paste("Participants count used to compute incidence for", title), caption = ifn.copyright()) +
+  theme(legend.position = "top", axis.text.x = element_text(angle=90)) 
+}
+
+
+```
+
+```{r}
+cur.inc = bundles$incidence %>% filter(season == !!season)
+```
+
+# ILI Ecdc Definition
+
+## Current season (`r season_title`)
+
+```{r}
+ii = cur.inc %>% filter(syndrome == "ili.ecdc")
+ili.countries = n_distinct(ii$country)
+h = ili.countries * .5
+```
+
+### Incidence 
+
+```{r, fig.width=12, fig.height=h}
+
+
+#plot_inc_superpose(ii, title="ILI (ECDC)")
+
+ggplot(ii, aes(x=monday_of_week(yw), y=country, fill=1000*incidence)) + 
+  geom_tile(color="gray") +
+  scale_fill_viridis_c(option = "plasma")
+
+```
+
+#### Superposed incidence for all countries
+
+```{r, fig.width=12, fig.height=10}
+plot_inc_superpose(ii, title="ILI (ECDC)")
+```
+
+### Count & Active participants
+
+```{r, fig.width=12, warning=F}
+plot_count(ii, title="ILI (ECDC)")
+```
+
+## All seasons
+
+```{r}
+h = ili.countries * 1.2
+```
+
+```{r, fig.width=12, fig.height=h }
+ii = bundles$incidence %>% filter(syndrome == "ili.ecdc")
+
+plot_inc_superpose(ii, title="ILI (ECDC)", date_breaks = "1 month") +
+  facet_grid(cols=vars(season), rows=vars(country), scales="free_x")
+
+```
+

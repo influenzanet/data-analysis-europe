@@ -1,0 +1,13 @@
+---
+title: "Influenzanet results"
+format: html
+toc: false
+date: now
+---
+
+This website presents internal results from data analysis of the Influenzanet central database integrating individual data and aggregated data from participating countries.
+Its content is built on a daily basis.
+
+Please do not share this website into public documents, it is dedicated to show internal results and process.
+
+The code for the analysis and this website is available at [https://github.com/influenzanet/data-analysis-europe](https://github.com/influenzanet/data-analysis-europe)
