@@ -18,6 +18,8 @@ source("conf.R")
 season = get_current_season()
 #season = 2019
 
+censore.threshold = .35
+
 season_title = paste0(season, "-", season + 1)
 
 init.path('ecdc/indicator')
@@ -33,22 +35,57 @@ plot_inc_superpose = function(ii, title, date_breaks="2 weeks") {
 }
 
 plot_count = function(ii, title) {
-  p = tidyr::pivot_longer(ii %>% select(yw, country, count, part), c('count','part') )
+p = tidyr::pivot_longer(ii %>% select(yw, country, count, part), c('count','part') )
 p$name = factor(p$name, c('part','count'))
 ggplot(p, aes(x=monday_of_week(yw), y=value, fill=name)) + 
   geom_bar(stat="identity") +
-  facet_grid(rows=vars(country), scales="free_y") +
+  facet_grid(rows=vars(country, name), scales="free_y") +
   scale_fill_discrete(labels=c("part"="Active participants", "count"="Participant with syndrome")) +
   labs(x="Week (monday date)", y="Number of participants", title=paste("Participants count used to compute incidence for", title), caption = ifn.copyright()) +
   theme(legend.position = "top", axis.text.x = element_text(angle=90)) 
 }
+
+#' Compute weighted moving average, fixed window 2
+#' x = vector of values
+#' n = vector of weights
+conv = function(x, n) {
+  sapply(seq_along(x), function(i) {
+      if(i == 1) {
+        return(x[i])
+      }
+      r = min(i, 2) - 1
+      w = n[(i-r):i]
+      sum(x[(i-r):i] * w) / sum(w)
+  })
+}
+
+#' Compute threshold value to censor data below a given number of maximum active participants
+#' Max Active participants is estimated with the mean of max of 2 previous season, weighted by number of weeks 
+#' So in the starting of a season, the previous seasons (will all weeks) count a little more on mean.
+#' Limit to censor a week if active participant of a week  if below a proportion (threshold) of the estimated max.
+compute_censoring = function(ii, threshold=.35) {
+  max.active = ii %>% group_by(country, season) %>% summarize(max_active=max(part), n=n(), .groups="drop")
+  max.active = max.active %>% 
+    arrange(season) %>% 
+    group_by(country) %>% 
+    mutate(
+      max_active.mav=conv(max_active,n)
+    )
+  ii = left_join(ii, max.active, by=c("country","season"))
+  ii = ii %>% mutate(active_limit=.35 * max_active.mav, censored=!is.na(active_limit) & part < active_limit)
+  ii
+}
+
 
 
 ```
 
 ```{r}
 cur.inc = bundles$incidence %>% filter(season == !!season)
+
 ```
+
+To adjust incidence scale, some points are censored if active participant of a week is below `r censore.threshold * 100` % of the maximum participant of a season (with a mean on 2 previous seasons to be more accurate on the start of the season)
 
 # ILI Ecdc Definition
 
@@ -56,18 +93,28 @@ cur.inc = bundles$incidence %>% filter(season == !!season)
 
 ```{r}
 ii = cur.inc %>% filter(syndrome == "ili.ecdc")
+
+method.country = ii %>% group_by(country, method) %>% count() %>% ungroup()
+method.country = method.country %>% group_by(country) %>% mutate(n_country=n())
+
+ii = left_join(ii, bundles$active[, c('yw','country','method', 'active')], by=c('yw','country','method'))
+ii$part[is.na(ii$part)] = ii$active[is.na(ii$part)]
+
 ili.countries = n_distinct(ii$country)
-h = ili.countries * .5
+
+ii = compute_censoring(ii)
+
 ```
 
 ### Incidence 
 
+```{r}
+h = ili.countries * .5
+```
+
 ```{r, fig.width=12, fig.height=h}
 
-
-#plot_inc_superpose(ii, title="ILI (ECDC)")
-
-ggplot(ii, aes(x=monday_of_week(yw), y=country, fill=1000*incidence)) + 
+ggplot(ii %>% filter(!censored), aes(x=monday_of_week(yw), y=country, fill=1000*incidence)) + 
   geom_tile(color="gray") +
   scale_fill_viridis_c(option = "plasma")
 
@@ -81,21 +128,35 @@ plot_inc_superpose(ii, title="ILI (ECDC)")
 
 ### Count & Active participants
 
-```{r, fig.width=12, warning=F}
+```{r}
+h = ili.countries * 1.5
+```
+
+```{r, fig.width=12, fig.height=h, warning=F}
 plot_count(ii, title="ILI (ECDC)")
 ```
 
 ## All seasons
 
 ```{r}
-h = ili.countries * 1.2
+h = ili.countries * 1.4
 ```
 
-```{r, fig.width=12, fig.height=h }
+```{r, fig.width=12, fig.height=h, warning=FALSE }
 ii = bundles$incidence %>% filter(syndrome == "ili.ecdc")
+ii = left_join(ii, bundles$active[, c('yw','country','method', 'active')], by=c('yw','country','method'))
+ii$part[is.na(ii$part)] = ii$active[is.na(ii$part)]
 
-plot_inc_superpose(ii, title="ILI (ECDC)", date_breaks = "1 month") +
-  facet_grid(cols=vars(season), rows=vars(country), scales="free_x")
+ii = compute_censoring(ii)
+
+ii = ii %>% filter(!(season == 2023 & country == "UK"))
+
+plot_inc_superpose(ii %>% filter(!censored), title="ILI (ECDC)", date_breaks = "1 month") +
+  geom_vline(data = ii %>% filter(censored), aes(xintercept = monday_of_week(yw)), colour="#D4D4D4", alpha=70) +
+  facet_grid(cols=vars(season), rows=vars(country), scales="free_x") +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 90))
 
 ```
 
+Gray vertical lines indicates that a week is not shown, because the number of active participants are below the threshold (`r censore.threshold * 100` % of max active participants)

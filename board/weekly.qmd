@@ -7,7 +7,7 @@ format:
     df-print: kable
 ---
 
-This page only include data from countries providing individual data
+This page only includes data from countries providing individual data
 
 ```{r, include=FALSE}
 
