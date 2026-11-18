@@ -358,6 +358,12 @@ seasons = list(
   list(2025, pop=2018, start='2025-09-01', end="2026-08-31")
 )
 
+# From 2026, compute season definition 
+new.seasons = unique(2026:(as.integer(format(Sys.Date(), "%Y"))))
+for(s in new.seasons) {
+  seasons[[length(seasons) + 1]] = list(s, pop=2018, start=paste0(s, "-09-01"), end=paste0(s + 1, "-08-31"))
+}
+
 for(season in seasons) {
   y = season[[1]]
   
